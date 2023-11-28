@@ -17,7 +17,7 @@ import handleInputChange from "../../utils/stateUtils.js";
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../entitities/user"
 
 const Registration = () => {
-    const inputStyle = "block py-2.5 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 border-gray-300 appearance-none  focus:outline-none focus:ring-0 focus:border-blue-600"
+    const inputStyle = "block py-2.5 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 border-gray-400 appearance-none  focus:outline-none focus:ring-0 focus:border-blue-600"
     const [email, setEmail] = useState("")
     const [password1, setPassword1] = useState("")
     const [password2, setPassword2] = useState("")

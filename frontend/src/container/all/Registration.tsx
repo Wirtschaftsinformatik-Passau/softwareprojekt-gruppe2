@@ -9,9 +9,9 @@ import 'react-datepicker/dist/react-datepicker.css'; // Import the CSS for the D
 
 import "../../index.css"
 
-import RegistryHeader from "../../components/all/RegistryHeader";
+import RegistryHeader from "../../components/all/registration/RegistryHeader";
 // @ts-ignore
-import solarGif from '../../assets/solar_high.jpg'
+import solarGif from '../../assets/solar-pannels-wind-power-plant-outside.jpg'
 import customStyles from "../../utils/dropdownSelectUtils.js";
 import handleInputChange from "../../utils/stateUtils.js";
 import RegistryModal from "../../components/all/RegistryModal";

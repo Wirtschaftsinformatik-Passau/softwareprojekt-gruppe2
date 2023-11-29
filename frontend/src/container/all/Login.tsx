@@ -1,15 +1,17 @@
 import React from 'react';
 import { useNavigate,NavigateFunction } from "react-router-dom";
 
-import LoginModal from "../../components/all/LoginModal";
+import LoginModal from "../../components/all/login/LoginModal";
+import ForgotPasswordModal from "../../components/all/login/ForgotPasswordModal";
 
 // @ts-ignore
 import panelImg from "../../assets/solar_login2.jpg";
 
-import RegistryHeader from "../../components/all/RegistryHeader";
+import RegistryHeader from "../../components/all/registration/RegistryHeader";
 const Login = () => {
     const navigate: NavigateFunction = useNavigate();
     const [modalisOpen, setModalIsOpen] = React.useState(false);
+    const [forgotPasswordModalIsOpen, setForgotPasswordModalIsOpen] = React.useState(false);
     const [password, setPassword] = React.useState("")
     const [email, setEmail] = React.useState("")
     const checkLogin = (event: any) => {
@@ -21,6 +23,11 @@ const Login = () => {
     }
     const updateEmail = (event: any) => {
         setEmail(event.target.value)
+    }
+
+    const handlePasswordForgot = (event: any) => {
+        event.preventDefault()
+        setForgotPasswordModalIsOpen(true)
     }
    return(
        <div className="flex justify-start items-center flex-col h-screen">
@@ -44,7 +51,9 @@ const Login = () => {
                                onClick={() => navigate("/registration")}>
                                    Registrieren
                                </button>
-                               <button className="bg-gray-500 rounded-lg px-10 py-1 text-white">
+                               <button
+                                   onClick={handlePasswordForgot}
+                                   className="bg-gray-500 rounded-lg px-10 py-1 text-white">
                                    Passwort vergessen?
                                </button>
                             <button className="bg-color2 rounded-lg px-10 py-1 text-white"
@@ -54,6 +63,7 @@ const Login = () => {
                             </button>
                            </div>
                             {modalisOpen && (<LoginModal modalCloserState={setModalIsOpen}/>)}
+                            {forgotPasswordModalIsOpen && (<ForgotPasswordModal modalCloserState={setForgotPasswordModalIsOpen}/>)}
                         </div>
                     </form>
                </div>

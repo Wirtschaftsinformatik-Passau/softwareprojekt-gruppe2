@@ -70,7 +70,10 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
+  /* Small (xs) */
+  @media (min-width: 300px) { /* ... */ }

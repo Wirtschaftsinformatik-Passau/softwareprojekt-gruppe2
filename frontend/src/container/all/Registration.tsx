@@ -14,10 +14,11 @@ import RegistryHeader from "../../components/all/RegistryHeader";
 import solarGif from '../../assets/solar_high.jpg'
 import customStyles from "../../utils/dropdownSelectUtils.js";
 import handleInputChange from "../../utils/stateUtils.js";
+import RegistryModal from "../../components/all/RegistryModal";
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../entitities/user"
 
 const Registration = () => {
-    const inputStyle = "block py-2.5 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 border-gray-400 appearance-none  focus:outline-none focus:ring-0 focus:border-blue-600"
+    const inputStyle = "block py-2.5 sm:py-1 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 sm:border-b-1 border-gray-400 appearance-none  focus:outline-none focus:ring-0 focus:border-color2"
     const [email, setEmail] = useState("")
     const [password1, setPassword1] = useState("")
     const [password2, setPassword2] = useState("")
@@ -31,6 +32,8 @@ const Registration = () => {
     const [nachname, setNachname] = useState("")
     const [vorname, setVorname] = useState("")
     const [hausnr, setHausnr] = useState("")
+    const [contentModalisOpen, setContentModalisOpen] = useState(false);
+    const [passwordModalisOpen, setPasswordModalIsOpen] = useState(false);
 
 
     const roleOptions: Array<UserDropDownOption> = [
@@ -61,12 +64,12 @@ const Registration = () => {
 
     const buttonHandler = () => {
         if (!checkRequiredFields()) {
-            alert("Bitte alle benötigten Felder ausfüllen!")
+            setContentModalisOpen(true)
             return
         }
 
         if (!checkPasswordEquality()) {
-            alert("Passwörter stimmen nicht überein!")
+            setPasswordModalIsOpen(true)
             return
         }
 
@@ -91,7 +94,7 @@ const Registration = () => {
                 <div className="absolute top-0 left-0 bottom-0 right-0 flex flex-col justify-center items-center">
                     <RegistryHeader/>
                     <div className="justify-self-center bg-white bg-opacity-80 flex flex-col justify-center
-                    items-center p-20 max-w-screen-lg sm:max-w-screen-sm md:max-w-screen-md rounded-3xl">
+                    items-center p-10 sm:p-20 max-w-screen-lg sm:max-w-screen-sm md:max-w-screen-md rounded-3xl">
                         <form className="justify-self-center">
                             <div className="grid grid-rows-4 gap-10 md:gap-5">
                                 <div className="grid grid-cols-3 gap-10 md:gap-5">
@@ -205,7 +208,7 @@ const Registration = () => {
                                 <div className="flex justify-center items-center h-full">
                                 <button
                                 type="button"
-                                className="mt-5 bg-blue-600 rounded-xl text-md text-white w-1/3"
+                                className="mt-5 bg-color2 rounded-xl text-md text-white w-1/3"
                                 onClick={buttonHandler}>
                                     Registrieren!
                                 </button>
@@ -213,7 +216,8 @@ const Registration = () => {
                             </div>
                         </form>
                     </div>
-
+                    {contentModalisOpen && (<RegistryModal modalCloserState={setContentModalisOpen} content={"Bitte alle benötigten Felder ausfüllen!"}/>)}
+                    {passwordModalisOpen && (<RegistryModal modalCloserState={setPasswordModalIsOpen} content={"Passwörter stimmen nicht überein!"}/>)}
                 </div>
             </div>
         </div>

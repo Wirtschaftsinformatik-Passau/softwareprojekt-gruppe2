@@ -3,8 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSolarPanel } from '@fortawesome/free-solid-svg-icons';
 import { faGlobe } from '@fortawesome/free-solid-svg-icons';
 
-
-import LanguageSelection from "./LanguageSelection.jsx";
+import LanguageSelection from "./LanguageSelection.js";
 
 const RegistryHeader = () => {
     const [iconAction, setIconAction] = useState(false)
@@ -16,22 +15,22 @@ const RegistryHeader = () => {
 
            <FontAwesomeIcon
                icon={faSolarPanel}
-               className="text-5xl text-blue-500 hover:text-blue-500"
+               className="text-5xl text-color2 hover:text-color2"
 
            />
-           <h1 className="text-5xl text-blue-500">
+           <h1 className="text-5xl text-color2">
                GreenEcoHub
            </h1>
+
        </div>
            {
                iconAction ?
                    <LanguageSelection
                     closeSetter={setIconAction}
                    />:
-
            <FontAwesomeIcon
                icon={faGlobe}
-               className="text-5xl text-blue-500 hover:text-blue-500 hover:animate-bounce cursor:pointer"
+               className="text-5xl text-color2 hover:text-blue-500 hover:animate-bounce cursor:pointer"
                onClick={() => {
                    console.log("over")
                    setIconAction(true)

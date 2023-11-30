@@ -70,7 +70,17 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+  /* Small (xs) */
+  @media (min-width: 300px) { /* ... */ }
+
+
+@layer.components {
+  .input-primary {
+    @apply block py-2.5 px-0 w-full placeholder-gray-500 text-black bg-transparent border-0 border-b-2 border-gray-400 appearance-none  focus:outline-none focus:ring-0 focus:border-color2
   }
 }

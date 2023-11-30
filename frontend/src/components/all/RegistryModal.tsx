@@ -2,6 +2,8 @@ import React from 'react';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCircleXmark} from "@fortawesome/free-solid-svg-icons/faCircleXmark";
 
+import ModalWrapper from '../utility/ModalWrapper';
+
 type RegistryModalProps = {
     modalCloserState: (arg: boolean) => void,
     content: string
@@ -17,7 +19,7 @@ const RegistryModal: React.FC<RegistryModalProps> = ({modalCloserState, content}
 
     return (
         <div className="fixed top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black bg-opacity-50">
-            <div className="bg-white p-8 rounded-xl grid grid-rows-2 gap-4">
+           <ModalWrapper modalCloserState={modalCloserState} rows={2}>
                 <div className={"flex flex-row justify-center border-b-2"}>
                     <FontAwesomeIcon
                         icon={faCircleXmark}
@@ -38,7 +40,7 @@ const RegistryModal: React.FC<RegistryModalProps> = ({modalCloserState, content}
                     </button>
             </div>
 
-        </div>
+            </ModalWrapper>
             </div>
     )
 }

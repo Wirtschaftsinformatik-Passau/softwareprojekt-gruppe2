@@ -39,7 +39,7 @@ const Login = () => {
                    <RegistryHeader/>
                    <form>
                         <div className="flex flex-col gap-5 justify-center items-center rounded-2xl bg-white bg-opacity-80 py-20">
-                            <h1 className="text-5xl text-color2">
+                            <h1 className="text-5xl text-color2 border-b-2 pb-2">
                                 GreenEcoHub
                             </h1>
                             <input type="text" className="py-2.5 px.2.5 bg-transparent border-0 focus:outline-none
@@ -47,16 +47,16 @@ const Login = () => {
                             <input type="password" className="py-2.5 px.2.5 bg-transparent border-0 focus:outline-none
                             border-b-2 border-b-gray-500 placeholder-gray-500 text-md focus:border-color2" placeholder={"Password"}/>
                            <div className="grid grid-cols-3 gap-5 w-9/12">
-                               <button className="bg-gray-500 rounded-lg px-10 py-1 text-white"
+                               <button className="bg-gray-500 rounded-lg px-0 py-1 text-white text-md"
                                onClick={() => navigate("/registration")}>
                                    Registrieren
                                </button>
                                <button
                                    onClick={handlePasswordForgot}
-                                   className="bg-gray-500 rounded-lg px-10 py-1 text-white">
+                                   className="bg-gray-500 rounded-lg px-0 py-1 text-white text-md">
                                    Passwort vergessen?
                                </button>
-                            <button className="bg-color2 rounded-lg px-10 py-1 text-white"
+                            <button className="bg-color2 rounded-lg px-0 py-1 text-white text-md"
                                     onClick={checkLogin}
                             >
                                 Login!

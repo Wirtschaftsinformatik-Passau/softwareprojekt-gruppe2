@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSolarPanel } from '@fortawesome/free-solid-svg-icons';
 import { faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 import LanguageSelection from "../LanguageSelection.js";
 
@@ -23,6 +24,12 @@ const RegistryHeader = () => {
            </h1>
 
        </div>
+       
+        <div className='grid grid-cols-2 gap-2'>
+        <FontAwesomeIcon
+       icon={faQuestion}
+       className='text-5xl text-color2 hover:text-blue-500 hover:animate-bounce cursor:pointer'
+       />
            {
                iconAction ?
                    <LanguageSelection
@@ -36,8 +43,8 @@ const RegistryHeader = () => {
                    setIconAction(true)
                }}
            />
-
            }
+           </div>
     </div>
    )
 }

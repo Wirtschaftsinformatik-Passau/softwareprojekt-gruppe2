@@ -1,6 +1,9 @@
 import React from 'react';
 import {faCircleXmark} from "@fortawesome/free-solid-svg-icons/faCircleXmark";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
+
+import ModalWrapper from '../../utility/ModalWrapper';
 
 type LoginModalProps = {
     modalCloserState: (arg: boolean) => void,
@@ -14,7 +17,7 @@ const LoginModal: React.FC<LoginModalProps> = ({modalCloserState}) => {
     }
     return (
         <div className="fixed top-0 left-0 right-0 bottom-0 flex justify-center items-center bg-black bg-opacity-50">
-            <div className="bg-white p-8 rounded-xl grid grid-rows-2 gap-4">
+           <ModalWrapper modalCloserState={modalCloserState} rows={2}>
                 <div className={"flex flex-row justify-center border-b-2"}>
                     <FontAwesomeIcon
                         icon={faCircleXmark}
@@ -22,6 +25,7 @@ const LoginModal: React.FC<LoginModalProps> = ({modalCloserState}) => {
                     />
                     <h1 className="text-center text-xl">
                     Passwort Falsch!
+                    
                 </h1>
                     <FontAwesomeIcon
                         icon={faCircleXmark}
@@ -34,9 +38,9 @@ const LoginModal: React.FC<LoginModalProps> = ({modalCloserState}) => {
                         onClick={handleErneutVersuchen}
                         className="p-2 bg-color2 text-white rounded-xl">Erneut versuchen!</button>
                 </div>
+            </ModalWrapper>
             </div>
-
-        </div>
+        
     )
 }
 

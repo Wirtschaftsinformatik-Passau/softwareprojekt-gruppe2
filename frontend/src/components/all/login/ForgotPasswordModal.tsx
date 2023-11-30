@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import handleInputChange from "../../../utils/stateUtils";
 import RegistryModal from "../RegistryModal";
-
+import ModalWrapper from "../../utility/ModalWrapper";
 
 type ModalProps = {
     modalCloserState: (arg: boolean) => void,
@@ -28,7 +28,7 @@ const ForgotPasswordModal: React.FC<ModalProps> = ({modalCloserState}) => {
 
     return (
     <div className="fixed left-0 top-0 right-0 bottom-0 bg-black bg-opacity-50 flex justify-center items-center">
-        <div className="bg-white p-8 rounded-xl grid grid-rows-2 gap-8 p-12">
+        <ModalWrapper modalCloserState={modalCloserState} rows={2}>
             {passwordScreen ? (
                 <>
                     <input
@@ -65,7 +65,7 @@ const ForgotPasswordModal: React.FC<ModalProps> = ({modalCloserState}) => {
                     </button>
                 </>
             )}
-        </div>
+        </ModalWrapper>
     </div>
     )
 };

@@ -23,15 +23,12 @@ const RegistryModal: React.FC<RegistryModalProps> = ({modalCloserState, content}
                 <div className={"flex flex-row justify-center border-b-2"}>
                     <FontAwesomeIcon
                         icon={faCircleXmark}
-                        className="text-2xl text-red-700 px-5"
+                        className="text-2xl text-red-700 px-4 mt-0.5"
                     />
                     <h1 className="text-center text-xl">
                         {content}
                     </h1>
-                    <FontAwesomeIcon
-                        icon={faCircleXmark}
-                        className="text-2xl text-red-700 px-5"
-                    />
+                    
                 </div>
                 <div className="flex flex-row justify-center">
                     <button onClick={handleOk}

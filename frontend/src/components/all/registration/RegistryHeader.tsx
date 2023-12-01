@@ -5,12 +5,14 @@ import { faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 import LanguageSelection from "../LanguageSelection.js";
+import HelpModal from '../../utility/HelpModal.js';
 
 const RegistryHeader = () => {
     const [iconAction, setIconAction] = useState(false)
+    const [help, setHelp] = useState(false)
 
    return(
-       <div className="absolute top-0 left-0 bg-white bg-opacity-80 w-full h-12 py-2 md:h-16 sm:h-10 flex justify-between items-center px-4">
+       <div className="absolute top-0 left-0 bg-white bg-opacity-80 w-full h-14 py-2 md:h-16 sm:h-10 flex justify-between items-center px-4">
 
        <div className="flex flex-row gap-8">
 
@@ -26,10 +28,14 @@ const RegistryHeader = () => {
        </div>
        
         <div className='grid grid-cols-2 gap-2'>
+            <div className=''>
         <FontAwesomeIcon
        icon={faQuestion}
+       onClick={() => setHelp(true)}
        className='text-5xl text-color2 hover:text-blue-500 hover:animate-bounce cursor:pointer'
        />
+       {help && (<HelpModal modalCloserState={setHelp}/>)}
+       </div>
            {
                iconAction ?
                    <LanguageSelection

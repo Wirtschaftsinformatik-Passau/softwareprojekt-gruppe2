@@ -91,7 +91,7 @@ const Registration = () => {
                 <div className="absolute top-0 left-0 bottom-0 right-0 flex flex-col justify-center items-center">
                     <RegistryHeader/>
                     <div className="justify-self-center bg-white bg-opacity-80 flex flex-col justify-center
-                    items-center px-5 pt-5 sm:p-10 max-w-screen-lg sm:max-w-screen-sm md:max-w-screen-md rounded-3xl">
+                    items-center px-5 pt-5 sm:p-10 max-w-screen-lg sm:max-w-screen-sm md:max-w-screen-md rounded-3xl py-4">
                         <form className="justify-self-center">
                             <div className="grid grid-rows-4 gap-10 md:gap-5">
                                 <div className="grid grid-cols-3 gap-10 md:gap-5">

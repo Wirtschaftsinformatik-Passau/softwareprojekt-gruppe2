@@ -6,7 +6,7 @@ router = APIRouter()
 
 
 @router.post("/registration/", response_model=schemas.UserCreate)
-def create_adresse(adresse: schemas.AdresseCreate, db: Session = Depends(database.get_db)):
+def create_user(user: schemas.UsersCreate, db: Session = Depends(database.get_db)):
     db_adresse = models.Adresse(**adresse.dict())
     db.add(db_adresse)
     db.commit()

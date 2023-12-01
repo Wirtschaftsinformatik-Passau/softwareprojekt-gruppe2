@@ -21,16 +21,13 @@ const LoginModal: React.FC<LoginModalProps> = ({modalCloserState}) => {
                 <div className={"flex flex-row justify-center border-b-2"}>
                     <FontAwesomeIcon
                         icon={faCircleXmark}
-                        className="text-2xl text-red-700 px-5"
+                        className="text-2xl text-red-700 px-5 mt-0.5"
                     />
                     <h1 className="text-center text-xl">
-                    Passwort Falsch!
+                    Passwort falsch!
                     
                 </h1>
-                    <FontAwesomeIcon
-                        icon={faCircleXmark}
-                        className="text-2xl text-red-700 px-5"
-                    />
+                 
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <button className="p-2 bg-gray-500 text-white rounded-xl">Passwort vergessen!</button>

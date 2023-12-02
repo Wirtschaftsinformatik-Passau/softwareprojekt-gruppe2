@@ -1,6 +1,5 @@
 ## Readme - Backend
-### Wichtiges zum Environment
-- /vars/.env datei erstellen im ordner backend
+### Ordner Struktur
 ```
 backend/
 │
@@ -28,6 +27,21 @@ backend/
 └── setup.sh # Setup file
 └── Makefile # Makefile
 ```
+
+### Wichtiges zum Environment
+- /vars/.env datei erstellen im ordner backend
+- folgende variablen müssen gesetzt werden:
+```
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_DB=
+POSTGRES_HOST=
+POSTGRES_PORT=
+ASYNC= 
+DEV= 
+```
+- in [./app/config.py](./app/config.py) seht ihr welche types die Variablen haben müssen
+
 
 ### Wichtiges für die Datenbank
 - neues Modell in models.py hinzugefügt?

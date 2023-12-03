@@ -1,7 +1,10 @@
 from fastapi import FastAPI
+from logging.config import dictConfig
+import logging
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import users, auth
 from .database import Base, engine
+from app.logger import LogConfig
 
 
 app = FastAPI()
@@ -10,10 +13,6 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], # which origins are allo
                    allow_methods=["*"], # which http methods are allowed
                    allow_headers=["*"]) # which headers are allowed
 
-
-@app.get("/")
-def hello_world():
-    return {"Hello": "World"}
 
 app.include_router(users.router)
 app.include_router(auth.router)

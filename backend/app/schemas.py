@@ -37,12 +37,32 @@ class NutzerResponse(BaseModel):
     nutzer_id: int
 
 
+class TokenRenew(BaseModel):
+    access_token: str
+
+
 class NutzerLogin(BaseModel):
     email: EmailStr
     passwort: str
 
 
-class LoginResponse(BaseModel):
+class TokenResponse(BaseModel):
     access_token: str
 
+
+class LoggingSchema(BaseModel):
+    user_id: int
+    endpoint: str
+    method: str
+    message: str
+    success: bool
+
+class RegistrationLogging(BaseModel):
+    user_id: int
+    role: str
+    msg: str = f"User registered"
+
+class AdresseLogging(BaseModel):
+    adresse_id: int
+    msg: str = f"Adresse created"
 

@@ -2,16 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import exc
 from sqlalchemy.future import select
+from logging.config import dictConfig
+import logging
 from app import models, schemas, database, config
-
-
 from app import schemas, database, models, hashing, oauth
 
+from app.logger import LogConfig
 
-router = APIRouter(prefix="/login", tags=["authentication"])
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("GreenEcoHub")
 
 
-@router.post("/", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.LoginResponse)
+router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+@router.post("/login", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.TokenResponse)
 async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(database.get_db_async)):
     try:
         stmt = select(models.Nutzer).where(models.Nutzer.email == user_creds.email)
@@ -24,9 +29,13 @@ async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(data
 
         access_token = oauth.create_access_token(data={"user_id": db_user.user_id})
         return {"access_token": access_token}
+
     except exc.IntegrityError as e:
         if config.settings.DEV:
             msg = f"Es gab folgenden Fehler: {e.orig}"
         else:
             msg = "Es gab einen Fehler bei der Registrierung."
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+
+

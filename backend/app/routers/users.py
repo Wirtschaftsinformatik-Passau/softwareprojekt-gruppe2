@@ -9,7 +9,6 @@ from app import models, schemas, database, config
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-
 @router.post("/registration", status_code=status.HTTP_201_CREATED, response_model=schemas.NutzerResponse)
 async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
     nutzer.geburtsdatum = datetime.strptime(nutzer.geburtsdatum, "%d.%m.%Y").date()
@@ -21,7 +20,7 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
         if res.scalars().first() is not None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email bereits vergeben")
 
-        db_user = models.Nutzer(**nutzer.dict())
+        db_user = models.Nutzer(**nutzer.model_dump())
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
@@ -35,10 +34,9 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
     return {"nutzer_id": db_user.user_id}
 
 
-
 @router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
-    db_adresse = models.Adresse(**adresse.dict())
+    db_adresse = models.Adresse(**adresse.model_dump())
     db.add(db_adresse)
     await db.commit()
     await db.refresh(db_adresse)

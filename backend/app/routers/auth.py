@@ -5,8 +5,6 @@ from sqlalchemy import exc
 from sqlalchemy.future import select
 from app import models, schemas, database, config
 
-from app import schemas, database, models
-
 
 router = APIRouter(prefix="/login", tags=["authentication"])
 

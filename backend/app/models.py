@@ -1,11 +1,9 @@
 import enum
-
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, UUID, \
     Identity
 from app.database import Base
 from sqlalchemy.orm import relationship
-from enum import Enum
-from datetime import datetime
+from datetime import datetime, date
 
 
 class Rolle(enum.Enum):
@@ -42,6 +40,7 @@ class Nutzer(Base):
 
     logs = relationship("Log", back_populates="user")
 
+
 class Netzbetreiber(Base):
     __tablename__ = 'netzbetreiber'
     user_id = Column(Integer, Identity(), primary_key=True)
@@ -63,3 +62,23 @@ class Log(Base):
     aenderungsart = Column(Enum(AenderungsartEnum))
 
     user = relationship("Nutzer", back_populates="logs")
+
+
+class Stromtarif(Base):
+    __tablename__ = 'stromtarife'
+    tarif_id = Column(Integer, Identity(), primary_key=True)
+    tarifname = Column(String, unique=True)
+    preis_pro_kwh = Column(Float)
+    grundgebuehr = Column(Float)
+    laufzeit = Column(Integer)
+
+
+class Vertrag(Base):
+    __tablename__ = 'vertraege'
+    vertrag_id = Column(Integer, Identity(), primary_key=True)
+    haushalt_id = Column(Integer, ForeignKey('nutzer.user_id'))
+    tarif_id = Column(Integer, ForeignKey('stromtarife.tarif_id'))
+    beginn_datum = Column(Date)
+    end_datum = Column(Date)
+    jahresabschlag = Column(Float)
+    vertragstatus = Column(Boolean)

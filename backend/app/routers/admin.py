@@ -1,6 +1,5 @@
 import sqlalchemy
 from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from sqlalchemy import exc, select
@@ -25,7 +24,7 @@ async def read_logs(
     - end_datum (datetime, optional): Das Enddatum für die Filterung von Protokollen.
     - user_id (int, optional): Die Nutzer-ID zum Filtern von Protokollen.
     - db (AsyncSession): Die Abhängigkeit von der Datenbanksitzung.
-
+K
     Returns:
     - List[schemas.Log]: Eine Liste von Protokolleinträgen, die den Filterkriterien entsprechen.
 

@@ -1,2 +1,0 @@
-ERROR:    | 2023-12-03 17:18:00 | {'user_id': 0, 'role': 'unknown', 'msg': 'Email 1@5.de bereits vergeben'}
-INFO:     | 2023-12-03 17:18:18 | {'user_id': 19, 'role': 'Admin', 'msg': 'User registered'}

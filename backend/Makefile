@@ -4,7 +4,6 @@ postgres-volume:
 postgres:
 	sudo docker run --name postgres_tose_backend -p 5432:5432 -v postgres-volume:/var/lib/postgresql-volume/data -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -d postgres:12-alpine
 
-
 createdb:
 	sudo docker exec -it postgres_tose_backend createdb --username=root --owner=root tose_backend
 

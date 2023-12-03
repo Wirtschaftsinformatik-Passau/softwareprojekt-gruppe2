@@ -26,6 +26,7 @@ def get_db():
     finally:
         db.close()
 
+
 async def get_db_async():
     db = SessionLocal()
     try:

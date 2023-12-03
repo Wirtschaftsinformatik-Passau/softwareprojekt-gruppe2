@@ -56,6 +56,8 @@ async def create_stromtarif(
     - TarifConflictError: Bei Konflikten wie bereits existierendem Tarif.
     - DatabaseError: Bei allgemeinen Datenbankfehlern.
     """
+    existing_tarif = await db.execute(select(models.Stromtarif).where(models.Stromtarif.tarif_name == tarif.tarif_name))
+    if existing_tarif.scalars().first() is not None:
     try:
         db_tarif = models.Stromtarif(**tarif.model_dump())
         db.add(db_tarif)

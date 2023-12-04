@@ -14,16 +14,22 @@ const HelpModal: React.FC<HelpModalProps> = ({modalCloserState}) => {
         <div 
         onMouseLeave={() => modalCloserState(false)}
         className={`fixed top-14 md:top-16 right-16 bg-white px-6 py-4 rounded-xl grid grid-rows-2 gap-4`}>
+            <button>
                 <h3 className={itemStyle}>
                      Hilfe
                 </h3>
+                </button>
+                <button>
                 <h3 className={itemStyle}
                 onClick={() => navigate("/registration")}>
                     Home
                 </h3>
+                </button>
+                <button>
                 <h3 className={itemStyle}>
                     Kontakt
                 </h3>
+                </button>
            </div>
    
     )

@@ -17,9 +17,15 @@ module.exports = {
       },
     },
     extend: {
+      translate: {
+        '-px': '-2px',
+      },
       colors: {
         color1: "#386641",
         color2: "#6A994E",
+        color3: "#A7C957",
+        color4: "#F2E8CF",
+        color5: "#BC4749",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

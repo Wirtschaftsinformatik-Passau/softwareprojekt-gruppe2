@@ -11,21 +11,25 @@ type LanguageSelectionProps = {
 }
 const LanguageSelection: React.FC<LanguageSelectionProps> = ({closeSetter}) => {
     return (
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-2 rounded-xl">
+            <button>
             <img
             src={german}
-            className="h-12 w-12 cursor:pointer"
+            className="h-12 w-12 cursor:pointer rounded-xl"
             onClick={() => {
                 closeSetter(false)
             }}
             />
+            </button>
+            <button>
             <img
                 src={usa}
-                className="h-12 w-12 cursor:pointer"
+                className="h-12 w-12 cursor:pointer rounded-xl"
                 onClick={() => {
                     closeSetter(false)
                 }}
             />
+            </button>
         </div>
     )
 }

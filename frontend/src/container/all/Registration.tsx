@@ -2,10 +2,12 @@
 import {React, SetStateAction, useState} from "react";
 // @ts-ignore
 import Select from 'react-select';
+import axios from "axios";
 // @ts-ignore
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css'; // Import the CSS for the DatePicker
 
+//TODO: Add validation for all fields
 
 import "../../index.css"
 
@@ -14,15 +16,18 @@ import RegistryHeader from "../../components/all/registration/RegistryHeader";
 import solarGif from '../../assets/solar-pannels-wind-power-plant-outside.jpg'
 import customStyles from "../../utils/dropdownSelectUtils.js";
 import handleInputChange from "../../utils/stateUtils.js";
-import RegistryModal from "../../components/all/RegistryModal";
+import RegistryModal from "../../components/all/registration/RegistryModal";
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../entitities/user"
+import { Iadresse, Adresse } from "../../entitities/adress";
+import { addSuffixToBackendURL } from "../../utils/networking_utils";
+
 
 const Registration = () => {
     const inputStyle = "block py-2.5 sm:py-1 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 sm:border-b-1 border-gray-400 appearance-none  focus:outline-none focus:ring-0 focus:border-color2"
     const [email, setEmail] = useState("")
     const [password1, setPassword1] = useState("")
     const [password2, setPassword2] = useState("")
-    const [selectedOption, setSelectedOption] = useState(null);
+    const [selectedOption, setSelectedOption] = useState(Nutzerrolle.Kunde);
     const [telefon, setTelefon] = useState("")
     const [gebDatum, setGebDatum] = useState(new Date())
     const [plz, setPlz] = useState("")
@@ -34,6 +39,7 @@ const Registration = () => {
     const [hausnr, setHausnr] = useState("")
     const [contentModalisOpen, setContentModalisOpen] = useState(false);
     const [passwordModalisOpen, setPasswordModalIsOpen] = useState(false);
+    const [emailModalisOpen, setEmailModalIsOpen] = useState(false);
 
 
     const roleOptions: Array<UserDropDownOption> = [
@@ -70,13 +76,64 @@ const Registration = () => {
             return
         }
 
-        // @ts-ignore
-        const user: IUser = new User(vorname, nachname, telefon, email, password1, selectedOption, gebDatum, titel)
-        console.log(user)
+        const adresse: Iadresse = new Adresse(strasse, Number(hausnr), Number(plz), stadt, "Deutschland")
+        axios.post(addSuffixToBackendURL("users/adresse"), adresse
+        )
+            .then((response) => {
+                const adresse_id = response.data.adresse_id
+                if (response.status === 201) {
+                    console.log("Adresse erfolgreich gespeichert")
+                    const user: IUser = new User(vorname, nachname, telefon, email, password1, selectedOption.value, gebDatum.toDateString(), adresse_id, titel)
+         
+                    axios.post(addSuffixToBackendURL("users/registration"), user)
+                        .then((response) => {
+                            if (response.status === 201) {
+                                console.log("User erfolgreich gespeichert")
+                            }
+                        })
+                        .catch((error) => {
+                            if (error.response && error.response.status === 422) {
+                        
+                                console.log("Server Response on Error 422:", error.response.data);
+                            } else if (error.response && error.response.status === 409) {
+                                setEmailModalIsOpen(true)
+                             
+                               }
+                                  else {
+                                console.log(error);
+                            }
+                        }
+                        )
+                }
+            })
+            .catch((error) => {
+                if (error.response && error.response.status === 422) {
+                    console.log("Server Response on Error 422:", error.response.data);
+                } else {
+                    console.log(error);
+                }
+            })
+
+    
     }
     const handleRoleSelect = (option: any) => {
         setSelectedOption(option);
     }
+    
+    const validKeyForPayment = [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "Backspace",
+        "Tab"
+      ];
 
     return (
         <div className="flex justify-start items-center flex-col h-screen">
@@ -131,10 +188,18 @@ const Registration = () => {
                                                 type="text"
                                                 className={inputStyle}
                                                 placeholder="Hausnr.*"
+                                                onKeyDown={(e) => {
+                                                    if (!validKeyForPayment.includes(e.key)) {
+                                                      e.preventDefault();
+                                                    }}}
                                                 onChange={handleInputChange(setHausnr)} />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <input
+                                                 onKeyDown={(e) => {
+                                                    if (!validKeyForPayment.includes(e.key)) {
+                                                      e.preventDefault();
+                                                    }}}
                                                 type="text"
                                                 className={inputStyle}
                                                 placeholder="PLZ*"
@@ -165,6 +230,10 @@ const Registration = () => {
                                             type="text"
                                             className={`${inputStyle}`}
                                             placeholder="Telefon*"
+                                            onKeyDown={(e) => {
+                                                if (!validKeyForPayment.includes(e.key)) {
+                                                  e.preventDefault();
+                                                }}}
                                             onChange={handleInputChange(setTelefon)} />
                                     </div>
                                     <div className="rounded-md">
@@ -215,6 +284,7 @@ const Registration = () => {
                     </div>
                     {contentModalisOpen && (<RegistryModal modalCloserState={setContentModalisOpen} content={"Bitte alle benötigten Felder ausfüllen!"}/>)}
                     {passwordModalisOpen && (<RegistryModal modalCloserState={setPasswordModalIsOpen} content={"Passwörter stimmen nicht überein!"}/>)}
+                    {emailModalisOpen && (<RegistryModal modalCloserState={setEmailModalIsOpen} content={"Email bereits vergeben!"}/>)}
                 </div>
             </div>
         </div>

@@ -2,49 +2,70 @@ export interface IUser {
     titel?: string
     vorname: string
     nachname: string
-    telefon: string
+    telefonnummer: string
     email: string
-    password: string
-    role:  Nutzerrolle,
-    geburtstag: Date
+    passwort: string
+    rolle:  string,
+    geburtsdatum: string
+    adresse_id: number
+}
+
+export interface ILoginUser {
+    email: string
+    passwort: string
 }
 
 export enum Nutzerrolle {
-    Admin,
-    Netzbetreiber,
-    Kunde,
-    Berater
+    Admin = "Admin",
+    Netzbetreiber = "Netzbetreiber",
+    Kunde = "Kunde",
+    Berater = "Berater"
 }
 
+export class LoginUser implements ILoginUser{
+    public email;
+    public passwort;
+
+    constructor(
+        email: string,
+        password: string,
+    ) {
+        this.email = email;
+        this.passwort = password
+    }
+}
 
 
 export class User implements IUser{
     public vorname;
     public nachname;
-    public telefon;
+    public telefonnummer;
     public titel;
     public email;
-    public role;
-    public geburtstag;
-    public password: string;
+    public rolle;
+    public geburtsdatum;
+    public passwort;
+    public adresse_id;
 
     constructor(
         vorname: string,
         nachname: string,
         telefon: string,
         email: string,
-        password: string,
-        role:  Nutzerrolle,
-        geburtstag: Date,
+        passwort: string,
+        rolle:  string,
+        geburtsdatum: string,
+        adresse_id: number,
         title: string = ""
     ) {
         this.vorname = vorname;
         this.nachname = nachname
-        this.telefon = telefon
+        this.telefonnummer = telefon
         this.email = email
-        this.password = password
-        this.role = role
-        this.geburtstag = geburtstag
+        this.passwort = passwort
+        this.rolle = rolle
+        this.geburtsdatum = geburtsdatum
+        this.adresse_id = adresse_id
         this.titel = title
     }
 }

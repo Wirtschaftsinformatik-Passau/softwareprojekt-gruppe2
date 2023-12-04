@@ -23,18 +23,33 @@ async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(data
         res = await db.execute(stmt)
         db_user = res.scalars().first()
         if db_user is None:
+            logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/auth/login", method="POST",
+                                                message="User not found", success=False)
+            logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden")
         if not hashing.Hashing.verify_password(user_creds.passwort, db_user.passwort):
+            logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/auth/login", method="POST",
+                                                message="Wrong password", success=False)
+            logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Passwort falsch")
 
         access_token = oauth.create_access_token(data={"user_id": db_user.user_id})
+        logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/auth/login", method="POST",
+                                            message="User logged in", success=True)
+        logger.info(logging_obj.dict())
         return {"access_token": access_token}
 
     except exc.IntegrityError as e:
         if config.settings.DEV:
             msg = f"Es gab folgenden Fehler: {e.orig}"
+            logging_msg = msg
         else:
+            logging_msg = f"Es gab folgenden Fehler: {e.orig}"
             msg = "Es gab einen Fehler bei der Registrierung."
+
+        logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/auth/login", method="POST",
+                                            message=logging_msg, success=False)
+        logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
 

@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import handleInputChange from "../../../utils/stateUtils";
-import RegistryModal from "../RegistryModal";
+import RegistryModal from "../registration/RegistryModal";
 import ModalWrapper from "../../utility/ModalWrapper";
 
 type ModalProps = {

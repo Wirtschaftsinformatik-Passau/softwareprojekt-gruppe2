@@ -8,8 +8,8 @@ import DropdownItem from '@material-tailwind/react/DropdownItem';
 
 const AdminNavbar = () => {
     return (
-        <nav className="bg-blue-500 w-1/6 h-full py-6 px-3">
-dd
+        <nav className="bg-gradient-to-t from-color2 to-color3 w-1/6 h-full py-6 px-3 mt-14 md:mt-16">
+            
         </nav>
     )
 }

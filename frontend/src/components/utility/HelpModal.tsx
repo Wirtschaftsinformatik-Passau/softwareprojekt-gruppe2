@@ -13,7 +13,7 @@ const HelpModal: React.FC<HelpModalProps> = ({modalCloserState}) => {
     return (
         <div 
         onMouseLeave={() => modalCloserState(false)}
-        className={`fixed top-14 md:top-16 right-16 bg-white px-6 py-4 rounded-xl grid grid-rows-2 gap-4`}>
+        className={`fixed top-16 md:top-18 right-16 bg-white px-6 py-4 rounded-xl grid grid-rows-2 gap-4 text-color1`}>
             <button>
                 <h3 className={itemStyle}>
                      Hilfe

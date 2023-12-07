@@ -21,7 +21,7 @@ import WrongPasswordModal from "../../components/all/login/WrongPasswordModal";
 
 const LoginSchema = yup.object().shape({
     email: yup.string().email("Invalid email").required("Required"),
-    password: yup.string().min(8, "Password must be at least 8 characters long").required("Required"),
+    password: yup.string().min(3, "Password must be at least 4 characters long").required("Required"),
 })
 
 const LoginUI = () => {
@@ -84,9 +84,6 @@ const LoginUI = () => {
     }
 
 
-
-    console.log(theme.palette.mode)
-
     return (
         <div>
         <Topbar fixed={true}/>
@@ -122,7 +119,7 @@ const LoginUI = () => {
         handleChange,
         handleSubmit
     }) => (
-        <form>
+        <form onSubmit={handleSubmit}>
             <Box display={"grid"} gridTemplateColumns={"repeat(4, 1fr)"} gap="2rem" sx={{
                 "& > div": { gridColumn: isNonMobile ? undefined : "span 4" }
             }}>

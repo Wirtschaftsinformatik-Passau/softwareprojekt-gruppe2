@@ -6,6 +6,7 @@ import Registration from "./container/all/Registration.tsx"
 import AdminDashboard from "./container/admin/AdminDashboard.jsx";
 import Login from "./container/all/Login.tsx"
 import LoginUI from "./container/all/LoginUI.tsx"
+import RegistrationUI from "./container/all/RegistrationUI.tsx";
 import { ColorModeContext, useMode } from "./utils/theme.js";
 
 
@@ -18,7 +19,7 @@ const App = () => {
             <ThemeProvider theme={theme}>
                 <CssBaseline/>
         <Routes>
-            <Route path="/registration" element={<Registration/>}/>
+            <Route path="/registration" element={<RegistrationUI/>}/>
             <Route path="/login" element={<LoginUI/>}/>
             <Route path="/admin" element={<AdminDashboard/>}/>
             <Route path="*" element={

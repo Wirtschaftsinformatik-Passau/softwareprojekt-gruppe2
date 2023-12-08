@@ -28,7 +28,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
     <MenuItem
       active={selected === title}
       style={{
-        color: colors.grey[100],
+        color: colors.white[100],
       }}
       onClick={() => setSelected(title)}
       icon={icon}
@@ -49,8 +49,8 @@ const Sidebar1 = () => {
     <Box
       sx={{
         "& .pro-sidebar-inner": {
-          background: `${colors.color1[300]} !important`,
-          width: isCollapsed ? "90% !important" : "102% !important",
+          background: `${colors.color1[400]} !important`,
+          width: isCollapsed ? "90% !important" : "100% !important",
         },
         "& .pro-icon-wrapper": {
           backgroundColor: "transparent !important",
@@ -63,7 +63,7 @@ const Sidebar1 = () => {
           backgroundColor: `white !important`,
         },
         "& .pro-menu-item.active": {
-            color: "blue !important",
+            color: `${colors.color5[600]} !important`,
           },
       }}
     >
@@ -110,20 +110,20 @@ const Sidebar1 = () => {
               <Box textAlign="center">
                 <Typography
                   variant="h2"
-                  color={colors.grey[100]}
+                  color={colors.color1[200]}
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0" }}
                 >
                   Mr. Admin
                 </Typography>
-                <Typography variant="h5" color={colors.color4[800]}>
+                <Typography variant="h5" color={colors.color2[300]}>
                   Fancy Admin
                 </Typography>
               </Box>
             </Box>
           )}
 
-          <Box paddingLeft={isCollapsed ? undefined : "10%"}>
+          <Box paddingLeft={isCollapsed ? undefined : "8%"}>
             <Item
               title="Dashboard"
               to="/"
@@ -134,7 +134,7 @@ const Sidebar1 = () => {
 
             <Typography
               variant="h6"
-              color={colors.grey[300]}
+              color={colors.white[200]}
               sx={{ m: "15px 0 5px 20px" }}
             >
               Data
@@ -163,7 +163,7 @@ const Sidebar1 = () => {
 
             <Typography
               variant="h6"
-              color={colors.grey[300]}
+              color={colors.white[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
               Pages

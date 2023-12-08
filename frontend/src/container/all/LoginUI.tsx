@@ -34,14 +34,6 @@ const LoginUI = () => {
     const [modalisOpen, setModalIsOpen] = React.useState(false);
     const navigate = useNavigate();
 
-
-    const updatePassword = (event: any) => {
-        setPassword(event.target.value)
-    }
-    const updateEmail = (event: any) => {
-        setEmail(event.target.value)
-    }
-
     const handleVergessenOpen = () => {
         setVergessenOpen(true);
     }
@@ -150,7 +142,7 @@ const LoginUI = () => {
                 <TextField
                     fullWidth
                     variant="outlined"
-                    type="text"
+                    type="password"
                     label="Passwort"
                     onBlur={handleBlur}
                     onChange={handleChange}
@@ -174,14 +166,14 @@ const LoginUI = () => {
                 </Box>
                 <div className="grid grid-cols-3 gap-4">
                 <Box display={"flex"} justifyContent={"center"} mt="20px" >
-                    <Button type="submit" variant="contained" color="neutral" sx={{
+                    <Button type="button" variant="contained" color="neutral" sx={{
                         borderRadius: "10px",
-                    }}>
+                    }} onClick={() => navigate("/registration")}>
                         Registrieren
                     </Button>
                 </Box>
                 <Box display={"flex"} justifyContent={"center"} mt="20px" >
-                    <Button type="submit" variant="contained" color="neutral" sx={{
+                    <Button type="button" variant="contained" color="neutral" sx={{
                         borderRadius: "10px",
                     }} onClick={handleVergessenOpen}>
                         Passwort Vergessen

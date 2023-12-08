@@ -10,10 +10,11 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import HelpModal from "../../utility/HelpModal";
-
+import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
 
 
 const Topbar = ({fixed}) => {
+    const isNonMobile = useMediaQuery("(min-width:700px)")
     const [helpModal, setHelpModal] = useState(false);
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -27,11 +28,10 @@ const Topbar = ({fixed}) => {
           left: 0, 
           right: 0, 
           zIndex: 1100, 
-          backgroundColor: colors.color1[400],
-        
+          backgroundColor: colors.color1[400],        
         } :  {backgroundColor: colors.color1[400]}}
       >
-        <Box display="flex" alignItems="center" gap={"10%"}>
+        <Box display="flex" alignItems="center" gap={isNonMobile? "10%" : "2%"}>
         <Box>
           <Typography variant="h3" 
           sx={{
@@ -53,7 +53,7 @@ const Topbar = ({fixed}) => {
         </Box>
         </Box>
   
-        {/* ICONS */}
+        
         <Box display="flex">
           <IconButton onClick={colorMode.toggleColorMode}>
             {theme.palette.mode === "dark" ? (

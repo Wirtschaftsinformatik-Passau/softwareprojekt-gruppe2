@@ -27,7 +27,6 @@ const LoginModal: React.FC<LoginModalProps> = ({modalCloserState}) => {
                     />
                     <h1 className="text-center text-xl">
                     Passwort oder E-Mail Adresse falsch!
-                    
                 </h1>
                  
                 </div>

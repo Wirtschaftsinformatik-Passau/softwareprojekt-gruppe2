@@ -27,7 +27,7 @@ class NutzerCreate(BaseModel):
 
     @field_validator('geburtsdatum')
     def check_geburtsdatum(cls, v):
-        if datetime.datetime.strptime(v, "%a %b %d %Y").date() > date.today():
+        if datetime.datetime.strptime(v, "%Y-%m-%d").date() > date.today():
             raise ValueError('geburtsdatum darf nicht in der Zukunft liegen')
         return v
 
@@ -69,8 +69,26 @@ class RegistrationLogging(BaseModel):
 class AdresseLogging(BaseModel):
     adresse_id: int
     msg: str = f"Adresse created"
+class UserOut(BaseModel):
+    user_id: int
+    email: EmailStr
+    adresse_id: int
+    vorname: str
+    nachname: str
+    geburtsdatum: str
+    telefonnummer: str
+    rolle: str
+
+    class Config:
+        from_attributes = True
+
+class UsersOut(BaseModel):
+    users: list[UserOut]
+    count: int
 
 
 class AdminDashboardResponse(BaseModel):
     Log_Daten: Dict[str, int]
     users_id: List[int]
+
+

@@ -9,3 +9,4 @@
 {"timestamp": "2023-12-03 22:46:52,613", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-03 23:26:28,966", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-04 15:36:40,842", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-06 16:09:24,000", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}

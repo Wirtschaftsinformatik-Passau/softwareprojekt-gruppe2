@@ -92,3 +92,21 @@ class AdminDashboardResponse(BaseModel):
     users_id: List[int]
 
 
+
+
+class UserOut(BaseModel):
+    user_id: int
+    email: EmailStr
+    adresse_id: int
+    vorname: str
+    nachname: str
+    geburtsdatum: str
+    telefonnummer: str
+    rolle: str
+
+    class Config:
+        from_attributes = True
+
+class UsersOut(BaseModel):
+    users: list[UserOut]
+    count: int

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from logging.config import dictConfig
 import logging
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import users, auth
+from .routers import users, auth, admin
 from .database import Base, engine
 from app.logger import LogConfig
 
@@ -16,3 +16,4 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], # which origins are allo
 
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(admin.router)

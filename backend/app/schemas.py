@@ -1,6 +1,7 @@
 import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator
 from datetime import date
+from typing import Dict, List
 
 
 class AdresseCreate(BaseModel):
@@ -23,6 +24,7 @@ class NutzerCreate(BaseModel):
     nachname: str
     passwort: str
     geburtsdatum: str
+
     @field_validator('geburtsdatum')
     def check_geburtsdatum(cls, v):
         if datetime.datetime.strptime(v, "%a %b %d %Y").date() > date.today():
@@ -57,12 +59,18 @@ class LoggingSchema(BaseModel):
     message: str
     success: bool
 
+
 class RegistrationLogging(BaseModel):
     user_id: int
     role: str
     msg: str = f"User registered"
 
+
 class AdresseLogging(BaseModel):
     adresse_id: int
     msg: str = f"Adresse created"
 
+
+class AdminDashboardResponse(BaseModel):
+    Log_Daten: Dict[str, int]
+    users_id: List[int]

@@ -9,7 +9,7 @@ import { ColorModeContext, useMode } from "../../utils/theme";
 import Topbar from "../../components/all/dashboards/Topbar";
 import Sidebar from "../../components/all/dashboards/AdminSidebar";
 import FAQ from "../../components/all/dashboards/FAQs";
-import UserCreation from "../../components/all/dashboards/AdminUserCreation";
+import UserCreation from "../../components/all/dashboards/AdminCreateUser";
 import AdminUserTable from "../../components/all/dashboards/AdminUserTable";
 import AdminUserEdit from "../../components/all/dashboards/AdminUserEdit";
 
@@ -35,7 +35,7 @@ const  AdminDashboard = () => {
                 <Route path="/faq" element={<FAQ items={faqItems}/>}/>
                 <Route path="/userCreation" element={<UserCreation/>}/>
                 <Route path="/userTable" element={<AdminUserTable/>}/>
-                <Route path="/userEdit/" element={<AdminUserEdit/>}/>
+                <Route path="/editUser/" element={<AdminUserEdit/>}/>
                 </Routes>
                 </div>
                 

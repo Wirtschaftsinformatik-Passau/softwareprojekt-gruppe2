@@ -1,0 +1,21 @@
+// vite.config.js
+import { defineConfig } from "file:///home/lubi/Documents/Projects/ToSe/GreenEcoHub/frontend_repo/frontend/node_modules/vite/dist/node/index.js";
+import react from "file:///home/lubi/Documents/Projects/ToSe/GreenEcoHub/frontend_repo/frontend/node_modules/@vitejs/plugin-react/dist/index.mjs";
+import path from "path";
+var __vite_injected_original_dirname = "/home/lubi/Documents/Projects/ToSe/GreenEcoHub/frontend_repo/frontend";
+var vite_config_default = defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5e3
+  },
+  resolve: {
+    alias: {
+      // Set up your aliases here
+      "@": path.resolve(__vite_injected_original_dirname, "@")
+    }
+  }
+});
+export {
+  vite_config_default as default
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsidml0ZS5jb25maWcuanMiXSwKICAic291cmNlc0NvbnRlbnQiOiBbImNvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9kaXJuYW1lID0gXCIvaG9tZS9sdWJpL0RvY3VtZW50cy9Qcm9qZWN0cy9Ub1NlL0dyZWVuRWNvSHViL2Zyb250ZW5kX3JlcG8vZnJvbnRlbmRcIjtjb25zdCBfX3ZpdGVfaW5qZWN0ZWRfb3JpZ2luYWxfZmlsZW5hbWUgPSBcIi9ob21lL2x1YmkvRG9jdW1lbnRzL1Byb2plY3RzL1RvU2UvR3JlZW5FY29IdWIvZnJvbnRlbmRfcmVwby9mcm9udGVuZC92aXRlLmNvbmZpZy5qc1wiO2NvbnN0IF9fdml0ZV9pbmplY3RlZF9vcmlnaW5hbF9pbXBvcnRfbWV0YV91cmwgPSBcImZpbGU6Ly8vaG9tZS9sdWJpL0RvY3VtZW50cy9Qcm9qZWN0cy9Ub1NlL0dyZWVuRWNvSHViL2Zyb250ZW5kX3JlcG8vZnJvbnRlbmQvdml0ZS5jb25maWcuanNcIjtpbXBvcnQgeyBkZWZpbmVDb25maWcgfSBmcm9tICd2aXRlJ1xuaW1wb3J0IHJlYWN0IGZyb20gJ0B2aXRlanMvcGx1Z2luLXJlYWN0J1xuaW1wb3J0IHBhdGggZnJvbSAncGF0aCdcblxuLy8gaHR0cHM6Ly92aXRlanMuZGV2L2NvbmZpZy9cbmV4cG9ydCBkZWZhdWx0IGRlZmluZUNvbmZpZyh7XG4gIHBsdWdpbnM6IFtyZWFjdCgpXSxcbiAgc2VydmVyOiB7XG4gICAgcG9ydDogNTAwMFxuICB9LFxuICByZXNvbHZlOiB7XG4gICAgYWxpYXM6IHtcbiAgICAgIC8vIFNldCB1cCB5b3VyIGFsaWFzZXMgaGVyZVxuICAgICAgJ0AnOiBwYXRoLnJlc29sdmUoX19kaXJuYW1lLCAnQCcpXG4gICAgfSxcbiAgfVxufSlcbiJdLAogICJtYXBwaW5ncyI6ICI7QUFBaVksU0FBUyxvQkFBb0I7QUFDOVosT0FBTyxXQUFXO0FBQ2xCLE9BQU8sVUFBVTtBQUZqQixJQUFNLG1DQUFtQztBQUt6QyxJQUFPLHNCQUFRLGFBQWE7QUFBQSxFQUMxQixTQUFTLENBQUMsTUFBTSxDQUFDO0FBQUEsRUFDakIsUUFBUTtBQUFBLElBQ04sTUFBTTtBQUFBLEVBQ1I7QUFBQSxFQUNBLFNBQVM7QUFBQSxJQUNQLE9BQU87QUFBQTtBQUFBLE1BRUwsS0FBSyxLQUFLLFFBQVEsa0NBQVcsR0FBRztBQUFBLElBQ2xDO0FBQUEsRUFDRjtBQUNGLENBQUM7IiwKICAibmFtZXMiOiBbXQp9Cg==

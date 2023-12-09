@@ -1,3 +1,21 @@
 {"timestamp": "2023-12-03 17:15:09,156", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 18, "role": "Admin", "msg": "User registered"}
 {"timestamp": "2023-12-03 17:18:00,591", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 1@5.de bereits vergeben"}
 {"timestamp": "2023-12-03 17:18:18,806", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 19, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-08 15:17:26,680", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 20, "role": "Netzbetreiber", "msg": "User registered"}
+{"timestamp": "2023-12-08 18:20:07,765", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 21, "role": "Netzbetreiber", "msg": "User registered"}
+{"timestamp": "2023-12-08 23:19:59,944", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 22, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 11:05:59,896", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 23, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 11:06:24,960", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 12@234.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:09:16,463", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 12@23.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:09:27,878", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 24, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 11:10:22,034", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 12@23dddddd.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:10:34,091", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 25, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 11:11:14,572", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 1@23dddddd.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:11:32,728", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 26, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 11:11:44,995", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 1@2dddd.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:11:59,282", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 1@2dddd.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:12:26,940", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 1@2dddd.de bereits vergeben"}
+{"timestamp": "2023-12-09 11:22:31,259", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 27, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 12:57:08,372", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 28, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 17:36:57,062", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 29, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-09 18:00:02,960", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 30, "role": "Admin", "msg": "User registered"}

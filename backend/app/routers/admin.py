@@ -28,7 +28,7 @@ async def get_admin_dashboard(current_user: models.Nutzer = Depends(oauth.get_cu
     with open(log_file_path, "r") as file:
         for line in file:
             log_entry = json.loads(line)
-            date_str = log_entry["timestamp"].split("T")[0]
+            date_str = log_entry["timestamp"].split(" ")[0]
             date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
             activity_count[date] += 1
 

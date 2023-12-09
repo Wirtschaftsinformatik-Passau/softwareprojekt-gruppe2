@@ -10,18 +10,19 @@ import RegistrationUI from "./container/all/RegistrationUI.tsx";
 import { ColorModeContext, useMode } from "./utils/theme.js";
 
 
+
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false)
     const [theme, colorMode] = useMode();
     
     return (
-        <ColorModeContext.Provider value={useMode()}>
+        <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
                 <CssBaseline/>
         <Routes>
             <Route path="/registration" element={<RegistrationUI/>}/>
             <Route path="/login" element={<LoginUI/>}/>
-            <Route path="/admin" element={<AdminDashboard/>}/>
+            <Route path="/admin/*" element={<AdminDashboard/>}/>
             <Route path="*" element={
                 isLoggedIn ? <Navigate to="/admin"/> : <Navigate to="/login"/>
             }/>

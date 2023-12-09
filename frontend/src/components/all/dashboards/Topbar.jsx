@@ -21,7 +21,7 @@ const Topbar = ({fixed}) => {
     const colorMode = useContext(ColorModeContext);
   
     return (
-      <Box display="flex" justifyContent="space-between" p={2} borderBottom={`2px solid ${colors.color1[200]}`}
+      <Box display="flex" justifyContent="space-between" p={2} 
         sx = {fixed ? {
           position: 'fixed',
           top: 0, 
@@ -35,7 +35,7 @@ const Topbar = ({fixed}) => {
         <Box>
           <Typography variant="h3" 
           sx={{
-            color: colors.color1[200],
+            color: theme.palette.neutral.background,
             fontWeight: "bold",
           }}>
             GreenEcoHub
@@ -43,11 +43,12 @@ const Topbar = ({fixed}) => {
         </Box>
         <Box
           display="flex"
-          backgroundColor={colors.color1[200]}
+          backgroundColor={theme.palette.background.default}
+
           borderRadius="3px"
         >
-          <InputBase sx={{ ml: 2, flex: 1 }} placeholder="Search" />
-          <IconButton type="button" sx={{ p: 1 }}>
+          <InputBase sx={{ ml: 2, flex: 1, color: theme.palette.neutral.main}} placeholder="Search" />
+          <IconButton type="button" sx={{ p: 1, color: theme.palette.neutral.main}} >
             <SearchIcon />
           </IconButton>
         </Box>

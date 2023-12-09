@@ -1,18 +1,21 @@
 import { Box, Button, TextField } from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
+import { useNavigate } from "react-router-dom";
 import { CssBaseline } from "@material-ui/core";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/utility/Header";
 import Topbar from "../../components/all/dashboards/Topbar";
 import { useTheme } from "@mui/material/styles";
 import { tokens } from "../../utils/theme";
-import solarImg from "../../assets/solar_high.jpg"
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../entitities/user"
+import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
+import axios from "axios";
 import { Iadresse, Adresse } from "../../entitities/adress";
 import { addSuffixToBackendURL } from "../../utils/networking_utils";
 
 const Form = () => {
+  const navigate = useNavigate();
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -21,22 +24,61 @@ const Form = () => {
     console.log(values);
   };
 
+  const registerUser = (values: any, {setSubmitting}: any) => {
+
+    const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
+    axios.post(addSuffixToBackendURL("users/adresse"), adresse
+    )
+        .then((response) => {
+            const adresse_id = response.data.adresse_id
+            if (response.status === 201) {
+                console.log("Adresse erfolgreich gespeichert")
+                const user: IUser = new User(values.vorname, values.nachname, values.telefon, values.email, 
+                  values.passwort, values.nutzerrole, values.geburtstag, adresse_id, "Herr")
+                axios.post(addSuffixToBackendURL("users/registration"), user)
+                    .then((response) => {
+                        if (response.status === 201) {
+                            console.log("User erfolgreich gespeichert")
+                            navigate("/login")
+                        }
+                    })
+                    .catch((error) => {
+                        if (error.response && error.response.status === 422) {
+                    
+                            console.log("Server Response on Error 422:", error.response.data);
+                        }
+                              else {
+                            console.log(error);
+                        }
+                    }
+                    )
+                    .finally(() => {
+                        setSubmitting(false);
+                    }
+                    )
+            }
+        })
+        .catch((error) => {
+            if (error.response && error.response.status === 422) {
+                console.log("Server Response on Error 422:", error.response.data);
+            } else {
+                console.log(error);
+            }
+        })
+
+
+}
+
   return (
     <div>
     <Topbar fixed={true}/>
     <div className="flex justify-start items-center flex-col h-screen" style={{marginTop: "70px"}}>
-    <div className={`w-full h-full ${theme.palette.mode == "dark" ? "bg-gray-100" : "bg-gray-600"} flex flex-row`}>
+    <div className={`w-full h-full bg-${theme.palette.background} `}>
        
-    <Box
-          sx={{
-            width: '50%',
-            marginRight: "10px",
-            padding: "20px",
-          }}
-        >
+    
       <Header title="Registrieren" subtitle="Erstelle ein neues Nutzerprofil"/>
       <Formik
-        onSubmit={handleFormSubmit}
+        onSubmit={registerUser}
         initialValues={initialValues}
         validationSchema={checkoutSchema}
         style={{
@@ -70,7 +112,7 @@ const Form = () => {
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.vorname}
-                name="firstName"
+                name="vorname"
                 error={!!touched.vorname && !!errors.vorname}
                 helperText={touched.vorname && errors.vorname}
                 InputLabelProps={{
@@ -94,7 +136,7 @@ const Form = () => {
                 onBlur={handleBlur}
                 onChange={handleChange}
                 value={values.nachname}
-                name="firstName"
+                name="nachname"
                 error={!!touched.nachname && !!errors.nachname}
                 helperText={touched.nachname && errors.nachname}
                 InputLabelProps={{
@@ -125,7 +167,7 @@ const Form = () => {
                   style: { color: touched.strasse && errors.strasse ? 'red' : `${colors.color1[500]}` }
               }}
               sx={{
-                  gridColumn: "span 1",
+                  gridColumn: "span 2",
                   '& .MuiInputBase-input': { 
                       color: touched.strasse && errors.strasse ? 'red' : `${colors.color1[500]} !important`,
                   },
@@ -149,7 +191,7 @@ const Form = () => {
                   style: { color: touched.hausnr && errors.hausnr ? 'red' : `${colors.color1[500]}` }
               }}
               sx={{
-                  gridColumn: "span 1",
+                  gridColumn: "span 2",
                   '& .MuiInputBase-input': { 
                       color: touched.hausnr && errors.hausnr ? 'red' : `${colors.color1[500]} !important`,
                   },
@@ -173,7 +215,7 @@ const Form = () => {
                   style: { color: touched.plz && errors.plz ? 'red' : `${colors.color1[500]}` }
               }}
               sx={{
-                  gridColumn: "span 1",
+                  gridColumn: "span 2",
                   '& .MuiInputBase-input': { 
                       color: touched.plz && errors.plz ? 'red' : `${colors.color1[500]} !important`,
                   },
@@ -189,7 +231,7 @@ const Form = () => {
                 label="Stadt"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.plz}
+                value={values.stadt}
                 name="stadt"
                 error={!!touched.stadt && !!errors.stadt}
                 helperText={touched.stadt && errors.stadt}
@@ -197,7 +239,7 @@ const Form = () => {
                   style: { color: touched.stadt && errors.plz ? 'red' : `${colors.color1[500]}` }
               }}
               sx={{
-                  gridColumn: "span 1",
+                  gridColumn: "span 2",
                   '& .MuiInputBase-input': { 
                       color: touched.stadt && errors.stadt ? 'red' : `${colors.color1[500]} !important`,
                   },
@@ -218,7 +260,9 @@ const Form = () => {
                 error={!!touched.geburtstag && !!errors.geburtstag}
                 helperText={touched.geburtstag && errors.geburtstag}
                 InputLabelProps={{
-                  style: { color: touched.geburtstag && errors.geburtstag ? 'red' : `${colors.color1[500]}` }
+                  style: { color: touched.geburtstag && errors.geburtstag ? 'red' : `${colors.color1[500]}` ,
+                  opacity: values.geburtstag ? 1 : 0}
+                  
               }}
               sx={{
                   gridColumn: "span 2",
@@ -227,6 +271,134 @@ const Form = () => {
                   },
                   '& .MuiOutlinedInput-notchedOutline': {
                       borderColor: touched.geburtstag && errors.geburtstag   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                type="text"
+                label="Telefonnummer"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.telefon}
+                name="telefon"
+                error={!!touched.telefon && !!errors.telefon}
+                helperText={touched.telefon && errors.telefon}
+                InputLabelProps={{
+                  style: { color: touched.telefon && errors.telefon ? 'red' : `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: touched.telefon && errors.telefon ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.telefon && errors.telefon   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              />
+              <FormControl fullWidth error={!!touched.nutzerrole && !!errors.nutzerrole }
+                sx={{
+                  gridColumn: "span 2",
+                  '& .MuiSvgIcon-root': { 
+                      color: touched.telefon && errors.telefon ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiSelect-outlined': { 
+                    color: touched.telefon && errors.telefon ? 'red' : `${colors.color1[500]} !important`,
+                },
+                '& .MuiFormLabel-root': { 
+                  color: touched.telefon && errors.telefon ? 'red' : `${colors.color1[500]} !important`,
+              },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.telefon && errors.telefon   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              >
+              <InputLabel>Nutzerrole</InputLabel>
+              <Select
+                value={values.nutzerrole}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                label="Nutzerrole"
+                name="nutzerrole"
+              >
+                <MenuItem value={Nutzerrolle.Admin}>Admin</MenuItem>
+                <MenuItem value={Nutzerrolle.Netzbetreiber}>Netzbetreiber</MenuItem>
+                <MenuItem value={Nutzerrolle.Kunde}>Kunde</MenuItem>
+                <MenuItem value={Nutzerrolle.Berater}>Berater</MenuItem>
+              </Select>
+              {touched.nutzerrole && errors.nutzerrole && <FormHelperText>{errors.nutzerrole}</FormHelperText>}
+            </FormControl>
+            <TextField
+                fullWidth
+                variant="outlined"
+                type="text"
+                label="E-Mail"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.email}
+                name="email"
+                error={!!touched.email && !!errors.email}
+                helperText={touched.email && errors.email}
+                InputLabelProps={{
+                  style: { color: touched.email && errors.email ? 'red' : `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: touched.email && errors.email ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.email && errors.email   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                type="password"
+                label="Passwort"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.passwort}
+                name="passwort"
+                error={!!touched.passwort && !!errors.passwort}
+                helperText={touched.passwort && errors.passwort}
+                InputLabelProps={{
+                  style: { color: touched.passwort && errors.passwort ? 'red' : `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: touched.passwort && errors.passwort ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.passwort && errors.passwort   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                type="password"
+                label="Passwort wiederholen"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.passwortWiederholen}
+                name="passwortWiederholen"
+                error={!!touched.passwortWiederholen && !!errors.passwortWiederholen}
+                helperText={touched.passwortWiederholen && errors.passwortWiederholen}
+                InputLabelProps={{
+                  style: { color: touched.passwortWiederholen && errors.passwortWiederholen ? 'red' : `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: touched.passwortWiederholen && errors.passwortWiederholen ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.passwortWiederholen && errors.passwortWiederholen   ? 'red' : `${colors.color1[500]} !important`,
                   },
               }}
               />
@@ -239,16 +411,7 @@ const Form = () => {
           </form>
         )}
       </Formik>
-      </Box>
-      <Box
-          sx={{
-            width: '50%',
-            backgroundColor: "blue"
-          }}
-        >
-          <img src={solarImg} style={{width: "100%", height: "100%"}}/>
-        </Box>
-     
+    
     </div>
     </div>
     </div>
@@ -256,8 +419,8 @@ const Form = () => {
   );
 };
 
-const phoneRegExp =
-  /^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
+const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
+
 
   const checkoutSchema = yup.object({
     vorname: yup.string().required('Vorname ist erforderlich'),
@@ -281,7 +444,7 @@ const phoneRegExp =
     hausnr: '',
     plz: '',
     stadt: '',
-    geburtstag: '',
+    geburtstag: '2000-01-01',
     telefon: '',
     nutzerrole: '',
     email: '',

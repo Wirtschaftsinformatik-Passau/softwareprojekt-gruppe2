@@ -18,6 +18,7 @@ import {ILoginUser, LoginUser } from '../../entitities/user';
 import { addSuffixToBackendURL } from '../../utils/networking_utils';
 import LoginDialog from "../../components/all/login/LoginDialog";
 import WrongPasswordModal from "../../components/all/login/WrongPasswordModal";
+import SuccessModal from "../../components/utility/SuccessModal";
 
 const LoginSchema = yup.object().shape({
     email: yup.string().email("Invalid email").required("Required"),
@@ -32,6 +33,7 @@ const LoginUI = () => {
     const [email, setEmail] = React.useState("")    
     const [password, setPassword] = React.useState("")
     const [modalisOpen, setModalIsOpen] = React.useState(false);
+    const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const navigate = useNavigate();
 
     const handleVergessenOpen = () => {
@@ -175,14 +177,14 @@ const LoginUI = () => {
                 <Box display={"flex"} justifyContent={"center"} mt="20px" >
                     <Button type="button" variant="contained" color="neutral" sx={{
                         borderRadius: "10px",
-                    }} onClick={handleVergessenOpen}>
+                    }} onClick={(handleVergessenOpen)}>
                         Passwort Vergessen
                     </Button>
                 </Box>
                 <Box display={"flex"} justifyContent={"center"} mt="20px" >
                     <Button type="submit" variant="contained" color="secondary" sx={{
                         borderRadius: "10px",
-                    }}>
+                    }} onClick={() => setSuccessModalIsOpen(true)}>
                         Einloggen
                     </Button>
                 </Box>
@@ -192,6 +194,7 @@ const LoginUI = () => {
 </Formik>
 <LoginDialog open={vergessenOpen} handleClose={handleVergessenClose}/>
 <WrongPasswordModal open={modalisOpen} handleClose={() => setModalIsOpen(false)}/>
+<SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} text="Password falsch!" navigationGoal="/registration"/>
         </Paper>
         </div>
         </div>

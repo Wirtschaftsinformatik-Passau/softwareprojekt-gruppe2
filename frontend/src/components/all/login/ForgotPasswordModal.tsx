@@ -1,7 +1,13 @@
-import React, {useState} from "react";
-import handleInputChange from "../../../utils/stateUtils";
-import RegistryModal from "../registration/RegistryModal";
-import ModalWrapper from "../../utility/ModalWrapper";
+import Dialog from '@mui/material/Dialog';
+import { Box, Button, TextField , useTheme} from "@mui/material";
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import { tokens } from "../../../utils/theme";
+import DialogTitle from '@mui/material/DialogTitle';
+import Slide from '@mui/material/Slide';
+import { TransitionProps } from '@mui/material/transitions';
+import React from 'react';
+import ModalWrapper from '../../utility/ModalWrapper';
 
 type ModalProps = {
     modalCloserState: (arg: boolean) => void,
@@ -25,46 +31,26 @@ const ForgotPasswordModal: React.FC<ModalProps> = ({modalCloserState}) => {
         }
     }
 
-
     return (
     <div className="fixed left-0 top-0 right-0 bottom-0 bg-black bg-opacity-50 flex justify-center items-center">
         <ModalWrapper modalCloserState={modalCloserState} rows={2}>
-            {passwordScreen ? (
-                <>
-                    <input
-                        className="block py-2.5 sm:py-1 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 sm:border-b-1 border-gray-400 appearance-none focus:outline-none focus:ring-0 focus:border-color2"
-                        type="password"
-                        onChange={(event) => handleInputChange(setPassword1)}
-                        placeholder="Passwort eingeben"
-                    />
-                    <input
-                        className="block py-2.5 sm:py-1 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 sm:border-b-1 border-gray-400 appearance-none focus:outline-none focus:ring-0 focus:border-color2"
-                        type="password"
-                        onChange={(event) => handleInputChange(setPassword2)}
-                        placeholder="Passwort erneut eingeben"
-                    />
-                    <button
-                        onClick={passwordButton}
-                        className="p-2 bg-color2 text-white rounded-xl px-10">
-                        Bestätigen!
-                    </button>
-                    {registryModal && (<RegistryModal modalCloserState={setRegistryModal} content={"Passwörter stimmen nicht überein!"}/>)}
-                </>
-            ) : (
-                <>
+        <>
                     <input
                         className="block py-2.5 sm:py-1 px-0 w-full placeholder-gray-500 text-md text-black bg-transparent border-0 border-b-2 sm:border-b-1 border-gray-400 appearance-none focus:outline-none focus:ring-0 focus:border-color2"
                         type="email"
                         placeholder="E-Mail eingeben"
-                        onChange={(event) => handleInputChange(setEmail)}
+                        onChange={(event) => (console.log("fff"))}
                     />
-                    <button
-                        onClick={() => setPasswordScreen(true)}
-                        className="p-2 bg-color2 text-white rounded-xl px-10">
+                    <Button
+                        onClick={() => setPasswordWindow(true)}
+                        sx={{
+                            backgroundColor: "#6a994e",
+                            color: "#fff",
+                        }}>
+                            
                         Email versenden!
-                    </button>
+                    </Button>
                 </>
-            )}
         </ModalWrapper>
     </div>
     )

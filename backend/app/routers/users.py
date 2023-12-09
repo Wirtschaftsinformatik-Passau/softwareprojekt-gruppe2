@@ -27,7 +27,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
 @router.post("/registration", status_code=status.HTTP_201_CREATED, response_model=schemas.NutzerResponse)
 async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
-        nutzer.geburtsdatum = datetime.strptime(nutzer.geburtsdatum, "%a %b %d %Y").date()
+        nutzer.geburtsdatum = datetime.strptime(nutzer.geburtsdatum, "%Y-%m-%d").date()
         nutzer.rolle = models.Rolle(nutzer.rolle)
         email = nutzer.email
         nutzer.passwort = hashing.Hashing.hash_password(nutzer.passwort)
@@ -84,3 +84,108 @@ async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depe
         logger_adresse.error(logging_msg.dict())
         logger_base.error(logging_msg.dict())
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+
+@router.get("/adresse", status_code=status.HTTP_200_OK)
+async def get_adressen(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(database.get_db_async)):
+    stmt = select(models.Adresse).offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    adressen = result.all()
+    adressen_out = [{
+        "adresse_id": adresse[0].adresse_id,
+        "strasse": adresse[0].strasse,
+        "stadt": adresse[0].stadt,
+        "plz": adresse[0].plz,
+        "land": adresse[0].land
+    } for adresse in adressen]
+    return adressen_out
+
+@router.get("/{id}", status_code=status.HTTP_200_OK)
+async def get_user(id: int, db: AsyncSession = Depends(database.get_db_async)):
+    stmt = select(models.Nutzer, models.Adresse).join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id).where(models.Nutzer.user_id == id)
+    result = await db.execute(stmt)
+    user_adresse_pair = result.first()
+    try:
+        user = user_adresse_pair[0]
+    except TypeError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
+    adresse = user_adresse_pair[1]
+    user_out = {
+        "nachname": user.nachname,
+        "email": user.email,
+        "user_id": user.user_id,
+        "vorname": user.vorname,
+        "rolle": user.rolle,
+        "adresse_id": user.adresse_id,
+        "geburtsdatum": user.geburtsdatum,
+        "telefonnummer": user.telefonnummer,
+        "strasse": adresse.strasse,
+        "stadt": adresse.stadt,
+        "hausnr": adresse.hausnummer,
+        "plz": adresse.plz,
+
+    }
+    return user_out
+@router.put("/adresse/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
+    stmt = select(models.Adresse).where(models.Adresse.adresse_id == id)
+    result = await db.execute(stmt)
+    db_adresse = result.first()
+    if db_adresse is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Adresse nicht gefunden")
+    db_adresse.strasse = adresse.strasse
+    db_adresse.hausnummer = adresse.hausnummer
+    db_adresse.zusatz = adresse.zusatz
+    db_adresse.plz = adresse.plz
+    db_adresse.stadt = adresse.stadt
+    db_adresse.land = adresse.land
+    await db.commit()
+    await db.refresh(db_adresse)
+    return {"adresse_id": db_adresse.adresse_id}
+
+@router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+    stmt = select(models.Nutzer).where(models.Nutzer.user_id == id)
+    result = await db.execute(stmt)
+    try:
+        db_user = result.first()[0]
+    except TypeError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
+
+    db_user.email = user.email
+    db_user.adresse_id = user.adresse_id
+    db_user.vorname = user.vorname
+    db_user.nachname = user.nachname
+    db_user.geburtsdatum = datetime.strptime(user.geburtsdatum, "%Y-%m-%d").date()
+    db_user.telefonnummer = user.telefonnummer
+    db_user.rolle = models.Rolle(user.rolle)
+    db_user.passwort = hashing.Hashing.hash_password(user.passwort)
+    await db.commit()
+    await db.refresh(db_user)
+    return {"user_id": db_user.user_id}
+@router.get("/", status_code=status.HTTP_200_OK)
+async def get_users(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(database.get_db_async)):
+    stmt = (
+        select(models.Nutzer, models.Adresse)
+        .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    user_adresse_pairs = result.all()
+    users_out = [{
+        "nachname": user.nachname,
+        "email": user.email,
+        "user_id": user.user_id,
+        "vorname": user.vorname,
+        "rolle": user.rolle if user.rolle is not None else "unknown",
+        "adresse_id": user.adresse_id,
+        "geburtsdatum": user.geburtsdatum,
+        "telefonnummer": user.telefonnummer,
+        "strasse": adresse.strasse,
+        "stadt": adresse.stadt,
+        "hausnr": adresse.hausnummer,
+        "plz": adresse.plz,
+
+    } for user, adresse in user_adresse_pairs]
+    return users_out

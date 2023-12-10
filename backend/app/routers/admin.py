@@ -6,7 +6,7 @@ from app import models, schemas, database, oauth
 import json
 from pathlib import Path
 from collections import defaultdict, Counter
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Any
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -16,10 +16,10 @@ async def check_admin_role(current_user: models.Nutzer) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Zugriff verweigert")
 
 
-@router.get("/logOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict[str, int]])
-async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                           db: AsyncSession = Depends(database.get_db_async)) \
-        -> Dict[str, Dict[str, int]]:
+@router.get("/logOverview", status_code=status.HTTP_200_OK,
+            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
+        -> Dict[str, List[Dict[str, Union[str, int]]]]:
     await check_admin_role(current_user)
 
     log_file_path = Path("logs/server.log")
@@ -37,12 +37,12 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
             except (IndexError, ValueError):
                 continue
 
-    return {"Log_Daten": dict(activity_count)}
+    formatted_data = [{"x": date, "y": count} for date, count in activity_count.items()]
+    return {"id": "log", "data": formatted_data}
 
 
-@router.get("/endpointOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict[str, int]])
-async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
-        -> Dict[str, Dict[str, int]]:
+@router.get("/endpointOverview", status_code=status.HTTP_200_OK, response_model=List[Dict[str, Any]])
+async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[Dict[str, Any]]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
@@ -56,16 +56,19 @@ async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_
                 date_str = log_entry["timestamp"].split(" ")[0]
                 date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
                 endpoint = log_entry["endpoint"]
-                endpoint_activity[date][endpoint] += 1
+                endpoint_activity[endpoint][date] += 1
             except json.JSONDecodeError:
                 continue  # Ungültige Zeilen werden automatisch übersprungen
 
-    return endpoint_activity
+    formatted_data = [{"id": endpoint, "data":
+        [{"x": date, "y": count} for date, count in dates.items()]} for endpoint, dates in endpoint_activity.items()]
+    return formatted_data
 
 
-@router.get("/successOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict[str, int]])
-async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[
-    str, Dict[str, int]]:
+@router.get("/successOverview", status_code=status.HTTP_200_OK,
+            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
+        -> Dict[str, List[Dict[str, Union[str, int]]]]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
@@ -86,11 +89,16 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
             except json.JSONDecodeError:
                 continue  # Ungültige Zeilen werden automatisch übersprungen
 
-    return success_activity
+    success_data = [{"x": date, "y": data['success']} for date, data in success_activity.items()]
+    fail_data = [{"x": date, "y": data['fail']} for date, data in success_activity.items()]
+
+    return {"success": success_data, "fail": fail_data}
 
 
-@router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, int])
-async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, int]:
+@router.get("/registrationOverview", status_code=status.HTTP_200_OK,
+            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
+        -> Dict[str, List[Dict[str, Union[str, int]]]]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
@@ -108,11 +116,14 @@ async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.
             except(IndexError, json.JSONDecodeError):
                 continue
 
-    return registration_count
+    formatted_data = [{"x": date, "y": count} for date, count in registration_count.items()]
+    return {"id": "registration", "data": formatted_data}
 
 
-@router.get("/loginOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, int])
-async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, int]:
+@router.get("/loginOverview", status_code=status.HTTP_200_OK,
+            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
+        -> Dict[str, List[Dict[str, Union[str, int]]]]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
@@ -130,28 +141,36 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
             except(IndexError, json.JSONDecodeError):
                 continue
 
-    return login_count
+    formatted_data = [{"x": date, "y": count} for date, count in login_count.items()]
+    return {"id": "login", "data": formatted_data}
 
 
-@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, int])
-async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, int]:
+@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, List[Dict[str, Any]]])
+async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                            db: AsyncSession = Depends(database.get_db_async)) -> Dict[str, List[Dict[str, Any]]]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log-Datei nicht gefunden")
 
-    role_count = defaultdict(int)
+    user_ids = set()
     with open(log_file_path, "r") as file:
         for line in file:
             try:
                 log_entry = json.loads(line)
                 if log_entry.get("msg") == "User registered":
-                    role = log_entry.get("role")
-                    role_count[role] += 1
+                    user_ids.add(log_entry.get("user_id"))
             except(IndexError, json.JSONDecodeError):
                 continue
 
-    return role_count
+    role_count = defaultdict(int)
+    for user_id in user_ids:
+        user = await db.get(models.Nutzer, user_id)
+        if user:
+            role_count[user.rolle.name] += 1
+
+    formatted_data = [{"x": role, "y": count} for role, count in role_count.items()]
+    return {"id": "user", "data": formatted_data}
 
     # User abfragen und zurückgeben
     # stmt = select(models.Nutzer)

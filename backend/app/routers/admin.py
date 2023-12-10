@@ -11,9 +11,10 @@ from typing import Dict, Union, List, Any
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
+
 async def check_admin_role(current_user: models.Nutzer) -> None:
     if current_user.rolle != models.Rolle.Admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Zugriff verweigert")
+
 
 
 @router.get("/logOverview", status_code=status.HTTP_200_OK,

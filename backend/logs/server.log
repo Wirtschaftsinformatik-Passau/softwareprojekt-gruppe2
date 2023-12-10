@@ -10,3 +10,9 @@
 {"timestamp": "2023-12-03 23:26:28,966", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-04 15:36:40,842", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-06 16:09:24,000", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-10 13:03:04,489", "level": "INFO", "name": "GreenEcoHub", "message": null, "user_id": 31, "role": "Admin", "msg": "User registriert"}
+{"timestamp": "2023-12-10 14:12:13,853", "level": "INFO", "name": "GreenEcoHub", "message": "Nutzer erfolgreich bearbeitet", "user_id": 29, "endpoint": "/users/{id}", "method": "PUT", "success": true}
+{"timestamp": "2023-12-10 14:15:13,840", "level": "INFO", "name": "GreenEcoHub", "message": "Nutzer nicht gefunden zum Bearbeiten", "user_id": 40, "endpoint": "/users/{id}", "method": "PUT", "success": false}
+{"timestamp": "2023-12-10 14:16:09,461", "level": "ERROR", "name": "GreenEcoHub", "message": "Nutzer nicht gefunden zum Bearbeiten", "user_id": 40, "endpoint": "/users/{id}", "method": "PUT", "success": false}
+{"timestamp": "2023-12-10 14:21:11,760", "level": "ERROR", "name": "GreenEcoHub", "message": "Error beim User Update 'Admins' is not a valid Rolle", "user_id": 29, "endpoint": "/users/{id}", "method": "PUT", "success": false}
+{"timestamp": "2023-12-10 19:43:54,545", "level": "INFO", "name": "GreenEcoHub", "message": "User registriert", "user_id": 32, "endpoint": "/users/registration", "method": "POST", "success": true}

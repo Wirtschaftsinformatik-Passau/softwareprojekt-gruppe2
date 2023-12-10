@@ -13,5 +13,15 @@ export default defineConfig({
       // Set up your aliases here
       '@': path.resolve(__dirname, '@')
     },
-  }
+  },
+  
+    optimizeDeps: {
+      include: ["@fullcalendar/core",
+      "@fullcalendar/daygrid",
+      "@fullcalendar/interaction",
+      "@fullcalendar/list",
+      "@fullcalendar/react",
+      "@fullcalendar/timegrid"]
+    }
+  
 })

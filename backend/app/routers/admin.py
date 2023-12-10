@@ -12,12 +12,10 @@ from typing import Dict, Union, List
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
+#current_user: models.Nutzer = Depends(oauth.get_current_user)
 @router.get("/dashboard", status_code=status.HTTP_200_OK, response_model=schemas.AdminDashboardResponse)
-async def get_admin_dashboard(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                              db: AsyncSession = Depends(database.get_db_async)) \
+async def get_admin_dashboard(db: AsyncSession = Depends(database.get_db_async)) \
                               -> Dict[str, Union[Dict[str, int], List[str]]]:
-    if current_user.rolle != models.Rolle.Admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Zugriff verweigert")
 
     # Log Dateien einsheen
     log_file_path = Path("logs/server.log")

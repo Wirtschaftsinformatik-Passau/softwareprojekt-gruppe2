@@ -19,3 +19,5 @@
 {"timestamp": "2023-12-09 12:57:08,372", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 28, "role": "Admin", "msg": "User registered"}
 {"timestamp": "2023-12-09 17:36:57,062", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 29, "role": "Admin", "msg": "User registered"}
 {"timestamp": "2023-12-09 18:00:02,960", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 30, "role": "Admin", "msg": "User registered"}
+{"timestamp": "2023-12-10 13:03:04,488", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 31, "role": "Admin", "msg": "User registriert"}
+{"timestamp": "2023-12-10 19:43:54,545", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 32, "role": "Energieberatende", "msg": "User registriert"}

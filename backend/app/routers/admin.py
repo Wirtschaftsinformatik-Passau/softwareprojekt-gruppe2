@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, status, HTTPException
-from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import datetime
-from app import models, schemas, database, config, oauth
+from app import models, schemas, database, oauth
 import json
 from pathlib import Path
 from collections import defaultdict, Counter
@@ -12,12 +11,16 @@ from typing import Dict, Union, List
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
+async def check_admin_role(current_user: models.Nutzer) -> None:
+    if current_user.rolle != models.Rolle.Admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Zugriff verweigert")
+
+
 @router.get("/logOverview", status_code=status.HTTP_200_OK, response_model=schemas.AdminDashboardResponse)
 async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                               db: AsyncSession = Depends(database.get_db_async)) \
                               -> Dict[str, Union[Dict[str, int], List[str]]]:
-    if current_user.rolle != models.Rolle.Admin:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Zugriff verweigert")
+    await check_admin_role(current_user)
 
     # Log Dateien einsheen
     log_file_path = Path("logs/server_all.log")
@@ -46,7 +49,9 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
 
 
 @router.get("/endpointOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict[str, int]])
-async def get_endpoint_overview() -> Dict[str, Dict[str, int]]:
+async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_current_user))\
+                                -> Dict[str, Dict[str, int]]:
+    await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
         raise HTTPException(status_code=404, detail="Log-Datei nicht gefunden")
@@ -67,7 +72,8 @@ async def get_endpoint_overview() -> Dict[str, Dict[str, int]]:
 
 
 @router.get("/successOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict[str, int]])
-async def get_success_overview() -> Dict[str, Dict[str, int]]:
+async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, Dict[str, int]]:
+    await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
         raise HTTPException(status_code=404, detail="Log-Datei nicht gefunden")
@@ -91,7 +97,8 @@ async def get_success_overview() -> Dict[str, Dict[str, int]]:
 
 
 @router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, int])
-async def get_registration_overview() -> Dict[str, int]:
+async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, int]:
+    await check_admin_role(current_user)
     log_file_path = Path("logs/server_all.log")
     if not log_file_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log-Datei nicht gefunden")
@@ -113,7 +120,8 @@ async def get_registration_overview() -> Dict[str, int]:
 
 
 @router.get("/loginOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, int])
-async def get_login_overview() -> Dict[str, int]:
+async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, int]:
+    await check_admin_role(current_user)
     log_file_path = Path("logs/server_all.log")
     if not log_file_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log-Datei nicht gefunden")
@@ -135,7 +143,8 @@ async def get_login_overview() -> Dict[str, int]:
 
 
 @router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, int])
-async def get_user_overview() -> Dict[str, int]:
+async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> Dict[str, int]:
+    await check_admin_role(current_user)
     log_file_path = Path("logs/server_all.log")
     if not log_file_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log-Datei nicht gefunden")

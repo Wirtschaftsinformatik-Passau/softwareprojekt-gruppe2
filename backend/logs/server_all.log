@@ -45,5 +45,4 @@ INFO:     | 2023-12-09 12:57:08 | {'user_id': 28, 'role': 'Admin', 'msg': 'User 
 INFO:     | 2023-12-09 17:36:57 | {'user_id': 29, 'role': 'Admin', 'msg': 'User registered'}
 INFO:     | 2023-12-09 18:00:02 | {'adresse_id': 59, 'msg': 'Adresse created'}
 INFO:     | 2023-12-09 18:00:02 | {'user_id': 30, 'role': 'Admin', 'msg': 'User registered'}
-INFO:     | 2023-12-10 11:45:40 | {'adresse_id': 60, 'msg': 'Adresse created'}
-INFO:     | 2023-12-10 13:00:12 | {'adresse_id': 61, 'msg': 'Adresse created'}
+

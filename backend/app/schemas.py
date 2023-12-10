@@ -69,6 +69,8 @@ class RegistrationLogging(BaseModel):
 class AdresseLogging(BaseModel):
     adresse_id: int
     msg: str = f"Adresse created"
+
+
 class UserOut(BaseModel):
     user_id: int
     email: EmailStr
@@ -81,6 +83,7 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class UsersOut(BaseModel):
     users: list[UserOut]
@@ -92,8 +95,6 @@ class AdminDashboardResponse(BaseModel):
     users_id: List[int]
 
 
-
-
 class UserOut(BaseModel):
     user_id: int
     email: EmailStr
@@ -106,6 +107,7 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class UsersOut(BaseModel):
     users: list[UserOut]

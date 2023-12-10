@@ -26,3 +26,4 @@
 {"timestamp": "2023-12-09 11:22:30,783", "level": "INFO", "name": "GreenEcoHubAdresse", "message": null, "adresse_id": 57, "msg": "Adresse created"}
 {"timestamp": "2023-12-09 12:57:07,843", "level": "INFO", "name": "GreenEcoHubAdresse", "message": null, "adresse_id": 58, "msg": "Adresse created"}
 {"timestamp": "2023-12-09 18:00:02,491", "level": "INFO", "name": "GreenEcoHubAdresse", "message": null, "adresse_id": 59, "msg": "Adresse created"}
+{"timestamp": "2023-12-10 05:27:13,272", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 1, "msg": "Adresse created"}

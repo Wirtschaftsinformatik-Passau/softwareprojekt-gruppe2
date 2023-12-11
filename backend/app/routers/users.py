@@ -7,7 +7,7 @@ from sqlalchemy.future import select
 from logging.config import dictConfig
 import logging
 
-from app import models, schemas, database, config, hashing
+from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
 
 
@@ -201,7 +201,8 @@ async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = De
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-async def get_users(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(database.get_db_async)):
+async def get_users(skip: int = 0, limit: int = 100, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                    db: AsyncSession = Depends(database.get_db_async)):
     stmt = (
         select(models.Nutzer, models.Adresse)
         .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)

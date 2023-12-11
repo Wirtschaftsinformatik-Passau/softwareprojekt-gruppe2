@@ -4,6 +4,7 @@ import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/ma
 import { Formik } from "formik";
 import * as yup from "yup";
 import { tokens } from "../../../utils/theme";
+import { useNavigate } from "react-router-dom";
 import Header from "../../utility/Header";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import SuccessModal from "../../utility/SuccessModal";
@@ -70,6 +71,7 @@ const extractAdressAndUser = (user: EditableUser) => {
 
 
 const AdminUserEdit: React.FC = () => {
+  const navigate = useNavigate();
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
@@ -93,7 +95,8 @@ const AdminUserEdit: React.FC = () => {
 
   
     const handleEditButton = () => {
-        axios.get(addSuffixToBackendURL("users/"+userID))
+        const token = localStorage.getItem("accessToken");
+        axios.get(addSuffixToBackendURL("users/"+userID), {headers: { Authorization: `Bearer ${token}` }})
       .then((response) => {
         if(response.status === 200){
           const user = response.data
@@ -116,7 +119,10 @@ const AdminUserEdit: React.FC = () => {
         }
       })
       .catch((error) => {
-        if (error.response && error.response.status === 422) {
+        if (error.response && error.response.status === 401 || error.response.status === 403) {
+          navigate("/login")
+        }
+        else if (error.response && error.response.status === 422) {
           console.log("Server Response on Error 422:", error.response.data);
       }  else if (error.response && error.response.status === 404) {
           setFailModalIsOpen(true)

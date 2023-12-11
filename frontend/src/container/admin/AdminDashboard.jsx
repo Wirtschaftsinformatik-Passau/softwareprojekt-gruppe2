@@ -24,13 +24,16 @@ const  AdminDashboard = () => {
         {
             title: "What is GreenEcoHub?",
             text: "GreenEcoHub is a platform that allows users to track their carbon footprint and compare it to other users. It also allows users to track their progress in reducing their carbon footprint and provides tips on how to reduce it further.",
+        }, {
+            title: "How do I use GreenEcoHub?",
+            text: "To use GreenEcoHub, you must first create an account. Once you have created an account, you can log in and begin tracking your carbon footprint. You can also view your progress and compare it to other users.",
         }
     ]
     return (
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
                 <CssBaseline/>
-        <div className="flex h-100">
+        <div className="flex h-100" >
                 <Sidebar/>
                 <div className="flex-1">
                 <Topbar/>

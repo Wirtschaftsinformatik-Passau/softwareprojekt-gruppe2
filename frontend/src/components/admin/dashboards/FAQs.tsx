@@ -4,6 +4,7 @@ import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
+import Grow from "@mui/material/Grow";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { tokens } from "../../../utils/theme";
 
@@ -24,6 +25,7 @@ const FAQ: React.FC <FAQProps> = ({items}) => {
     <Box m="20px">
       <Header title="FAQ" subtitle="Frequently Asked Questions Page" />
       {items && (items.map((item, index) => (
+        <Grow in={true} timeout={1000}>
     <Accordion key={index} defaultExpanded sx={{
       backgroundColor: colors.color1[400],
     }}>
@@ -37,7 +39,8 @@ const FAQ: React.FC <FAQProps> = ({items}) => {
           {item.text}
         </Typography>
       </AccordionDetails>
-    </Accordion>)
+    </Accordion>
+    </Grow>)
         ))}
     </Box>
   );

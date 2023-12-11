@@ -4,42 +4,49 @@ import { tokens } from "../../../utils/theme";
 
 
 const mockData =[
-    {"id": "login",
-    "data": [
-        { x: "05.12.2023", y: Math.random() * 100 },
-            { x: "06.12.2023", y: 45 },
-            { x: "07.12.2023", y: Math.random() * 100 },
-            { x: "08.12.2023", y: Math.random() * 100 },
-            { x: "09.12.2023", y: Math.random() * 100 }
-    ]},
-    {
-        "id": "registration",
-        "data": [
-            { x: "05.12.2023", y: Math.random() * 100 },
-            { x: "06.12.2023", y: Math.random() * 100 },
-            { x: "07.12.2023", y: Math.random() * 100 },
-            { x: "08.12.2023", y: Math.random() * 100 },
-            { x: "09.12.2023", y: Math.random() * 100 }
-        ]
-    },
-    {
-        "id": "dashboard",
-        "data": [
-            { x: "05.12.2023", y: Math.random() * 100 },
-            { x: "06.12.2023", y: Math.random() * 100 },
-            { x: "07.12.2023", y: Math.random() * 100 },
-            { x: "08.12.2023", y: Math.random() * 100 },
-            { x: "09.12.2023", y: Math.random() * 100 }
-        ]
-    }
+  {
+      "id": "login",
+      "data": [
+          { "x": "05.12.2023", "y": 20 },  // Angenommener Zufallswert
+          { "x": "06.12.2023", "y": 45 },
+          { "x": "07.12.2023", "y": 50 },  // Angenommener Zufallswert
+          { "x": "08.12.2023", "y": 30 },  // Angenommener Zufallswert
+          { "x": "09.12.2023", "y": 85 },  // Angenommener Zufallswert
+          { "x": "10.12.2023", "y": 60 },  // Angenommener Zufallswert
+          { "x": "11.12.2023", "y": 75 }   // Angenommener Zufallswert
+      ]
+  },
+  {
+      "id": "registration",
+      "data": [
+          { "x": "05.12.2023", "y": 40 },  // Angenommener Zufallswert
+          { "x": "06.12.2023", "y": 55 },  // Angenommener Zufallswert
+          { "x": "07.12.2023", "y": 65 },  // Angenommener Zufallswert
+          { "x": "08.12.2023", "y": 35 },  // Angenommener Zufallswert
+          { "x": "09.12.2023", "y": 95 },  // Angenommener Zufallswert
+          { "x": "10.12.2023", "y": 80 },  // Angenommener Zufallswert
+          { "x": "11.12.2023", "y": 70 }   // Angenommener Zufallswert
+      ]
+  },
+  {
+      "id": "dashboard",
+      "data": [
+          { "x": "05.12.2023", "y": 30 },  // Angenommener Zufallswert
+          { "x": "06.12.2023", "y": 45 },  // Angenommener Zufallswert
+          { "x": "07.12.2023", "y": 55 },  // Angenommener Zufallswert
+          { "x": "08.12.2023", "y": 65 },  // Angenommener Zufallswert
+          { "x": "09.12.2023", "y": 75 },  // Angenommener Zufallswert
+          { "x": "10.12.2023", "y": 85 },  // Angenommener Zufallswert
+          { "x": "11.12.2023", "y": 95 }   // Angenommener Zufallswert
+      ]
+  }
 ]
+
 
 const LineChart = ({ data = mockData,isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const colorScheme = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"];
 
-  const getColor = (bar) => colorScheme[bar.index%10];
 
   return (
     <ResponsiveLine

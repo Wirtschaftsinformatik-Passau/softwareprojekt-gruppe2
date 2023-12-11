@@ -7,6 +7,7 @@ import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import Header from "../../utility/Header";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 const mockusers = [
@@ -146,15 +147,21 @@ const mockusers = [
 const UserTable = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get(addSuffixToBackendURL("users"))
+    const token = localStorage.getItem("accessToken");
+    axios.get(addSuffixToBackendURL("users"), {headers: { Authorization: `Bearer ${token}` }})
     .then((res) => {
       let users = res.data;
       setUsers(users)
     })
     .catch((err) => {
+      if (err.response && err.response.status === 401 || err.response.status === 403) {
+        console.log("Unauthorized  oder kein Admin", err.response.data)
+        navigate("/login")
+      }
       console.log(err.response.data)
     })
   

@@ -7,6 +7,7 @@ import { CssBaseline } from "@material-ui/core";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../utility/Header";
 import { useTheme } from "@mui/material/styles";
+import Grow from "@mui/material/Grow";
 import { tokens } from "../../../utils/theme";
 import SuccessModal from "../../utility/SuccessModal";
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../../entitities/user"
@@ -29,10 +30,10 @@ const UserCreation = () => {
   };
 
   const registerUser = (values: any, {setSubmitting}: any) => {
-
+    
     const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
-    axios.post(addSuffixToBackendURL("users/adresse"), adresse
-    )
+    const token = localStorage.getItem("accessToken");
+    axios.post(addSuffixToBackendURL("users/adresse"), adresse, {headers: { Authorization: `Bearer ${token}` }})
         .then((response) => {
             const adresse_id = response.data.adresse_id
             if (response.status === 201) {
@@ -47,7 +48,10 @@ const UserCreation = () => {
                         }
                     })
                     .catch((error) => {
-                        if (error.response && error.response.status === 422) {
+                        if (error.response && error.response.status === 401 || error.response.status === 403) {
+                            navigate("/login");
+                        }
+                        else if (error.response && error.response.status === 422) {
                     
                             console.log("Server Response on Error 422:", error.response.data);
                         }else if (error.response && error.response.status === 409) {
@@ -78,6 +82,7 @@ const UserCreation = () => {
   return (
     <Box m="20px">
       <Header title="Registrieren" subtitle="Erstelle ein neues Nutzerprofil"/>
+      <Grow>
       <Formik
         onSubmit={registerUser}
         initialValues={initialValues}
@@ -412,6 +417,7 @@ const UserCreation = () => {
           </form>
         )}
       </Formik>
+      </Grow>
             
     <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
     text="Nutzer erfolgreich registriert!" navigationGoal="/admin"/>

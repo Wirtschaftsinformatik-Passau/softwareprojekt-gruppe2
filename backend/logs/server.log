@@ -10,4 +10,18 @@
 {"timestamp": "2023-12-03 23:26:28,966", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-04 15:36:40,842", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-06 16:09:24,000", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
-
+{"timestamp": "2023-12-11 00:07:28,693", "level": "ERROR", "name": "GreenEcoHub", "message": "Es gab folgenden SQL Fehler: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table \"Nutzer\" violates foreign key constraint \"Nutzer_adresse_id_fkey\"\nDETAIL:  Key (adresse_id)=(16) is not present in table \"Adresse\".", "user_id": 0, "endpoint": "/users/registration", "method": "POST", "success": false}
+{"timestamp": "2023-12-11 00:08:04,041", "level": "ERROR", "name": "GreenEcoHub", "message": "Es gab folgenden SQL Fehler: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table \"Nutzer\" violates foreign key constraint \"Nutzer_adresse_id_fkey\"\nDETAIL:  Key (adresse_id)=(16) is not present in table \"Adresse\".", "user_id": 0, "endpoint": "/users/registration", "method": "POST", "success": false}
+{"timestamp": "2023-12-11 00:08:27,098", "level": "ERROR", "name": "GreenEcoHub", "message": "Email 12rr333@5.de bereits vergeben", "user_id": 0, "endpoint": "/users/registration", "method": "POST", "success": false}
+{"timestamp": "2023-12-11 09:40:12,971", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 09:47:17,276", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 09:48:07,525", "level": "INFO", "name": "GreenEcoHub", "message": "User registriert", "user_id": 33, "endpoint": "/users/registration", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 09:51:14,502", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 33, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 10:29:39,992", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 33, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 11:12:52,581", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 11:18:43,448", "level": "ERROR", "name": "GreenEcoHub", "message": "Wrong password", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": false}
+{"timestamp": "2023-12-11 11:18:43,836", "level": "INFO", "name": "GreenEcoHub", "message": "User logged in", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 11:37:30,430", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 11:43:14,682", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 15:19:22,239", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-11 15:19:54,273", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 16, "endpoint": "/auth/login", "method": "POST", "success": true}

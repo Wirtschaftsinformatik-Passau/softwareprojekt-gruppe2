@@ -56,6 +56,7 @@ const Sidebar1 = () => {
   return (
     <Box
     sx={{
+      "minHeight": "100vh",
       "& .pro-sidebar-inner": {
         background: `${colors.color1[400]} !important`,
         width: isCollapsed ? "90% !important" : "100% !important",

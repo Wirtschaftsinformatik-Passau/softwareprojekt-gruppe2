@@ -35,7 +35,7 @@ async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(data
 
         access_token = oauth.create_access_token(data={"user_id": db_user.user_id})
         logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/auth/login", method="POST",
-                                            message="User logged in", success=True)
+                                            message="User eingeloggt", success=True)
         logger.info(logging_obj.dict())
         return {"access_token": access_token}
 

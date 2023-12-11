@@ -11,13 +11,13 @@ interface HeaderProps {
     
 }
 
-const Header: React.FC<HeaderProps> = ({title, subtitle, textAlign="center"}) => {
+const Header: React.FC<HeaderProps> = ({title, subtitle, textAlign="center", variant="h2"}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   return (
     <Box mb="30px" textAlign={textAlign}>
       <Typography
-        variant="h2"
+        variant={variant}
         color={colors.color1[500]}
         fontWeight="bold"
         sx={{ m: "0 0 8px 0" }}

@@ -51,6 +51,8 @@ class NutzerLogin(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
 
+class TokenData(BaseModel):
+    id: int
 
 class LoggingSchema(BaseModel):
     user_id: int
@@ -112,3 +114,14 @@ class UserOut(BaseModel):
 class UsersOut(BaseModel):
     users: list[UserOut]
     count: int
+
+class ChartData(BaseModel):
+    x: str
+    y: int
+
+    class Config:
+        from_attributes = True
+
+class ChartDataCategorical(BaseModel):
+    id: str
+    data: List[ChartData]

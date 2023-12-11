@@ -7,7 +7,9 @@ const StatBox = ({ title, subtitle, icon, progress, increase }) => {
   const colors = tokens(theme.palette.mode);
 
   return (
-    <Box width="100%" m="0 30px" sx={{background: colors.color1[400]}} p="10px">
+    <Box width="100%" m="0 0px" sx={
+      {background: colors.color1[400], ":hover": {background: colors.color1[500], cursor: "pointer"}}
+      } p="10px" borderRadius={"15px"} boxShadow="0px 8px 8px rgba(0, 0, 0, 0.4)">
       <Box display="flex" justifyContent="space-between">
         <Box sx={{ color: theme.palette.background.default }}s>
           {icon}

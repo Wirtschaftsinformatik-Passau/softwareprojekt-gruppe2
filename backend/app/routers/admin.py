@@ -14,11 +14,11 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 async def check_admin_role(current_user: models.Nutzer) -> None:
     if current_user.rolle != models.Rolle.Admin:
-
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Nur Admins haben Zugriff auf diese Daten")
 
 
 @router.get("/logOverview", status_code=status.HTTP_200_OK,
-            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+            response_model=List[schemas.ChartData])
 async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> Dict[str, List[Dict[str, Union[str, int]]]]:
     await check_admin_role(current_user)
@@ -39,7 +39,7 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
                 continue
 
     formatted_data = [{"x": date, "y": count} for date, count in activity_count.items()]
-    return {"id": "log", "data": formatted_data}
+    return formatted_data
 
 
 @router.get("/endpointOverview", status_code=status.HTTP_200_OK, response_model=List[Dict[str, Any]])
@@ -96,10 +96,9 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
     return {"success": success_data, "fail": fail_data}
 
 
-@router.get("/registrationOverview", status_code=status.HTTP_200_OK,
-            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+@router.get("/registrationOverview", status_code=status.HTTP_200_OK,response_model=List[schemas.ChartData])
 async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
-        -> Dict[str, List[Dict[str, Union[str, int]]]]:
+        -> List[schemas.ChartData]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
@@ -110,21 +109,22 @@ async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.
         for line in file:
             try:
                 log_entry = json.loads(line)
-                if log_entry.get("msg") == "User registered":
+                if log_entry.get("message") == "User registriert":
                     date_str = log_entry["timestamp"].split(" ")[0]
                     date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
+
                     registration_count[date] += 1
             except(IndexError, json.JSONDecodeError):
                 continue
 
     formatted_data = [{"x": date, "y": count} for date, count in registration_count.items()]
-    return {"id": "registration", "data": formatted_data}
+    return formatted_data
 
 
 @router.get("/loginOverview", status_code=status.HTTP_200_OK,
-            response_model=Dict[str, List[Dict[str, Union[str, int]]]])
+            response_model=List[schemas.ChartData])
 async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
-        -> Dict[str, List[Dict[str, Union[str, int]]]]:
+        -> List[schemas.ChartData]:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
     if not log_file_path.exists():
@@ -135,7 +135,7 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
         for line in file:
             try:
                 log_entry = json.loads(line)
-                if log_entry.get("msg") == "User logged in":
+                if log_entry.get("message") == "User eingeloggt":
                     date_str = log_entry["timestamp"].split(" ")[0]
                     date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
                     login_count[date] += 1
@@ -143,10 +143,10 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
                 continue
 
     formatted_data = [{"x": date, "y": count} for date, count in login_count.items()]
-    return {"id": "login", "data": formatted_data}
+    return formatted_data
 
 
-@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=Dict[str, List[Dict[str, Any]]])
+@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)) -> Dict[str, List[Dict[str, Any]]]:
     await check_admin_role(current_user)
@@ -159,7 +159,7 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
         for line in file:
             try:
                 log_entry = json.loads(line)
-                if log_entry.get("msg") == "User registered":
+                if log_entry.get("message") == "User registriert":
                     user_ids.add(log_entry.get("user_id"))
             except(IndexError, json.JSONDecodeError):
                 continue
@@ -171,7 +171,7 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
             role_count[user.rolle.name] += 1
 
     formatted_data = [{"x": role, "y": count} for role, count in role_count.items()]
-    return {"id": "user", "data": formatted_data}
+    return formatted_data
 
     # User abfragen und zurückgeben
     # stmt = select(models.Nutzer)

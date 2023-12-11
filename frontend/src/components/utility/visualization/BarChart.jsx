@@ -65,7 +65,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
           },
           legend: {
             text: {
-              fill: colors.grey[100],
+              fill: colors.grey[300],
             },
           },
           ticks: {
@@ -140,6 +140,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
         from: "color",
         modifiers: [["darker", 1.6]],
       }}
+    
       legends={[
         {
           dataFrom: "keys",
@@ -159,6 +160,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
               on: "hover",
               style: {
                 itemOpacity: 1,
+              
               },
             },
           ],

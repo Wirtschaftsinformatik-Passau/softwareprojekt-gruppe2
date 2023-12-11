@@ -33,10 +33,10 @@ const  AdminDashboard = () => {
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
                 <CssBaseline/>
-        <div className="flex h-100" >
+        <div className="flex h-100" style={{marginTop: "64px"}}>
                 <Sidebar/>
-                <div className="flex-1">
-                <Topbar/>
+                <div className="flex-1 overflow-y-auto">
+                <Topbar fixed={true}/>
                 <Routes>
                 <Route path="/" element={<AdminHomeDashboard/>}/>
                 <Route path="/faq" element={<FAQ items={faqItems}/>}/>

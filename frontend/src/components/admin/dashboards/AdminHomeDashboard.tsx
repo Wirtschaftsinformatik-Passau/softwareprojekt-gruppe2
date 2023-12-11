@@ -41,7 +41,7 @@ const AdminEndPointActivity = () => {
         axios.get(addSuffixToBackendURL("users"), {headers: { Authorization: `Bearer ${token}` }})
         .then((res) => {
           const response = res.data
-          setNumberUsers(response.length);
+          setNumberUsers(response.length)
           setUsers(response);
           console.log(Math.round((users.filter((user) => user.rolle === "Admin").length / numberUsers) * 100).toString() )
         })
@@ -216,14 +216,13 @@ const AdminEndPointActivity = () => {
         display="grid"
         gridTemplateColumns="repeat(12, 1fr)"
         gridAutoRows="140px"
-        gap="20px">
-
-            
+        gap="20px">  
         <Box
         display="grid"
         gridTemplateRows="repeat(2, 1fr)"
         gridAutoRows="140px"
         gridColumn={"span 6"}
+        gridRow={"span 3"}
         gap="0px">
             <Box gridColumn={"span 6"} m="20px">
              <Header title="Endpunktaktivität" variant="h3"/>
@@ -235,12 +234,19 @@ const AdminEndPointActivity = () => {
             gridColumn={"span 6"} 
             display="flex"
             alignItems="center"
+            onClick={() => navigate("/admin/endpointActivity")}
+            sx={{
+              cursor: "pointer",
+              ":hover":{
+                backgroundColor: colors.grey[800],
+              }
+            }}
           
             borderRadius={"15px"}
             boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
             justifyContent="center">
                
-                <BarChart isDashboard={true}/>
+                <LineChart isDashboard={true}/>
                  </Box>
         </Grow>
 
@@ -251,6 +257,7 @@ const AdminEndPointActivity = () => {
         gridTemplateRows="repeat(2, 1fr)"
         gridAutoRows="140px"
         gridColumn={"span 6"}
+         gridRow={"span 3"}
         gap="0px">
             <Box gridColumn={"span 6"} m="20px">
              <Header title="Rollenübersicht" variant="h3"/>
@@ -262,12 +269,19 @@ const AdminEndPointActivity = () => {
             gridColumn={"span 6"} 
             display="flex"
             alignItems="center"
+            onClick={() => navigate("/admin/roleOverview")}
+            sx={{
+              cursor: "pointer",
+              ":hover":{
+                backgroundColor: colors.grey[800],
+              }
+            }}
           
             borderRadius={"15px"}
             boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
             justifyContent="center">
                
-                <PieChart isDashboard={false}/>
+                <PieChart isDashboard={true}/>
                  </Box>
         </Grow>
 

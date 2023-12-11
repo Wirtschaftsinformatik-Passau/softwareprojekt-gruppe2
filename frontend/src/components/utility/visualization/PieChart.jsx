@@ -115,7 +115,7 @@ const PieChart = ({data=mockPieData, isDashboard=false}) => {
             {
               on: "hover",
               style: {
-                itemTextColor: "#000",
+                itemTextColor: "black",
               },
             },
           ],

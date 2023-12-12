@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
 from sqlalchemy import exc
 from datetime import datetime
 from app import models, schemas, database, oauth
@@ -103,7 +105,7 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
     return {"success": success_data, "fail": fail_data}
 
 
-@router.get("/registrationOverview", status_code=status.HTTP_200_OK,response_model=List[schemas.ChartData])
+@router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
 async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
     await check_admin_role(current_user)
@@ -183,6 +185,28 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
                                             message=logging_msg, success=False)
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+
+@router.get("/logs", status_code=status.HTTP_200_OK, response_model=schemas.LogData)
+async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> schemas.LogData:
+    await check_admin_role(current_user)
+    log_file_path = Path("logs/server.log")
+
+    if not log_file_path.exists() or log_file_path.stat().st_size == 0:
+        return schemas.LogData(logs=[])
+
+    logs = []
+    with open(log_file_path, 'r') as file:
+        for line in file:
+            try:
+                log_entry = json.loads(line)
+                logs.append(log_entry)
+            except json.JSONDecodeError:
+                continue
+
+    return schemas.LogData(logs=logs)
+
+                           
 
 
 

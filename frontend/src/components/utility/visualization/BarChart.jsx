@@ -123,7 +123,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
         legend: "Datum",
         legendPosition: "middle",
         legendOffset: isDashboard ? 10 : 32,
-        tickValues: isDashboard ? [] : undefined, // Updated line
+        tickValues: isDashboard ? undefined :  data.map((item, index) => index % 3 === 0 ? item.date : null).filter(Boolean), // Updated line
     }}
       axisLeft={{
         tickSize: 5,

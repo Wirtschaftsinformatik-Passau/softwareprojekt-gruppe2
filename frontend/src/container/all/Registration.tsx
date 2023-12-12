@@ -96,7 +96,7 @@ const Registration = () => {
                         
                                 console.log("Server Response on Error 422:", error.response.data);
                             } else if (error.response && error.response.status === 409) {
-                                setEmailModalIsOpen(true)
+                                //setEmailModalIsOpen(true)
                              
                                }
                                   else {

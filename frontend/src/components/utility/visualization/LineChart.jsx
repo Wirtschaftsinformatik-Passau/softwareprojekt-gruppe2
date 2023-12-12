@@ -99,14 +99,14 @@ const LineChart = ({ data = mockData,isDashboard = false }) => {
       axisTop={null}
       axisRight={null}
       axisBottom={{
-        orient: "bottom",
-        tickSize: 0,
+        tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "Datum", // added
-        legendOffset: 36,
+        legend: "Datum",
         legendPosition: "middle",
-      }}
+        legendOffset: isDashboard ? 10 : 32,
+        tickValues: isDashboard ? undefined :  data.map((item, index) => index % 3 === 0 ? item.date : null).filter(Boolean), // Updated line
+    }}
       axisLeft={{
         orient: "left",
         tickValues: 5, // added

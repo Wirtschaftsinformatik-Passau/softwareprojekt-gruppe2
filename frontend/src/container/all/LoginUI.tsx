@@ -58,13 +58,13 @@ const LoginUI = () => {
                 navigate("/admin")
             }
             else{
-                setModalIsOpen(true)
+                setSuccessModalIsOpen(true)
             }
         
         })
         .catch((error) => {
             if ((error.response && error.response.status === 404) || (error.response && error.response.status === 401)){
-                setModalIsOpen(true)
+                setSuccessModalIsOpen(true)
             }
             else {
                 console.log(error.response.data);
@@ -184,7 +184,7 @@ const LoginUI = () => {
                 <Box display={"flex"} justifyContent={"center"} mt="20px" >
                     <Button type="submit" variant="contained" color="secondary" sx={{
                         borderRadius: "10px",
-                    }} onClick={() => setSuccessModalIsOpen(true)}>
+                    }}>
                         Einloggen
                     </Button>
                 </Box>
@@ -194,7 +194,7 @@ const LoginUI = () => {
 </Formik>
 <LoginDialog open={vergessenOpen} handleClose={handleVergessenClose}/>
 <WrongPasswordModal open={modalisOpen} handleClose={() => setModalIsOpen(false)}/>
-<SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} text="Password falsch!" navigationGoal="/registration"/>
+<SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} text="Password falsch!"/>
         </Paper>
         </div>
         </div>

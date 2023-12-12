@@ -14,14 +14,17 @@ const AdminEndPointActivity = () => {
         gridTemplateColumns="repeat(2, 1fr)"
         gridAutoRows="140px"
         gap="10px">
-        <Box gridColumn={"span 2"} m="20px">
+        <Box gridColumn={"span 1"} m="20px">
              <Header title="Endpunktaktivität allgemein" subtitle="Anzahl der aufgerufenen Backend Endpunkte"/>
+             </Box>
+             <Box gridColumn={"span 1"} m="20px">
+             <Header title="Endpunktaktivität spezifisch" subtitle="Anzahl der spezifischen Endpunkt Aufrufe und Entwicklung über die Zeit"/>
              </Box>
        
    <Grow in={true} timeout={1000}>
        <Box 
-       gridRow={"span 3"}
-       gridColumn={"span 6"} 
+       gridRow={"span 2"}
+       gridColumn={"span 1"} 
        display="flex"
        alignItems="center"
      
@@ -32,13 +35,10 @@ const AdminEndPointActivity = () => {
            <BarChart isDashboard={false}/>
             </Box>
    </Grow>
-   <Box gridColumn={"span 2"} m="20px">
-             <Header title="Endpunktaktivität spezifisch" subtitle="Anzahl der spezifischen Endpunkt Aufrufe und Entwicklung über die Zeit"/>
-             </Box>
    <Grow in={true} timeout={1000}>
        <Box 
-       gridRow={"span 3"}
-       gridColumn={"span 6"} 
+       gridRow={"span 2"}
+       gridColumn={"span 1"} 
        display="flex"
        alignItems="center"
      

@@ -266,7 +266,14 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
     log_file_path = Path("logs/server.log")
 
     if not log_file_path.exists() or log_file_path.stat().st_size == 0:
-        logger.info("Log-Datei existiert nicht oder ist leer")
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/admin/logs",
+            method="GET",
+            message="Log-Datei existiert nicht oder ist leer",
+            success=False
+        )
+        logger.error(logging_error.dict())
         return schemas.LogData(logs=[])
 
     logs = []

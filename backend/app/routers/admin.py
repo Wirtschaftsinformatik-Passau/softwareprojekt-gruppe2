@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import func
 from datetime import datetime
 from app import models, schemas, database, oauth
 import json
@@ -9,7 +10,6 @@ from collections import defaultdict, Counter
 from typing import Dict, Union, List, Any
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
-
 
 
 async def check_admin_role(current_user: models.Nutzer) -> None:
@@ -96,7 +96,7 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
     return {"success": success_data, "fail": fail_data}
 
 
-@router.get("/registrationOverview", status_code=status.HTTP_200_OK,response_model=List[schemas.ChartData])
+@router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
 async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
     await check_admin_role(current_user)
@@ -148,30 +148,39 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
 
 @router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                            db: AsyncSession = Depends(database.get_db_async)) -> Dict[str, List[Dict[str, Any]]]:
+                            db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.ChartData]:
+    await check_admin_role(current_user)
+    result = await db.execute(
+        select(models.Nutzer.rolle, func.count(models.Nutzer.user_id))
+        .group_by(models.Nutzer.rolle)
+    )
+    role_counts = result.all()
+
+    chart_data = [
+        schemas.ChartData(x=rolle.name, y=count) for rolle, count in role_counts
+    ]
+
+    return chart_data
+
+
+@router.get("/logs", status_code=status.HTTP_200_OK, response_model=schemas.LogData)
+async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> schemas.LogData:
     await check_admin_role(current_user)
     log_file_path = Path("logs/server.log")
-    if not log_file_path.exists():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log-Datei nicht gefunden")
 
-    user_ids = set()
-    with open(log_file_path, "r") as file:
+    if not log_file_path.exists() or log_file_path.stat().st_size == 0:
+        return schemas.LogData(logs=[])
+
+    logs = []
+    with open(log_file_path, 'r') as file:
         for line in file:
             try:
                 log_entry = json.loads(line)
-                if log_entry.get("message") == "User registriert":
-                    user_ids.add(log_entry.get("user_id"))
-            except(IndexError, json.JSONDecodeError):
+                logs.append(log_entry)
+            except json.JSONDecodeError:
                 continue
 
-    role_count = defaultdict(int)
-    for user_id in user_ids:
-        user = await db.get(models.Nutzer, user_id)
-        if user:
-            role_count[user.rolle.name] += 1
-
-    formatted_data = [{"x": role, "y": count} for role, count in role_count.items()]
-    return formatted_data
+    return schemas.LogData(logs=logs)
 
     # User abfragen und zurückgeben
     # stmt = select(models.Nutzer)

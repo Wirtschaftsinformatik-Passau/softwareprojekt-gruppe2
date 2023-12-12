@@ -25,9 +25,9 @@ async def check_admin_role(current_user: models.Nutzer) -> None:
 
 
 @router.get("/logOverview", status_code=status.HTTP_200_OK,
-            response_model=List[schemas.ChartData])
+            response_model=List[schemas.BarChartData])
 async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
-        -> Dict[str, List[Dict[str, Union[str, int]]]]:
+        -> List[schemas.BarChartData]:
     await check_admin_role(current_user)
 
     log_file_path = Path("logs/server.log")
@@ -45,7 +45,7 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
             except (IndexError, ValueError):
                 continue
 
-    formatted_data = [{"x": date, "y": count} for date, count in activity_count.items()]
+    formatted_data = [{"date": date, "value": count} for date, count in activity_count.items()]
     return formatted_data
 
 
@@ -153,9 +153,9 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
     return formatted_data
 
 
-@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
+@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.PieChartData])
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                            db: AsyncSession = Depends(database.get_db_async)) -> Dict[str, List[Dict[str, Any]]]:
+                            db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.PieChartData]:
     await check_admin_role(current_user)
     stmt = (
         select(models.Nutzer)
@@ -163,15 +163,13 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
     try:
         result = await db.execute(stmt)
         users = result.all()
-        users_role = [{
-            "rolle": user.rolle
-        } for user in users]
+        users_role = [
+            user[0].rolle.name if user[0].rolle is not None else "Unknown"
+         for user in users]
 
-        role_count = defaultdict(int)
-        for user in users_role:
-            role_count[user.rolle.name] += 1
+        role_count = Counter(users_role)
 
-        formatted_data = [{"x": role, "y": count} for role, count in role_count.items()]
+        formatted_data = [{"id": role, "label": role, "value": count} for role, count in role_count.items()]
         return formatted_data
 
     except exc.IntegrityError as e:

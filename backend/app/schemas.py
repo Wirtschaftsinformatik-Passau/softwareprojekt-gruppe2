@@ -113,6 +113,22 @@ class ChartData(BaseModel):
     class Config:
         from_attributes = True
 
+class PieChartData(BaseModel):
+    id: str
+    label: str
+    value: int
+
+    class Config:
+        from_attributes = True
+
+
+class BarChartData(BaseModel):
+    date: str
+    value: int
+
+    class Config:
+        from_attributes = True
+
 class ChartDataCategorical(BaseModel):
     id: str
     data: List[ChartData]

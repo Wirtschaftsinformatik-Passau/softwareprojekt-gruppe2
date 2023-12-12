@@ -13,7 +13,7 @@ class Rolle(enum.Enum):
 
 
 class Adresse(Base):
-    __tablename__ = 'Adresse'
+    __tablename__ = 'adresse'
 
     adresse_id = Column(Integer, Identity(), primary_key=True)
     strasse = Column(String)
@@ -25,7 +25,7 @@ class Adresse(Base):
 
 
 class Nutzer(Base):
-    __tablename__ = 'Nutzer'
+    __tablename__ = 'nutzer'
     user_id = Column(Integer, Identity(), primary_key=True)
     nachname = Column(String)
     vorname = Column(String)
@@ -34,9 +34,9 @@ class Nutzer(Base):
     passwort = Column(String)
     rolle = Column(Enum(Rolle))
     telefonnummer = Column(String)
-    adresse_id = Column(Integer, ForeignKey('Adresse.adresse_id'))
+    adresse_id = Column(Integer, ForeignKey('adresse.adresse_id'))
 
 
 class Netzbetreiber(Base):
-    __tablename__ = 'Netzbetreiber'
+    __tablename__ = 'netzbetreiber'
     user_id = Column(Integer, Identity(), primary_key=True)

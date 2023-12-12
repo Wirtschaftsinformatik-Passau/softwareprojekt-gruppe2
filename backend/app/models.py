@@ -1,5 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, UUID, \
-    Identity
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey,Identity
 from app.database import Base
 from sqlalchemy.orm import relationship
 import enum

@@ -3,15 +3,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func
+from sqlalchemy import exc
 from datetime import datetime
 from app import models, schemas, database, oauth
 import json
 from pathlib import Path
 from collections import defaultdict, Counter
 from typing import Dict, Union, List, Any
+import logging
+from logging.config import dictConfig
+from app.logger import LogConfig
+from app.config import Settings
+
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("GreenEcoHub")
 
 async def check_admin_role(current_user: models.Nutzer) -> None:
     if current_user.rolle != models.Rolle.Admin:
@@ -19,9 +27,9 @@ async def check_admin_role(current_user: models.Nutzer) -> None:
 
 
 @router.get("/logOverview", status_code=status.HTTP_200_OK,
-            response_model=List[schemas.ChartData])
+            response_model=List[schemas.BarChartData])
 async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
-        -> Dict[str, List[Dict[str, Union[str, int]]]]:
+        -> List[schemas.BarChartData]:
     await check_admin_role(current_user)
 
     log_file_path = Path("logs/server.log")
@@ -39,7 +47,7 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
             except (IndexError, ValueError):
                 continue
 
-    formatted_data = [{"x": date, "y": count} for date, count in activity_count.items()]
+    formatted_data = [{"date": date, "value": count} for date, count in activity_count.items()]
     return formatted_data
 
 
@@ -147,25 +155,36 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
     return formatted_data
 
 
-@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
+@router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.PieChartData])
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                            db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.ChartData]:
+                            db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.PieChartData]:
     await check_admin_role(current_user)
+    stmt = (
+        select(models.Nutzer)
+    )
     try:
-        result = await db.execute(
-            select(models.Nutzer.rolle, func.count(models.Nutzer.user_id))
-            .group_by(models.Nutzer.rolle)
-        )
-        role_counts = result.all()
+        result = await db.execute(stmt)
+        users = result.all()
+        users_role = [
+            user[0].rolle.name if user[0].rolle is not None else "Unknown"
+         for user in users]
 
-        chart_data = [
-            schemas.ChartData(x=rolle.name, y=count) for rolle, count in role_counts
-        ]
+        role_count = Counter(users_role)
 
-        return chart_data
+        formatted_data = [{"id": role, "label": role, "value": count} for role, count in role_count.items()]
+        return formatted_data
 
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    except exc.IntegrityError as e:
+        if Settings.DEV:
+            msg = f"Error beim User Abfragen: {e.orig}"
+            logging_msg = msg
+        else:
+            logging_msg = f"Error beim User Abfragen: {e.orig}"
+            msg = "Es gab einen Fehler bei der user Abfrage."
+        logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/", method="GET",
+                                            message=logging_msg, success=False)
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
 
 @router.get("/logs", status_code=status.HTTP_200_OK, response_model=schemas.LogData)
@@ -186,6 +205,10 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
                 continue
 
     return schemas.LogData(logs=logs)
+
+                           
+
+
 
     # User abfragen und zurückgeben
     # stmt = select(models.Nutzer)

@@ -24,7 +24,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import StatBox from "../../utility/visualization/StatBox";
 import PieChart from "../../utility/visualization/PieChart";
 import BarChart from "../../utility/visualization/BarChart";
-
+import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 
@@ -34,6 +34,12 @@ const AdminEndPointActivity = () => {
     const colors = tokens(theme.palette.mode);
     const [numberUsers, setNumberUsers] = React.useState(0);
     const [users, setUsers] = React.useState([])
+    const [lineData, setLineData] = React.useState([])
+
+    useEffect(() => {
+      const token = localStorage.getItem("accessToken");
+      setStateOtherwiseRedirect(setLineData, "admin/endpointOverview", navigate,  {Authorization: `Bearer ${token}`})
+    }, [])
 
     useEffect(() => {
        
@@ -43,7 +49,6 @@ const AdminEndPointActivity = () => {
           const response = res.data
           setNumberUsers(response.length)
           setUsers(response);
-          console.log(Math.round((users.filter((user) => user.rolle === "Admin").length / numberUsers) * 100).toString() )
         })
         .catch((err) => {
           if (err.response.status === 401) {
@@ -246,7 +251,7 @@ const AdminEndPointActivity = () => {
             boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
             justifyContent="center">
                
-                <LineChart isDashboard={true}/>
+                <LineChart isDashboard={true} data={lineData}/>
                  </Box>
         </Grow>
 

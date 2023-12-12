@@ -1,5 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, UUID, \
-    Identity
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey,Identity
 from app.database import Base
 from sqlalchemy.orm import relationship
 import enum
@@ -14,7 +13,7 @@ class Rolle(enum.Enum):
 
 
 class Adresse(Base):
-    __tablename__ = 'adresse'
+    __tablename__ = 'Adresse'
 
     adresse_id = Column(Integer, Identity(), primary_key=True)
     strasse = Column(String)
@@ -26,7 +25,7 @@ class Adresse(Base):
 
 
 class Nutzer(Base):
-    __tablename__ = 'nutzer'
+    __tablename__ = 'Nutzer'
     user_id = Column(Integer, Identity(), primary_key=True)
     nachname = Column(String)
     vorname = Column(String)
@@ -35,9 +34,9 @@ class Nutzer(Base):
     passwort = Column(String)
     rolle = Column(Enum(Rolle))
     telefonnummer = Column(String)
-    adresse_id = Column(Integer, ForeignKey('adresse.adresse_id'))
+    adresse_id = Column(Integer, ForeignKey('Adresse.adresse_id'))
 
 
 class Netzbetreiber(Base):
-    __tablename__ = 'netzbetreiber'
+    __tablename__ = 'Netzbetreiber'
     user_id = Column(Integer, Identity(), primary_key=True)

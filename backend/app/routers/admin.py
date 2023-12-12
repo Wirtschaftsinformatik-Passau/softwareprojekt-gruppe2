@@ -1,16 +1,23 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import exc
 from datetime import datetime
 from app import models, schemas, database, oauth
 import json
 from pathlib import Path
 from collections import defaultdict, Counter
 from typing import Dict, Union, List, Any
+import logging
+from logging.config import dictConfig
+from app.logger import LogConfig
+from app.config import Settings
+
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("GreenEcoHub")
 
 async def check_admin_role(current_user: models.Nutzer) -> None:
     if current_user.rolle != models.Rolle.Admin:
@@ -150,28 +157,36 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)) -> Dict[str, List[Dict[str, Any]]]:
     await check_admin_role(current_user)
-    log_file_path = Path("logs/server.log")
-    if not log_file_path.exists():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Log-Datei nicht gefunden")
+    stmt = (
+        select(models.Nutzer)
+    )
+    try:
+        result = await db.execute(stmt)
+        users = result.all()
+        users_role = [{
+            "rolle": user.rolle
+        } for user in users]
 
-    user_ids = set()
-    with open(log_file_path, "r") as file:
-        for line in file:
-            try:
-                log_entry = json.loads(line)
-                if log_entry.get("message") == "User registriert":
-                    user_ids.add(log_entry.get("user_id"))
-            except(IndexError, json.JSONDecodeError):
-                continue
-
-    role_count = defaultdict(int)
-    for user_id in user_ids:
-        user = await db.get(models.Nutzer, user_id)
-        if user:
+        role_count = defaultdict(int)
+        for user in users_role:
             role_count[user.rolle.name] += 1
 
-    formatted_data = [{"x": role, "y": count} for role, count in role_count.items()]
-    return formatted_data
+        formatted_data = [{"x": role, "y": count} for role, count in role_count.items()]
+        return formatted_data
+
+    except exc.IntegrityError as e:
+        if Settings.DEV:
+            msg = f"Error beim User Abfragen: {e.orig}"
+            logging_msg = msg
+        else:
+            logging_msg = f"Error beim User Abfragen: {e.orig}"
+            msg = "Es gab einen Fehler bei der user Abfrage."
+        logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/", method="GET",
+                                            message=logging_msg, success=False)
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+
 
     # User abfragen und zurückgeben
     # stmt = select(models.Nutzer)

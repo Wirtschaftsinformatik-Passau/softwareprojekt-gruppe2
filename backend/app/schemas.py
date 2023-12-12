@@ -7,7 +7,7 @@ from typing import Dict, List
 class AdresseCreate(BaseModel):
     strasse: str
     hausnummer: int
-    zusatz: str | None = None
+    zusatz: str = None
     plz: int
     stadt: str
     land: str
@@ -87,11 +87,6 @@ class UserOut(BaseModel):
         from_attributes = True
 
 
-class UsersOut(BaseModel):
-    users: list[UserOut]
-    count: int
-
-
 class AdminDashboardResponse(BaseModel):
     Log_Daten: Dict[str, int]
     users_id: List[int]
@@ -110,10 +105,6 @@ class UserOut(BaseModel):
     class Config:
         from_attributes = True
 
-
-class UsersOut(BaseModel):
-    users: list[UserOut]
-    count: int
 
 class ChartData(BaseModel):
     x: str

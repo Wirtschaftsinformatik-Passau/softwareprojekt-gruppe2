@@ -1,5 +1,5 @@
-./backend_tose_venv
-
+./backend_tose_venv/
+./logs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

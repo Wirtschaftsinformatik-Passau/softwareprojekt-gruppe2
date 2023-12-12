@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func
 from datetime import datetime
 from app import models, schemas, database, oauth
@@ -150,17 +151,21 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.ChartData]:
     await check_admin_role(current_user)
-    result = await db.execute(
-        select(models.Nutzer.rolle, func.count(models.Nutzer.user_id))
-        .group_by(models.Nutzer.rolle)
-    )
-    role_counts = result.all()
+    try:
+        result = await db.execute(
+            select(models.Nutzer.rolle, func.count(models.Nutzer.user_id))
+            .group_by(models.Nutzer.rolle)
+        )
+        role_counts = result.all()
 
-    chart_data = [
-        schemas.ChartData(x=rolle.name, y=count) for rolle, count in role_counts
-    ]
+        chart_data = [
+            schemas.ChartData(x=rolle.name, y=count) for rolle, count in role_counts
+        ]
 
-    return chart_data
+        return chart_data
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/logs", status_code=status.HTTP_200_OK, response_model=schemas.LogData)

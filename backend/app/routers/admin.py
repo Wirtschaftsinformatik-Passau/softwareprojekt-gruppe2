@@ -197,9 +197,10 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
 
     logs = []
     with open(log_file_path, 'r') as file:
-        for line in file:
+        for (ind, line) in enumerate(file):
             try:
                 log_entry = json.loads(line)
+                log_entry["log_id"] = ind
                 logs.append(log_entry)
             except json.JSONDecodeError:
                 continue
@@ -209,9 +210,3 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
                            
 
 
-
-    # User abfragen und zurückgeben
-    # stmt = select(models.Nutzer)
-    # result = await db.execute(stmt)
-    #  users_data = result.scalar().all()
-    # users_list = [user.user_id for user in users_data]

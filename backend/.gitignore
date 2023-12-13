@@ -2,6 +2,7 @@
 ./logs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
+vars/.env
 *.py[cod]
 
 # C extensions

@@ -274,22 +274,20 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
             success=False
         )
         logger.error(logging_error.dict())
-        return schemas.LogData(logs=[])
+
 
     logs = []
     with open(log_file_path, 'r') as file:
-        for line in file:
+        for (ind, line) in enumerate(file):
             try:
                 log_entry = json.loads(line)
+                log_entry["log_id"] = ind
                 logs.append(log_entry)
-            except json.JSONDecodeError as e:
-                handle_json_decode_error(e, current_user.user_id, "/admin/logs")
+            except json.JSONDecodeError:
+               handle_json_decode_error(e, current_user.user_id, "/admin/logs")
                 continue
 
-    return schemas.LogData(logs=logs)
 
-    # User abfragen und zurückgeben
-    # stmt = select(models.Nutzer)
-    # result = await db.execute(stmt)
-    #  users_data = result.scalar().all()
-    # users_list = [user.user_id for user in users_data]
+
+                          
+

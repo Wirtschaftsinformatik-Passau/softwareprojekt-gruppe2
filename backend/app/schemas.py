@@ -143,6 +143,7 @@ class ChartDataCategorical(BaseModel):
 
 
 class LogEntry(BaseModel):
+    log_id: int
     timestamp: str
     level: str
     name: str

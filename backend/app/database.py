@@ -3,9 +3,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
+from app import config
 
-SQL_URL_async = "postgresql+asyncpg://root:secret@172.17.0.2:5432/tose_backend"
-SQL_URL = "postgresql://root:secret@172.17.0.2:5432/tose_backend"
+
+SQL_URL_async = (f"postgresql+asyncpg://{config.settings.POSTGRES_USER}:{config.settings.POSTGRES_PASSWORD}@"
+                 f"{config.settings.POSTGRES_HOST}:{config.settings.POSTGRES_PORT}/{config.settings.POSTGRES_DB}")
+SQL_URL = (f"postgresql://{config.settings.POSTGRES_USER}:{config.settings.POSTGRES_PASSWORD}@"
+           f"{config.settings.POSTGRES_HOST}:{config.settings.POSTGRES_PORT}/{config.settings.POSTGRES_DB}")
+print(SQL_URL_async)
 non_async = False
 
 if non_async:

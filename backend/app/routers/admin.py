@@ -154,7 +154,7 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
     return {"success": success_data, "fail": fail_data}
 
 
-@router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.ChartData])
+@router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.BarChartData])
 async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
     await check_admin_role(current_user)
@@ -175,7 +175,7 @@ async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.
                 handle_json_decode_error(e, current_user.user_id, "/admin/registrationOverview")
                 continue
 
-    formatted_data = [{"x": date, "y": count} for date, count in registration_count.items()]
+    formatted_data = [{"date": date, "value": count} for date, count in registration_count.items()]
     logging_info = schemas.LoggingSchema(
         user_id=current_user.user_id,
         endpoint="/admin/registrationOverview",
@@ -188,7 +188,7 @@ async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.
 
 
 @router.get("/loginOverview", status_code=status.HTTP_200_OK,
-            response_model=List[schemas.ChartData])
+            response_model=List[schemas.BarChartData])
 async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
     await check_admin_role(current_user)
@@ -208,7 +208,7 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
                 handle_json_decode_error(e, current_user.user_id, "/admin/loginOverview")
                 continue
 
-    formatted_data = [{"x": date, "y": count} for date, count in login_count.items()]
+    formatted_data = [{"date": date, "value": count} for date, count in login_count.items()]
     logging_info = schemas.LoggingSchema(
         user_id=current_user.user_id,
         endpoint="/admin/loginOverview",

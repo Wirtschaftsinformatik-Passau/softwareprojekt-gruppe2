@@ -8,9 +8,9 @@ const handleInputChange = setter => event => {
 };
 
 export const setStateOtherwiseRedirect = (setter, endpoint, redirectFn, headers={}) => {
+  console.log("endpoint", endpoint)
     axios.get(addSuffixToBackendURL(endpoint), {headers: headers})
     .then(response => {
-        console.log("reuududdudududududuu")
         setter(response.data);
         console.log(response.data)
     })

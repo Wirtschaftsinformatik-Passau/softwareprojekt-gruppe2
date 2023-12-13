@@ -152,7 +152,3 @@ class LogEntry(BaseModel):
     endpoint: str
     method: str
     success: bool
-
-
-class LogData(BaseModel):
-    logs: list[LogEntry]

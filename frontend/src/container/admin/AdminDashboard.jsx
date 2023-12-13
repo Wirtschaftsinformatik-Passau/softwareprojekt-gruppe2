@@ -15,6 +15,9 @@ import AdminUserEdit from "../../components/admin/dashboards/AdminUserEdit";
 import AdminEndPointActivity from "../../components/admin/dashboards/AdminEndPointAcitvity";
 import AdminRoleOverview from "../../components/admin/dashboards/AdminRoleOverview";
 import AdminHomeDashboard from "../../components/admin/dashboards/AdminHomeDashboard";
+import AdminLogOverview from "../../components/admin/dashboards/AdminLogOverview";
+import AdminCalendar from "../../components/admin/dashboards/AdminCalendar";
+
 
 
 const  AdminDashboard = () => {
@@ -45,6 +48,8 @@ const  AdminDashboard = () => {
                 <Route path="/editUser/" element={<AdminUserEdit/>}/>
                 <Route path="/endpointActivity" element={<AdminEndPointActivity/>}/>
                 <Route path="/roleOverview" element={<AdminRoleOverview/>}/>
+                <Route path="/logOverview" element={<AdminLogOverview/>}/>
+                <Route path="/calendar" element={<AdminCalendar/>}/>
                 </Routes>
                 </div>
                 

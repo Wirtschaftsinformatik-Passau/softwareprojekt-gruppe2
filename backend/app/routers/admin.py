@@ -139,8 +139,8 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
                 handle_json_decode_error(e, current_user.user_id, "/admin/successOverview")
                 continue  # Ungültige Zeilen werden automatisch übersprungen
 
-    success_data = [{"x": date, "y": data['success']} for date, data in success_activity.items()]
-    fail_data = [{"x": date, "y": data['fail']} for date, data in success_activity.items()]
+    success_data = [{"date": date, "value": data['success']} for date, data in success_activity.items()]
+    fail_data = [{"date": date, "value": data['fail']} for date, data in success_activity.items()]
 
     logging_info = schemas.LoggingSchema(
         user_id=current_user.user_id,
@@ -223,71 +223,91 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
 @router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.PieChartData])
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.PieChartData]:
-    await check_admin_role(current_user)
-    stmt = (
-        select(models.Nutzer)
-    )
     try:
-        result = await db.execute(stmt)
-        users = result.all()
-        users_role = [
-            user[0].rolle.name if user[0].rolle is not None else "Unknown"
-            for user in users]
+        await check_admin_role(current_user)
+        stmt = (
+            select(models.Nutzer)
+        )
+        try:
+            result = await db.execute(stmt)
+            users = result.all()
+            users_role = [
+                user[0].rolle.name if user[0].rolle is not None else "Unknown"
+                for user in users]
 
-        role_count = Counter(users_role)
+            role_count = Counter(users_role)
 
-        formatted_data = [{"id": role, "label": role, "value": count} for role, count in role_count.items()]
-        logging_info = schemas.LoggingSchema(
+            formatted_data = [{"id": role, "label": role, "value": count} for role, count in role_count.items()]
+            logging_info = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/admin/userOverview",
+                method="GET",
+                message="Rollenübersicht erfolgreich abgerufen",
+                success=True
+            )
+            logger.info(logging_info.dict())
+            return formatted_data
+
+        except exc.IntegrityError as e:
+            if Settings.DEV:
+                msg = f"Error beim User Abfragen: {e.orig}"
+                logging_msg = msg
+            else:
+                logging_msg = f"Error beim User Abfragen: {e.orig}"
+                msg = "Es gab einen Fehler bei der user Abfrage."
+            logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/", method="GET",
+                                                message=logging_msg, success=False)
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+    except Exception as e:
+        logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/admin/userOverview",
             method="GET",
-            message="Rollenübersicht erfolgreich abgerufen",
-            success=True
+            message=f"Fehler beim Abrufen der Rollenübersicht: {str(e)}",
+            success=False
         )
-        logger.info(logging_info.dict())
-        return formatted_data
-
-    except exc.IntegrityError as e:
-        if Settings.DEV:
-            msg = f"Error beim User Abfragen: {e.orig}"
-            logging_msg = msg
-        else:
-            logging_msg = f"Error beim User Abfragen: {e.orig}"
-            msg = "Es gab einen Fehler bei der user Abfrage."
-        logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/", method="GET",
-                                            message=logging_msg, success=False)
-        logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Fehler beim Abrufen der Rollenübersicht")
 
 
-@router.get("/logs", status_code=status.HTTP_200_OK, response_model=schemas.LogData)
-async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> schemas.LogData:
-    await check_admin_role(current_user)
-    log_file_path = Path("logs/server.log")
+@router.get("/logs", status_code=status.HTTP_200_OK, response_model=List[schemas.LogEntry])
+async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[schemas.LogEntry]:
+    try:
+        await check_admin_role(current_user)
+        log_file_path = Path("logs/server.log")
 
-    if not log_file_path.exists() or log_file_path.stat().st_size == 0:
+        if not log_file_path.exists() or log_file_path.stat().st_size == 0:
+            logging_error = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/admin/logs",
+                method="GET",
+                message="Log-Datei existiert nicht oder ist leer",
+                success=False
+            )
+            logger.error(logging_error.dict())
+
+        logs = []
+        with open(log_file_path, 'r') as file:
+            for (ind, line) in enumerate(file):
+                try:
+                    log_entry = json.loads(line)
+                    log_entry["log_id"] = ind
+                    logs.append(log_entry)
+                except json.JSONDecodeError as e:
+                    handle_json_decode_error(e, current_user.user_id, "/admin/logs")
+                    continue
+
+        return logs
+    except Exception as e:
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/admin/logs",
             method="GET",
-            message="Log-Datei existiert nicht oder ist leer",
+            message=f"Fehler beim Abrufen der Logs: {str(e)}",
             success=False
         )
         logger.error(logging_error.dict())
-
-
-    logs = []
-    with open(log_file_path, 'r') as file:
-        for (ind, line) in enumerate(file):
-            try:
-                log_entry = json.loads(line)
-                log_entry["log_id"] = ind
-                logs.append(log_entry)
-            except json.JSONDecodeError:
-               handle_json_decode_error(e, current_user.user_id, "/admin/logs")
-                continue
-
-
-
-                          
-
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Logs")

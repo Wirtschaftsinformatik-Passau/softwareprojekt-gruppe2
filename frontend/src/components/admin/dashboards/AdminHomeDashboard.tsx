@@ -35,11 +35,19 @@ const AdminEndPointActivity = () => {
     const [numberUsers, setNumberUsers] = React.useState(0);
     const [users, setUsers] = React.useState([])
     const [lineData, setLineData] = React.useState([])
+    const [pieData, setPieData] = React.useState([])
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
       setStateOtherwiseRedirect(setLineData, "admin/endpointOverview", navigate,  {Authorization: `Bearer ${token}`})
     }, [])
+
+    useEffect(() => {
+      const token = localStorage.getItem("accessToken");
+      setStateOtherwiseRedirect(setPieData, "admin/userOverview", navigate,  {Authorization: `Bearer ${token}`})
+    }, [])
+
+
 
     useEffect(() => {
        
@@ -63,7 +71,6 @@ const AdminEndPointActivity = () => {
       
       }, [])
     
-      console.log(numberUsers)
 
     return (
         <Box m="20px">
@@ -286,7 +293,7 @@ const AdminEndPointActivity = () => {
             boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
             justifyContent="center">
                
-                <PieChart isDashboard={true}/>
+                <PieChart isDashboard={true} data={pieData}/>
                  </Box>
         </Grow>
 

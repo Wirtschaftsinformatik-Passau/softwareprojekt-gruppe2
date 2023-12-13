@@ -209,7 +209,7 @@ const Sidebar1 = () => {
             </Typography>
             <Item
               title="Log Files"
-              to="/contacts"
+              to="/logOverview"
               icon={<InventoryIcon/>}
               selected={selected}
               setSelected={setSelected}

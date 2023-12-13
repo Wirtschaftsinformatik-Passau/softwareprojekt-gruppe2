@@ -40,3 +40,12 @@ class Nutzer(Base):
 class Netzbetreiber(Base):
     __tablename__ = 'netzbetreiber'
     user_id = Column(Integer, Identity(), primary_key=True)
+
+class Tarif(Base):
+    __tablename__ = 'tarif'
+    tarif_id = Column(Integer, Identity(), primary_key=True)
+    tarifname = Column(String, unique=True)
+    preis_kwh = Column(Float)
+    grundgebuehr = Column(Float)
+    laufzeit = Column(Integer)
+    spezielle_konditionen = Column(String)

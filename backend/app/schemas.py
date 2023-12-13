@@ -152,3 +152,13 @@ class LogEntry(BaseModel):
     endpoint: str
     method: str
     success: bool
+
+class TarifCreate(BaseModel):
+    tarifname : str
+    preis_kwh : float
+    grundgebuehr : float
+    laufzeit : int
+    spezielle_konditionen : str
+
+class TarifResponse(BaseModel):
+    tarif_id: int

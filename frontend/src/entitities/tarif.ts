@@ -1,17 +1,17 @@
 export interface ITarif {
-    tarifName: string,
-    preisKwh: number,
+    tarifname: string,
+    preis_kwh: number,
     grundgebuehr: number,
     laufzeit: number,
-    spezielleKonditionen: string,
+    spezielle_konditionen: string,
 }
 
 export class Tarif implements ITarif{
-    public tarifName;
-    public preisKwh;
+    public tarifname;
+    public preis_kwh;
     public grundgebuehr;
     public laufzeit;
-    public spezielleKonditionen;
+    public spezielle_konditionen;
 
     constructor(
         tarifName: string,
@@ -20,10 +20,10 @@ export class Tarif implements ITarif{
         laufzeit: number,
         spezielleKonditionen: string
     ) {
-        this.tarifName = tarifName;
-        this.preisKwh = preisKwh
+        this.tarifname = tarifName;
+        this.preis_kwh = preisKwh
         this.grundgebuehr = grundgebuehr
         this.laufzeit = laufzeit
-        this.spezielleKonditionen = spezielleKonditionen
+        this.spezielle_konditionen = spezielleKonditionen
     }
 }

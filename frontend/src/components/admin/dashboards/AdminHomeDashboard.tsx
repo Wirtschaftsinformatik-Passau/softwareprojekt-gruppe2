@@ -152,9 +152,9 @@ const AdminEndPointActivity = () => {
             alignItems="center"
             justifyContent="center">
                 <StatBox
-                title={users.filter((user) => user.rolle === "Solateur").length.toString()}
-                subtitle="Solateure"
-                progress= {(Math.round((users.filter((user) => user.rolle === "Solateur").length / numberUsers) * 100) / 100).toString()}
+                title={users.filter((user) => user.rolle === "Solarteure").length.toString()}
+                subtitle="Solarteure"
+                progress= {(Math.round((users.filter((user) => user.rolle === "Solarteure").length / numberUsers) * 100) / 100).toString()}
                 increase="+0%"
                 icon={
                   <SolarPowerIcon

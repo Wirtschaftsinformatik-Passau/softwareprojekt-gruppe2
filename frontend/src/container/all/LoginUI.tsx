@@ -1,5 +1,5 @@
 import { Box, Button, TextField , useTheme} from "@mui/material";
-import React  from "react";
+import React, { useEffect }  from "react";
 import { useNavigate } from "react-router-dom";
 import { Formik } from "formik";
 import * as yup from "yup";
@@ -15,7 +15,7 @@ import { Paper } from '@mui/material';
 import panelImg from "../../assets/solar_login2.jpg";
 
 import {ILoginUser, LoginUser } from '../../entitities/user';
-import { addSuffixToBackendURL } from '../../utils/networking_utils';
+import { addSuffixToBackendURL, setStateofResponse } from '../../utils/networking_utils';
 import LoginDialog from "../../components/all/login/LoginDialog";
 import WrongPasswordModal from "../../components/all/login/WrongPasswordModal";
 import SuccessModal from "../../components/utility/SuccessModal";
@@ -25,7 +25,11 @@ const LoginSchema = yup.object().shape({
     password: yup.string().min(3, "Password must be at least 4 characters long").required("Required"),
 })
 
-const LoginUI = () => {
+interface LoginProps {
+    isAlreadyLoggedIn: boolean;
+}
+
+const LoginUI: React.FC<LoginProps> = ({isAlreadyLoggedIn=false}) => {
     const isNonMobile = useMediaQuery("(min-width: 768px)");
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -34,6 +38,8 @@ const LoginUI = () => {
     const [password, setPassword] = React.useState("")
     const [modalisOpen, setModalIsOpen] = React.useState(false);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
+    const [currentUser, setCurrentUser] = React.useState(null); 
+    const[loggedIn, setLoggedIn] = React.useState(isAlreadyLoggedIn);
     const navigate = useNavigate();
 
     const handleVergessenOpen = () => {
@@ -44,18 +50,41 @@ const LoginUI = () => {
         setVergessenOpen(false);
     }
 
+    useEffect(() => {  
+        console.log("usi") 
+        if (loggedIn){        
+        const accessToken = localStorage.getItem("accessToken")
+        const headers = {"Authorization": `Bearer ${accessToken}`}
+        setStateofResponse(setCurrentUser,"users/current/single" , headers)
+        console.log(currentUser)
+        }
 
+    }, [])
+
+    useEffect(() => {
+        console.log(currentUser)
+        if (loggedIn) { 
+            console.log(currentUser.rolle === "Netzbetreiber")
+            if (currentUser.rolle === "Netzbetreiber"){
+                navigate("/netzbetreiber")
+
+            }
+            
+            else if (currentUser.rolle === "Admin"){
+                navigate("/admin")
+            }
+        }
+        }
+    , [currentUser])
+    
     const checkLogin = (values: any, {setSubmitting}: any) => {
         const user = new LoginUser(values.email, values.password);
-        console.log(user)
         axios.post(addSuffixToBackendURL("auth/login"), user)
         .then((response) => {
-            console.log(response)
             if(response.status === 202){
                 const accessToken = response.data.access_token
                 localStorage.setItem("accessToken", accessToken)
-                console.log("accessToken: ", accessToken)   
-                navigate("/admin")
+                setLoggedIn(true)
             }
             else{
                 setSuccessModalIsOpen(true)

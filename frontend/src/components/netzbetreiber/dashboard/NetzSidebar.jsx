@@ -13,11 +13,12 @@ import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
+import TableViewIcon from '@mui/icons-material/TableView';
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import AddBoxIcon from '@mui/icons-material/AddBox';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import EditIcon from '@mui/icons-material/Edit';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
@@ -41,7 +42,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
       icon={icon}
     >
       <Typography>{title}</Typography>
-      <Link to={"/admin" + to} />
+      <Link to={"/netzbetreiber" + to} />
     </MenuItem>
   );
 };
@@ -166,26 +167,27 @@ const Sidebar1 = () => {
               Data
             </Typography>
             <Item
-              title="Nutzerwaltung"
-              to="/userTable"
-              icon={<PeopleOutlinedIcon />}
+              title="Tarifübersicht"
+              to="/tarif"
+              icon={<TableViewIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Nutzer bearbeiten"
-              to="/editUser"
+              title="Tarif erstellen"
+              to="/tarif-create"
+              icon={<AddBoxIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Tarif bearbeiten"
+              to="/tarif-edit"
               icon={<EditIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
-              title="Nutzer erstellen"
-              to="/userCreation"
-              icon={<PersonAddIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            
           
 
             <Typography

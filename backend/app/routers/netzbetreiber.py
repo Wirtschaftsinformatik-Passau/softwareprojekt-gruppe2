@@ -26,14 +26,18 @@ async def check_netzbetreiber_role(current_user: models.Nutzer) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
 #tarif erstellen
-@router.post("/tarife", response_model=schemas.TarifResponse)
+@router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user)
-    new_tarif = models.Tarif(**tarif.dict())
-    db.add(new_tarif)
-    await db.commit()
-    await db.refresh(new_tarif)
-    return new_tarif
+    try:
+        await check_netzbetreiber_role(current_user)
+        new_tarif = models.Tarif(**tarif.dict())
+        db.add(new_tarif)
+        await db.commit()
+        await db.refresh(new_tarif)
+        return new_tarif
+    except exc.IntegrityError as e:
+        logger.error(f"Tarif konnte nicht erstellt werden: {e}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht erstellt werden: {e}")
 
 #tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)

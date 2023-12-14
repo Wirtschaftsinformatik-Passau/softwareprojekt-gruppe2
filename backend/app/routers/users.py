@@ -28,7 +28,19 @@ router = APIRouter(prefix="/users", tags=["Users"])
 async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
         nutzer.geburtsdatum = datetime.strptime(nutzer.geburtsdatum, "%Y-%m-%d").date()
-        nutzer.rolle = models.Rolle(nutzer.rolle)
+        try:
+            nutzer.rolle = models.Rolle(nutzer.rolle)
+        except ValueError as e:
+            if config.settings.DEV:
+                msg = f"Error beim User Update {e}"
+                logging_msg = msg
+            else:
+                logging_msg = f"Error beim : {e}"
+                msg = "Es gab einen Fehler bei der Registrierung."
+            logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/registration", method="POST",
+                                                message=logging_msg, success=False)
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
         email = nutzer.email
         nutzer.passwort = hashing.Hashing.hash_password(nutzer.passwort)
         stmt = select(models.Nutzer).where(models.Nutzer.email == email)
@@ -147,6 +159,11 @@ async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSessi
     await db.commit()
     await db.refresh(db_adresse)
     return {"adresse_id": db_adresse.adresse_id}
+
+@router.get("/current/single", status_code=status.HTTP_200_OK)
+async def read_current_user(current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    return current_user
+
 
 @router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):

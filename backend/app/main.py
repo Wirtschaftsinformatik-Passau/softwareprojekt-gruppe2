@@ -7,7 +7,6 @@ from .database import Base, engine
 from app.oauth import get_current_user
 from app.logger import LogConfig
 
-
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], # which origins are allowed
                    allow_credentials=True,

@@ -1,19 +1,14 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey,Identity
 from app.database import Base
 from sqlalchemy.orm import relationship
-import enum
+from sqlalchemy.dialects.postgresql import ENUM
 
-
-class Rolle(enum.Enum):
-    Haushalte = 'Haushalte'
-    Solarteure = 'Solarteure'
-    Energieberatende = 'Energieberatende'
-    Netzbetreiber = 'Netzbetreiber'
-    Admin = 'Admin'
+from app.config import settings
+from app.types import Rolle
 
 
 class Adresse(Base):
-    __tablename__ = 'adresse'
+    __tablename__ = 'adresse' if settings.OS == 'Linux' else "Adresse"
 
     adresse_id = Column(Integer, Identity(), primary_key=True)
     strasse = Column(String)
@@ -25,27 +20,37 @@ class Adresse(Base):
 
 
 class Nutzer(Base):
-    __tablename__ = 'Nutzer'
+    __tablename__ = 'nutzer' if settings.OS == 'Linux' else "Nutzer"
     user_id = Column(Integer, Identity(), primary_key=True)
     nachname = Column(String)
     vorname = Column(String)
     geburtsdatum = Column(Date)
     email = Column(String)
     passwort = Column(String)
-    rolle = Column(Enum(Rolle))
+    rolle = Column(Enum(Rolle), ENUM(*[r.value for r in Rolle],
+                                name='rolle' if settings.OS == 'Linux' else "Rolle",
+                                create_type=False), nullable=False)
     telefonnummer = Column(String)
-    adresse_id = Column(Integer, ForeignKey('adresse.adresse_id'))
+    adresse_id = Column(Integer, ForeignKey(f'adresse.adresse_id' if settings.OS == 'Linux' else "Adresse.adresse_id"))
 
 
 class Netzbetreiber(Base):
-    __tablename__ = 'Netzbetreiber'
+    __tablename__ = 'netzbetreiber' if settings.OS == 'Linux' else "Netzbetreiber"
     user_id = Column(Integer, Identity(), primary_key=True)
 
+
 class Tarif(Base):
-    __tablename__ = 'Tarif'
+    __tablename__ = 'tarif' if settings.OS == 'Linux' else "Tarif"
     tarif_id = Column(Integer, Identity(), primary_key=True)
     tarifname = Column(String, unique=True)
     preis_kwh = Column(Float)
     grundgebuehr = Column(Float)
     laufzeit = Column(Integer)
     spezielle_konditionen = Column(String)
+
+
+class Preisstrukturen(Base):
+    __tablename__ = 'preisstrukturen' if settings.OS == 'Linux' else "Preisstrukturen"
+    preis_id = Column(Integer, Identity(), primary_key=True)
+    bezugspreis_kwh = Column(Float)
+    einspeisung_kwh = Column(Float)

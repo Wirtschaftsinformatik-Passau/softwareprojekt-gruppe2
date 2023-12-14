@@ -56,7 +56,6 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
       keys={['value']}
       indexBy="date"    
       theme={{
-        // added
         axis: {
           domain: {
             line: {
@@ -70,20 +69,25 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
           },
           ticks: {
             line: {
-              stroke: colors.grey[100],
+              stroke: colors.grey[300],
               strokeWidth: 1,
             },
             text: {
-              fill: colors.grey[100],
+              fill: colors.grey[300],
             },
           },
         },
         legends: {
           text: {
-            fill: colors.grey[100],
+            fill: colors.grey[300],
           },
         },
     }}
+    tooltip={({ value, indexValue }) => {
+      return <div style={{padding: "10px", backgroundColor: theme.palette.background.default, color: colors.grey[100], borderRadius: "4px"}}>
+        {indexValue}: {value}</div>
+          }}
+          
       margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
       padding={0.3}
       valueScale={{ type: "linear" }}
@@ -167,9 +171,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
         },
       ]}
       role="application"
-      barAriaLabel={function (e) {
-        return e.id + ": " + e.formattedValue + " in country: " + e.indexValue;
-      }}
+      
     />
   );
 };

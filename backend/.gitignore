@@ -2,6 +2,7 @@
 ./logs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
+backend/logs/server.log
 vars/.env
 *.py[cod]
 

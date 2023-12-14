@@ -17,7 +17,7 @@ import { tokens } from "../../../utils/theme";
 
 
 const formatDate = (date) => {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("de-at", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -72,7 +72,7 @@ const AdminCalendar = () => {
               <ListItem
                 key={event.id}
                 sx={{
-                  backgroundColor: colors.color3[400],
+                  backgroundColor: colors.color1[300],
                   margin: "10px 0",
                   borderRadius: "2px",
                 }}
@@ -93,9 +93,29 @@ const AdminCalendar = () => {
             ))}
           </List>
         </Box>
-        <Box flex="1 1 100%" ml="15px">
+        <Box flex="1 1 100%" ml="15px" backgroundColor={theme.palette.background.default}
+
+        sx={
+          {
+            color: colors.color1[400],
+            "& .fc-button":{
+              backgroundColor: colors.color1[400],
+            },
+            "& .fc-button-primary":{
+              backgroundColor: colors.color1[400],
+              border: null, 
+              borderColor: colors.color1[400],
+              color: theme.palette.background.default
+            },
+            ".fc .fc-button-primary:not(:disabled).fc-button-active, .fc .fc-button-primary:not(:disabled):active": {
+              backgroundColor: colors.color1[600],
+              borderColor: colors.color1[600],
+              
+            }
+          }
+        }>
           <FullCalendar
-           backgo="rgb(255,0,0)"
+  
             height="75vh"
             plugins={[
               dayGridPlugin,

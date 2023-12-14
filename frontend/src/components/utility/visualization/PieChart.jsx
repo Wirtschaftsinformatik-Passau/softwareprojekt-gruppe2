@@ -76,6 +76,12 @@ const PieChart = ({data=mockPieData, isDashboard=false}) => {
         from: "color",
         modifiers: [["darker", 2]],
       }}
+      tooltip={e => {
+        return <div style={{padding: "10px", backgroundColor: theme.palette.background.default, color: colors.grey[100], borderRadius: "4px"}}>
+          {e.id}</div>
+            
+      }}
+
       defs={[
         {
           id: "dots",
@@ -103,10 +109,10 @@ const PieChart = ({data=mockPieData, isDashboard=false}) => {
           justify: false,
           translateX: 0,
           translateY: 56,
-          itemsSpacing: 0,
+          itemsSpacing: 20,
           itemWidth: 100,
           itemHeight: 18,
-          itemTextColor: "#999",
+          itemTextColor: colors.grey[300],
           itemDirection: "left-to-right",
           itemOpacity: 1,
           symbolSize: 18,

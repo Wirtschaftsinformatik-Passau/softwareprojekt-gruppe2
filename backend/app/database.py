@@ -10,7 +10,6 @@ SQL_URL_async = (f"postgresql+asyncpg://{config.settings.POSTGRES_USER}:{config.
                  f"{config.settings.POSTGRES_HOST}:{config.settings.POSTGRES_PORT}/{config.settings.POSTGRES_DB}")
 SQL_URL = (f"postgresql://{config.settings.POSTGRES_USER}:{config.settings.POSTGRES_PASSWORD}@"
            f"{config.settings.POSTGRES_HOST}:{config.settings.POSTGRES_PORT}/{config.settings.POSTGRES_DB}")
-print(SQL_URL_async)
 non_async = False
 
 if non_async:

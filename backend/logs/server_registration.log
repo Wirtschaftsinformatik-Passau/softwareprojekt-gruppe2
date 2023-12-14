@@ -25,3 +25,16 @@
 {"timestamp": "2023-12-11 00:08:27,097", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 12rr333@5.de bereits vergeben"}
 {"timestamp": "2023-12-11 09:48:07,525", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 33, "role": "Netzbetreiber", "msg": "User registriert"}
 {"timestamp": "2023-12-12 22:21:19,573", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 25, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:02,087", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 34, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:08,725", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 35, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:18,273", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 36, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:19,815", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 37, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:21,300", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 38, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:32,940", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 39, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:34,484", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 40, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:35,947", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 41, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:37,450", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 42, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:38,765", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 43, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:40,299", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 44, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:41,834", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 45, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-14 15:29:43,377", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 46, "role": "Haushalte", "msg": "User registriert"}

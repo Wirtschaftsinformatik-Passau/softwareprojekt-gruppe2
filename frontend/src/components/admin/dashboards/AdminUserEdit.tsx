@@ -4,7 +4,7 @@ import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/ma
 import { Formik } from "formik";
 import * as yup from "yup";
 import { tokens } from "../../../utils/theme";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useParams} from "react-router-dom";
 import Header from "../../utility/Header";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import SuccessModal from "../../utility/SuccessModal";
@@ -72,10 +72,11 @@ const extractAdressAndUser = (user: EditableUser) => {
 
 const AdminUserEdit: React.FC = () => {
   const navigate = useNavigate();
+  
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
-  const [userID, setUserID] = React.useState(null)
+  const [userID, setUserID] = React.useState("")
   const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
   const [editableUser, setEditableUser] = React.useState(null)
@@ -93,8 +94,22 @@ const AdminUserEdit: React.FC = () => {
     passwortWiederholen: '',
     })
 
+  const { userId } = useParams();
+
+    useEffect(() => {
+      console.log(userId)
+      console.log("hello")
+      if (userId !== undefined && userId !== null && userId !== "undefined" && userId !== "null" && userId !== ""){
+        setUserID(userId)
+        handleEditButton()
+        console.log(editableUser)
+        
+      }
+    },[])
   
     const handleEditButton = () => {
+      console.log(userID)
+      console.log("hello")
         const token = localStorage.getItem("accessToken");
         axios.get(addSuffixToBackendURL("users/"+userID), {headers: { Authorization: `Bearer ${token}` }})
       .then((response) => {
@@ -444,8 +459,10 @@ const AdminUserEdit: React.FC = () => {
               >
                 <MenuItem value={Nutzerrolle.Admin}>Admin</MenuItem>
                 <MenuItem value={Nutzerrolle.Netzbetreiber}>Netzbetreiber</MenuItem>
-                <MenuItem value={Nutzerrolle.Kunde}>Kunde</MenuItem>
-                <MenuItem value={Nutzerrolle.Berater}>Berater</MenuItem>
+                <MenuItem value={Nutzerrolle.Haushalte}>Haushalte</MenuItem>
+                <MenuItem value={Nutzerrolle.Energieberatende}>Energieberatende</MenuItem>
+                <MenuItem value={Nutzerrolle.Solateuere}>Solateuere</MenuItem>
+                <MenuItem value={undefined}>Error</MenuItem>
               </Select>
               {touched.nutzerrole && errors.nutzerrole && <FormHelperText>{errors.nutzerrole}</FormHelperText>}
             </FormControl>

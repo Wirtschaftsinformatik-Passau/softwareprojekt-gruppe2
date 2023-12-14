@@ -42,11 +42,65 @@ const mockData =[
   }
 ]
 
+const mockData2 = [
+  {
+      "id": "/login",
+      "data": [
+          {
+              "x": "11.12.2023",
+              "y": 2
+          },
+          {
+              "x": "12.12.2023",
+              "y": 21
+          },
+          {
+              "x": "13.12.2023",
+              "y": 9
+          },
+          {
+              "x": "14.12.2023",
+              "y": 2
+          }
+      ]
+  },
+  {
+      "id": "/registration",
+      "data": [
+          {
+              "x": "12.12.2023",
+              "y": 10
+          },
+          {
+            "x": "13.12.2023",
+            "y": 43
+        }
+        ,{
+          "x": "14.12.2023",
+          "y": 20
+      }
+      ]
+  },
+  {
+      "id": "/userOverview",
+      "data": [
+          {
+              "x": "13.12.2023",
+              "y": 43
+          },
+          {
+              "x": "14.12.2023",
+              "y": 20
+          }
+      ]
+  },]
 
-const LineChart = ({ data = mockData,isDashboard = false }) => {
+
+const LineChart = ({ data = mockData2,isDashboard = false }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
+  console.log(data);
 
   return (
     <ResponsiveLine
@@ -91,7 +145,7 @@ const LineChart = ({ data = mockData,isDashboard = false }) => {
         type: "linear",
         min: "auto",
         max: "auto",
-        stacked: true,
+        stacked: false,
         reverse: false,
       }}
       yFormat=" >-.2f"

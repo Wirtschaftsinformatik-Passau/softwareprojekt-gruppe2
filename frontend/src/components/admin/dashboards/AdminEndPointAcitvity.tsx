@@ -11,7 +11,8 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 const AdminEndPointActivity = () => {
     const [lineData, setLineData] = useState([]);
     const [barData, setBarData] = useState([]);
-    const [successData, setSuccessData] = useState([]);
+    const [loginData, setLoginData] = useState([]);
+    const [registerData, setRegisterData] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -26,12 +27,17 @@ const AdminEndPointActivity = () => {
 
       useEffect(() => {
         const token = localStorage.getItem("accessToken");
-        setStateOtherwiseRedirect(setSuccessData, "admin/successOverview", navigate,  {Authorization: `Bearer ${token}`})
+        setStateOtherwiseRedirect(setLoginData, "admin/loginOverview", navigate,  {Authorization: `Bearer ${token}`})
       } , [])
+
+      useEffect(() => { 
+        const token = localStorage.getItem("accessToken");
+        setStateOtherwiseRedirect(setRegisterData, "admin/registrationOverview", navigate,  {Authorization: `Bearer ${token}`})
+      },[])
   
 
     return (
-        <Box>
+       
         <Box
         m="20px"
         display="grid"
@@ -73,18 +79,11 @@ const AdminEndPointActivity = () => {
            <LineChart isDashboard={false} data={lineData}/>
             </Box>
    </Grow>
-   </Box>
-   {/*
-   <Box
-        m="20px"
-        display="grid"
-        gridTemplateColumns="repeat(2, 1fr)"
-        gridAutoRows="140px"
-        gap="10px">
-        <Box gridColumn={"span 1"} m="20px">
-             <Header title="Endpunktaktivität allgemein" subtitle="Anzahl der aufgerufenen Backend Endpunkte"/>
+   <Box gridColumn={"span 1"} m="20px">
+             <Header title="Login Aktivität allgemein" subtitle="Anzahl der Logins in der vergangenen Zeit"/>
              </Box>
              <Box gridColumn={"span 1"} m="20px">
+             <Header title="Registrierung Aktivität allgemein" subtitle="Anzahl der Registrierungen in der vergangenen Zeit"/>
              </Box>
        
    <Grow in={true} timeout={1000}>
@@ -98,14 +97,27 @@ const AdminEndPointActivity = () => {
        boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
        justifyContent="center">
           
-           <BarChart isDashboard={true} data={successData}/>
+           <BarChart isDashboard={false} data={loginData}/>
             </Box>
-    </Grow>
+   </Grow>
+   <Grow in={true} timeout={1000}>
+       <Box 
+       gridRow={"span 2"}
+       gridColumn={"span 1"} 
+       display="flex"
+       alignItems="center"
+     
+       borderRadius={"15px"}
+       boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
+       justifyContent="center">
+          
+           <BarChart isDashboard={false} data={registerData}/>
+            </Box>
+   </Grow>
+   
+   </Box>
    
 
-    </Box> */}
-   </Box>
-  
         
     )
 

@@ -25,7 +25,7 @@ class Adresse(Base):
 
 
 class Nutzer(Base):
-    __tablename__ = 'nutzer'
+    __tablename__ = 'Nutzer'
     user_id = Column(Integer, Identity(), primary_key=True)
     nachname = Column(String)
     vorname = Column(String)
@@ -38,5 +38,14 @@ class Nutzer(Base):
 
 
 class Netzbetreiber(Base):
-    __tablename__ = 'netzbetreiber'
+    __tablename__ = 'Netzbetreiber'
     user_id = Column(Integer, Identity(), primary_key=True)
+
+class Tarif(Base):
+    __tablename__ = 'Tarif'
+    tarif_id = Column(Integer, Identity(), primary_key=True)
+    tarifname = Column(String, unique=True)
+    preis_kwh = Column(Float)
+    grundgebuehr = Column(Float)
+    laufzeit = Column(Integer)
+    spezielle_konditionen = Column(String)

@@ -9,6 +9,7 @@ import Topbar from "../../components/admin/dashboards/Topbar";
 import Sidebar from "../../components/netzbetreiber/dashboard/NetzSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import NetzHome from "../../components/netzbetreiber/dashboard/NetzHomeDashboard";
+import NetzbetreiberTarifCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifCreate";
 
 
 
@@ -35,6 +36,7 @@ const  NetzbetreiberDashboard = () => {
                 <Routes>
                 <Route path="/" element={<NetzHome/>}/>
                 <Route path="/faq" element={<FAQ items={faqItems}/>}/>
+                <Route path="/tarifCreate" element={<NetzbetreiberTarifCreate/>}/>
                 </Routes>
                 </div>
                 

@@ -175,7 +175,7 @@ const Sidebar1 = () => {
             />
             <Item
               title="Tarif erstellen"
-              to="/tarif-create"
+              to="/tarifCreate"
               icon={<AddBoxIcon />}
               selected={selected}
               setSelected={setSelected}

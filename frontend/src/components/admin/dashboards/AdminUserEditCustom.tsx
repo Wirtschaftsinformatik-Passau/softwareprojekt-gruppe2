@@ -125,55 +125,52 @@ const AdminUserEdit = ({}) => {
         });
     }, []);
  
-    const updateUser = (values: any, {setSubmitting}: any) => {
-        const { adresse, userToSave: newUser } = extractAdressAndUser(values);
-        console.log(adresse);
-        console.log(newUser);
-        axios.put(addSuffixToBackendURL("users/adresse" + newUser.adresse_id), adresse)
-            .then((response) => {
-                const adresse_id = response.data.adresse_id
-                newUser.adresse_id = adresse_id
-                if (response.status === 201) {
-                    console.log("Adresse erfolgreich gespeichert")
-                    
-                    axios.put(addSuffixToBackendURL("users/" + userID), newUser)
-                        .then((response) => {
-                            if (response.status === 204) {
-                                setSuccessModalIsOpen(true)
-                                console.log("User erfolgreich gespeichert")
-                            }
-                        })
-                        .catch((error) => {
-                            if (error.response && error.response.status === 422) {
-                        
-                                console.log("Server Response on Error 422:", error.response.data);
-                            }else if (error.response && error.response.status === 409) {
-                                setFailModalIsOpen(true)
-                            }
-                                  else {
-                                console.log(error);
-                            }
-                        }
-                        )
-                        .finally(() => {
-                            setSubmitting(false);
-                        }
-                        )
-                }
-            })
-            .catch((error) => {
-                if (error.response && error.response.status === 422) {
-                    console.log("Server Response on Error 422:", error.response.data);
-                } else {
-                    console.log(error);
-                }
-            })
-            .finally(() => {
-                setSubmitting(false);
-            })
-    
-    
-    }
+    const registerUser = (values: any, {setSubmitting}: any) => {
+
+      const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
+      axios.post(addSuffixToBackendURL("users/adresse"), adresse
+      )
+          .then((response) => {
+              const adresse_id = response.data.adresse_id
+              if (response.status === 201) {
+                  console.log("Adresse erfolgreich gespeichert")
+                  const user: IUser = new User(values.vorname, values.nachname, values.telefon, values.email, 
+                    values.passwort || "", values.nutzerrole, values.geburtstag, adresse_id, "Herr")
+                  axios.put(addSuffixToBackendURL("users/" + userId), user)
+                      .then((response) => {
+                          if (response.status === 204) {
+                              setSuccessModalIsOpen(true)
+                              console.log("User erfolgreich gespeichert")
+                          }
+                      })
+                      .catch((error) => {
+                          if (error.response && error.response.status === 422) {
+                      
+                              console.log("Server Response on Error 422:", error.response.data);
+                          }else if (error.response && error.response.status === 409) {
+                              setFailModalIsOpen(true)
+                          }
+                                else {
+                              console.log(error);
+                          }
+                      }
+                      )
+                      .finally(() => {
+                          setSubmitting(false);
+                      }
+                      )
+              }
+          })
+          .catch((error) => {
+              if (error.response && error.response.status === 422) {
+                  console.log("Server Response on Error 422:", error.response.data);
+              } else {
+                  console.log(error);
+              }
+          })
+  
+  
+  }
  
   if (isLoading) {
     return (
@@ -189,8 +186,8 @@ const AdminUserEdit = ({}) => {
         <Header title="Nutzer bearbeiten" subtitle="Bearbeite die Daten" />
       </Box>
         <Box>
-            <Formik
-        onSubmit={(updateUser)}
+        <Formik
+        onSubmit={registerUser}
         initialValues={initialValues}
         validationSchema={checkoutSchema}
         style={{
@@ -437,10 +434,9 @@ const AdminUserEdit = ({}) => {
               >
                 <MenuItem value={Nutzerrolle.Admin}>Admin</MenuItem>
                 <MenuItem value={Nutzerrolle.Netzbetreiber}>Netzbetreiber</MenuItem>
-                <MenuItem value={Nutzerrolle.Haushalte}>Haushalte</MenuItem>
                 <MenuItem value={Nutzerrolle.Energieberatende}>Energieberatende</MenuItem>
-                <MenuItem value={Nutzerrolle.Solarteure}>Solateuere</MenuItem>
-                <MenuItem value={undefined}>Error</MenuItem>
+                <MenuItem value={Nutzerrolle.Haushalte}>Haushalte</MenuItem>
+                <MenuItem value={Nutzerrolle.Solarteure}>Solateure</MenuItem>
               </Select>
               {touched.nutzerrole && errors.nutzerrole && <FormHelperText>{errors.nutzerrole}</FormHelperText>}
             </FormControl>
@@ -468,18 +464,58 @@ const AdminUserEdit = ({}) => {
                   },
               }}
               />
-            
+              <TextField
+                fullWidth
+                variant="outlined"
+                type="password"
+                label="Passwort"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.passwort}
+                name="passwort"
+                error={!!touched.passwort && !!errors.passwort}
+                helperText={touched.passwort && errors.passwort}
+                InputLabelProps={{
+                  style: { color: touched.passwort && errors.passwort ? 'red' : `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: touched.passwort && errors.passwort ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.passwort && errors.passwort   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              />
+              <TextField
+                fullWidth
+                variant="outlined"
+                type="password"
+                label="Passwort wiederholen"
+                onBlur={handleBlur}
+                onChange={handleChange}
+                value={values.passwortWiederholen}
+                name="passwortWiederholen"
+                error={!!touched.passwortWiederholen && !!errors.passwortWiederholen}
+                helperText={touched.passwortWiederholen && errors.passwortWiederholen}
+                InputLabelProps={{
+                  style: { color: touched.passwortWiederholen && errors.passwortWiederholen ? 'red' : `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: touched.passwortWiederholen && errors.passwortWiederholen ? 'red' : `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: touched.passwortWiederholen && errors.passwortWiederholen   ? 'red' : `${colors.color1[500]} !important`,
+                  },
+              }}
+              />
             </Box>
-            <Box display="flex" justifyContent="space-between" mt="20px">
-            <Button type="button" sx={{background: theme.palette.neutral.main, color: theme.palette.background.default}} 
-            variant="contained"
-            onClick={() => navigate("/admin/editUser")}
-            >
-                Abbrechen
-              </Button>
-              <Button type="submit" 
-              sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
-                Profil bearbeiten
+            <Box display="flex" justifyContent="end" mt="20px">
+              <Button type="submit" sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
+                Profil erstellen
               </Button>
             </Box>
           </form>
@@ -488,7 +524,7 @@ const AdminUserEdit = ({}) => {
         </Box>
     
       <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Nutzer erfolgreich registriert!" navigationGoal="/admin"/>
+    text="Nutzer erfolgreich gespeichert!" navigationGoal="/admin"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Nutzer ID existiert nicht" />
     </>
@@ -508,10 +544,11 @@ const AdminUserEdit = ({}) => {
         stadt: yup.string().required('Stadt ist erforderlich'),
         geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
         telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
-        nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Berater, Nutzerrolle.Kunde, Nutzerrolle.Netzbetreiber], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
+        nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Energieberatende, Nutzerrolle.Haushalte,
+           Nutzerrolle.Netzbetreiber, Nutzerrolle.Solarteure], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
         email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
-        passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein').required('Passwort ist erforderlich'),
-        passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen').required('Passwortbestätigung ist erforderlich'),
+        passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein'),
+        passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen'),
       });
     
 

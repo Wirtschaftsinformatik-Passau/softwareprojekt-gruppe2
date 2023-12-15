@@ -35,6 +35,7 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
+
 #tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):

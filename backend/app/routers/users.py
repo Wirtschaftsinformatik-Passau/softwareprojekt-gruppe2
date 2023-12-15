@@ -197,7 +197,11 @@ async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = De
                                                 message=logging_msg, success=False)
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
-        db_user.passwort = hashing.Hashing.hash_password(user.passwort)
+        if user.passwort:
+            db_user.passwort = hashing.Hashing.hash_password(user.passwort)
+        else:
+            db_user.passwort = db_user.passwort
+
         await db.commit()
         await db.refresh(db_user)
         logging_obj = schemas.LoggingSchema(user_id=id, endpoint="/users/{id}", method="PUT",

@@ -25,11 +25,7 @@ const LoginSchema = yup.object().shape({
     password: yup.string().min(3, "Password must be at least 4 characters long").required("Required"),
 })
 
-interface LoginProps {
-    isAlreadyLoggedIn: boolean;
-}
-
-const LoginUI: React.FC<LoginProps> = ({isAlreadyLoggedIn=false}) => {
+const LoginUI = () => {
     const isNonMobile = useMediaQuery("(min-width: 768px)");
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -39,7 +35,7 @@ const LoginUI: React.FC<LoginProps> = ({isAlreadyLoggedIn=false}) => {
     const [modalisOpen, setModalIsOpen] = React.useState(false);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [currentUser, setCurrentUser] = React.useState(null); 
-    const[loggedIn, setLoggedIn] = React.useState(isAlreadyLoggedIn);
+    const[loggedIn, setLoggedIn] = React.useState(false);
     const navigate = useNavigate();
 
     const handleVergessenOpen = () => {
@@ -50,19 +46,16 @@ const LoginUI: React.FC<LoginProps> = ({isAlreadyLoggedIn=false}) => {
         setVergessenOpen(false);
     }
 
-    useEffect(() => {  
-        console.log("usi") 
+    useEffect(() => {   
         if (loggedIn){        
         const accessToken = localStorage.getItem("accessToken")
         const headers = {"Authorization": `Bearer ${accessToken}`}
         setStateofResponse(setCurrentUser,"users/current/single" , headers)
-        console.log(currentUser)
         }
 
-    }, [])
+    }, [loggedIn])
 
     useEffect(() => {
-        console.log(currentUser)
         if (loggedIn) { 
             console.log(currentUser.rolle === "Netzbetreiber")
             if (currentUser.rolle === "Netzbetreiber"){
@@ -71,6 +64,7 @@ const LoginUI: React.FC<LoginProps> = ({isAlreadyLoggedIn=false}) => {
             }
             
             else if (currentUser.rolle === "Admin"){
+
                 navigate("/admin")
             }
         }

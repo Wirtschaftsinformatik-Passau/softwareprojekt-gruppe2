@@ -105,7 +105,7 @@ async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_
                 date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%d.%m.%Y")
                 endpoint = log_entry["endpoint"]
                 endpoint_activity[endpoint][date] += 1
-            except json.JSONDecodeError as e:
+            except (KeyError, json.JSONDecodeError) as e:
                 handle_json_decode_error(e, current_user.user_id, "/admin/endpointOverview")
                 continue  # Ungültige Zeilen werden automatisch übersprungen
 

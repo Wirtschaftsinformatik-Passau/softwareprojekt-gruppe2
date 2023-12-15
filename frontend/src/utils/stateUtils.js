@@ -16,10 +16,10 @@ export const setStateOtherwiseRedirect = (setter, endpoint, redirectFn, headers=
     })
     .catch((err) => {
         if (err.response.status === 401) {
-          redirectFn("/login")
+          //redirectFn("/login")
         }
         else if (err.response.status === 403) {
-          redirectFn("/login");
+          //redirectFn("/login");
 
         }
         console.log(err.response.data)

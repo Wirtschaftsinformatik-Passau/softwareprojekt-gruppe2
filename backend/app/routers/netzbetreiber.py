@@ -23,11 +23,11 @@ dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
 
 
-async def check_netzbetreiber_role(current_user: models.Nutzer, method: str):
+async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, endpoint: str):
     if current_user.rolle != models.Rolle.Netzbetreiber:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
-            endpoint="/preisstrukturen",
+            endpoint=endpoint,
             method=method,
             message="Zugriff verweigert: Nutzer ist kein Netzbetreiber",
             success=False
@@ -40,7 +40,7 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str):
 @router.post("/tarife", response_model=schemas.TarifResponse)
 async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "POST")
+    await check_netzbetreiber_role(current_user, "POST", "/tarife")
     new_tarif = models.Tarif(**tarif.dict())
     db.add(new_tarif)
     await db.commit()
@@ -53,7 +53,7 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
 async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
                        current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "PUT")
+    await check_netzbetreiber_role(current_user, "PUT", "/tarife")
     query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
     result = await db.execute(query)
     existing_tarif = result.scalar_one_or_none()
@@ -73,7 +73,7 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "DELETE")
+    await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
 
     # Überprüfen, ob der Tarif existiert
     delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
@@ -99,7 +99,7 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user),
                      db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET")
+    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
     select_stmt = select(models.Tarif)
     result = await db.execute(select_stmt)
     tarife = result.scalars().all()
@@ -111,7 +111,7 @@ async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_use
 async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
                                current_user: models.Nutzer = Depends(oauth.get_current_user),
                                db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "POST")
+    await check_netzbetreiber_role(current_user, "POST", "/preisstrukturen")
     try:
         preisstruktur = models.Preisstrukturen(**preisstruktur.dict())
         db.add(preisstruktur)
@@ -152,7 +152,7 @@ async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
             response_model=schemas.PreisstrukturenResponse)
 async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.PreisstrukturenCreate,
                                current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "PUT")
+    await check_netzbetreiber_role(current_user, "PUT", "/preisstrukturen")
 
     query = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
     result = await db.execute(query)

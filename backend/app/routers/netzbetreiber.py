@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -16,6 +16,9 @@ from logging.config import dictConfig
 from app.logger import LogConfig
 from app.config import Settings
 from app.schemas import LoggingSchema
+import pandas as pd
+import io
+import re
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -35,9 +38,15 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
-#tarif erstellen
+
+def is_haushalt(user: models.Nutzer) -> bool:
+    return user.rolle == models.Rolle.Haushalte
+
+
+# tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
-async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
+async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     try:
         await check_netzbetreiber_role(current_user)
         new_tarif = models.Tarif(**tarif.dict())
@@ -48,7 +57,6 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
     except exc.IntegrityError as e:
         logger.error(f"Tarif konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht erstellt werden: {e}")
-
 
 
 # tarif aktualisieren
@@ -154,7 +162,8 @@ async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
 @router.put("/preisstrukturen/{preis_id}", status_code=status.HTTP_200_OK,
             response_model=schemas.PreisstrukturenResponse)
 async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.PreisstrukturenCreate,
-                               current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
+                               current_user: models.Nutzer = Depends(oauth.get_current_user),
+                               db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "PUT", "/preisstrukturen")
 
     query = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
@@ -198,3 +207,40 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
+
+
+@router.post("/dashboard", status_code=status.HTTP_201_CREATED, response_model=schemas.DashboardDataResponse)
+async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), file: UploadFile = File(...),
+                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "POST", "/dashboard/{user_id}")
+
+    filename = file.filename
+    match = re.search(r"_(\d+)\.csv$", filename)
+    if not match:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
+
+    user_id = int(match.group(1))
+
+    stmt = select(models.Nutzer).where(models.Nutzer.user_id == user_id)
+    result = await db.execute(stmt)
+    haushalt_user = result.scalars().first()
+    if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
+        raise HTTPException(status_code=400, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
+
+    df = pd.read_csv(io.StringIO(file.file.read().decode('utf-8')))
+    df['Zeit'] = pd.to_datetime(df['Zeit'])
+
+    for _, row in df.iterrows():
+        dashboard_data = models.DashboardData(
+            haushalt_id=current_user.user_id,
+            datum=row['Zeit'],
+            pv_erzeugung=row['PV(W)'],
+            soc=row['SOC(%)'],
+            batterie_leistung=row['Batterie(W)'],
+            zaehler=row['Zähler(W)'],
+            last=row['Last(W)']
+        )
+        db.add(dashboard_data)
+    await db.commit()
+
+    return {"dashboard_id": current_user.user_id, "message": "Daten erfolgreich hochgeladen"}

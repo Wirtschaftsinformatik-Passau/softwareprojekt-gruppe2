@@ -179,3 +179,24 @@ class PreisstrukturenCreate(BaseModel):
 
 class PreisstrukturenResponse(BaseModel):
     preis_id: int
+
+
+class DashboardDataCreate(BaseModel):
+    haushalt_id: int
+    datum: str
+    pv_erzeugung: float
+    soc: float
+    batterie_leistung: float
+    zaehler: float
+    last: float
+
+    @field_validator('pv_erzeugung', 'soc', 'batterie_leistung', 'zaehler', 'last')
+    def check_positive_value(cls, v):
+        if v < 0:
+            raise ValueError('Der Wert darf nicht negativ sein')
+        return v
+
+
+class DashboardDataResponse(BaseModel):
+    dashboard_id: int
+    message: str

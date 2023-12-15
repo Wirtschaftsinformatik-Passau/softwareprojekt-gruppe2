@@ -1,7 +1,6 @@
 import enum
 
 
-
 class Rolle(enum.Enum):
     Haushalte = 'Haushalte'
     Solarteure = 'Solarteure'

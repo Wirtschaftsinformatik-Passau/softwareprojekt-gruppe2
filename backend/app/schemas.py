@@ -154,6 +154,9 @@ class LogEntry(BaseModel):
     method: str
     success: bool
 
+    class Config:
+        from_attributes = True
+
 
 class TarifCreate(BaseModel):
     tarifname: str
@@ -165,6 +168,14 @@ class TarifCreate(BaseModel):
 
 class TarifResponse(BaseModel):
     tarif_id: int
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
+
+    class Config:
+        from_attributes = True
 
 
 class PreisstrukturenCreate(BaseModel):

@@ -219,11 +219,9 @@ async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), 
     if not match:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
 
-    user_id = int(match.group(1))
+    haushalt_id = int(match.group(1))
 
-    stmt = select(models.Nutzer).where(models.Nutzer.user_id == user_id)
-    result = await db.execute(stmt)
-    haushalt_user = result.scalars().first()
+    haushalt_user = await db.get(models.Nutzer, haushalt_id)
     if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
         raise HTTPException(status_code=400, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
 
@@ -243,4 +241,4 @@ async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), 
         db.add(dashboard_data)
     await db.commit()
 
-    return {"dashboard_id": current_user.user_id, "message": "Daten erfolgreich hochgeladen"}
+    return {"dashboard_id": haushalt_id, "message": "Daten erfolgreich hochgeladen"}

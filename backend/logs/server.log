@@ -1960,3 +1960,5 @@
 {"timestamp": "2023-12-15 16:05:41,872", "level": "ERROR", "name": "GreenEcoHub", "message": "Fehler beim Parsen der Log-Zeile: 'endpoint'", "user_id": 45, "endpoint": "/admin/endpointOverview", "method": "GET", "success": false}
 {"timestamp": "2023-12-15 16:05:41,987", "level": "INFO", "name": "GreenEcoHub", "message": "Endpoint-\u00dcbersicht erfolgreich abgerufen", "user_id": 45, "endpoint": "/admin/endpointOverview", "method": "GET", "success": true}
 {"timestamp": "2023-12-15 16:05:42,008", "level": "INFO", "name": "GreenEcoHub", "message": "Rollen\u00fcbersicht erfolgreich abgerufen", "user_id": 45, "endpoint": "/admin/userOverview", "method": "GET", "success": true}
+{"timestamp": "2023-12-15 17:52:50,689", "level": "ERROR", "name": "GreenEcoHub", "message": "Zugriff verweigert: Nutzer ist kein Netzbetreiber", "user_id": 45, "endpoint": "/tarife", "method": "GET", "success": false}
+{"timestamp": "2023-12-15 17:52:55,296", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 44, "endpoint": "/auth/login", "method": "POST", "success": true}

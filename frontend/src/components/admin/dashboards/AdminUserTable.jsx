@@ -3,8 +3,10 @@ import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../../utils/theme";
 import { useState, useEffect } from "react";
 import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
-import LockOpenOutlinedIcon from "@mui/icons-material/LockOpenOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import HomeIcon from '@mui/icons-material/Home';
+import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
+import PowerIcon from '@mui/icons-material/Power';
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import Header from "../../utility/Header";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -205,29 +207,32 @@ const UserTable = () => {
       renderCell: ({ row: {rolle} }) => {
         return (
           <Box
-            width="100%"
-            p="5px"
-            display="flex"
-            justifyContent="center"
-            backgroundColor={
-              rolle === "Admin"
-                ? colors.color2[400]
-                : rolle === "Netzbetreiber"
-                ? colors.color2[200]
-                : rolle === "Kunde"
-                ? colors.color5[300]
-                : colors.color4[600]
-            }
-            borderRadius="4px"
-          >
-            {rolle === "Admin" && <AdminPanelSettingsOutlinedIcon />}
-            {rolle === "Netzbetreiber" && <SecurityOutlinedIcon />}
-            {rolle === "Kunde" && <LockOpenOutlinedIcon />}
-            {rolle === "Berater" && <LockOpenOutlinedIcon />}
-            <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
-              {rolle}
-            </Typography>
-          </Box>
+                width="100%"
+                p="5px"
+                display="flex"
+                justifyContent="center"
+                backgroundColor={
+                  rolle === "Admin"
+                    ? colors.color1[400]
+                    : rolle === "Netzbetreiber"
+                    ? colors.color2[500]
+                    : rolle === "Energieberatende"
+                    ? colors.color3[500]
+                    : rolle === "Solarteure" 
+                    ? colors.color4[500]
+                    : colors.color5[500]
+                }
+                borderRadius="4px"
+              >
+                {rolle === "Admin" && <AdminPanelSettingsOutlinedIcon />}
+                {rolle === "Netzbetreiber" && <PowerIcon />}
+                {rolle === "Haushalte" && <HomeIcon />}
+                {rolle === "Energieberatende" && <PointOfSaleIcon />}
+                {rolle === "Solarteure" && <SolarPowerIcon />}
+                <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
+                  {rolle}
+                </Typography>
+              </Box>
         );
       },
     },

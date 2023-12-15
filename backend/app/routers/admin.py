@@ -275,8 +275,8 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
 
 @router.get("/logs", status_code=status.HTTP_200_OK, response_model=List[schemas.LogEntry])
 async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[schemas.LogEntry]:
+    await check_admin_role(current_user)
     try:
-        await check_admin_role(current_user)
         log_file_path = Path("logs/server.log")
 
         if not log_file_path.exists() or log_file_path.stat().st_size == 0:
@@ -300,7 +300,12 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
                     handle_json_decode_error(e, current_user.user_id, "/admin/logs")
                     continue
 
-        return logs
+        for l in logs:
+            try:
+                schemas.LogEntry.from_orm(l)
+            except:
+                print(l)
+        return logs[:5]
     except Exception as e:
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -310,4 +315,4 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
             success=False
         )
         logger.error(logging_error.dict())
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Logs")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Fehler beim Abrufen der Logs {e}")

@@ -171,6 +171,11 @@ class PreisstrukturenCreate(BaseModel):
     bezugspreis_kwh: float
     einspeisung_kwh: float
 
+    @field_validator('bezugspreis_kwh', 'einspeisung_kwh')
+    def check_positive_value(cls, v):
+        if v < 0:
+            raise ValueError('Der Wert darf nicht negativ sein')
+        return v
 
 class PreisstrukturenResponse(BaseModel):
     preis_id: int

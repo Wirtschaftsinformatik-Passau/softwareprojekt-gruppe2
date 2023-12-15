@@ -21,9 +21,16 @@ dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
 
 
-async def check_admin_role(current_user: models.Nutzer) -> None:
+async def check_admin_role(current_user: models.Nutzer, method: str, endpoint: str):
     if current_user.rolle != models.Rolle.Admin:
-        logger.error(f"Zugriff verweigert: Nutzer {current_user.user_id} ist kein Admin")
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=endpoint,
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Admin",
+            success=False
+        )
+        logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Nur Admins haben Zugriff auf diese Daten")
 
 
@@ -55,7 +62,7 @@ def handle_json_decode_error(e: Exception, current_user_id: int, endpoint: str) 
             response_model=List[schemas.BarChartData])
 async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.BarChartData]:
-    await check_admin_role(current_user)
+    await check_admin_role(current_user, method="GET", endpoint="/logOverview")
 
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/logOverview")
@@ -85,7 +92,7 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
 
 @router.get("/endpointOverview", status_code=status.HTTP_200_OK, response_model=List[Dict[str, Any]])
 async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[Dict[str, Any]]:
-    await check_admin_role(current_user)
+    await check_admin_role(current_user, method="GET", endpoint="/endpointOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/endpointOverview")
 
@@ -119,7 +126,7 @@ async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_
             response_model=Dict[str, List[Dict[str, Union[str, int]]]])
 async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> Dict[str, List[Dict[str, Union[str, int]]]]:
-    await check_admin_role(current_user)
+    await check_admin_role(current_user, method="GET", endpoint="/successOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/successOverview")
 
@@ -157,7 +164,7 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
 @router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.BarChartData])
 async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
-    await check_admin_role(current_user)
+    await check_admin_role(current_user, method="GET", endpoint="/registrationOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/registrationOverview")
 
@@ -191,7 +198,7 @@ async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.
             response_model=List[schemas.BarChartData])
 async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
-    await check_admin_role(current_user)
+    await check_admin_role(current_user, method="GET", endpoint="/loginOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/loginOverview")
 
@@ -224,7 +231,7 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.PieChartData]:
     try:
-        await check_admin_role(current_user)
+        await check_admin_role(current_user, method="GET", endpoint="/userOverview")
         stmt = (
             select(models.Nutzer)
         )
@@ -276,7 +283,7 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
 @router.get("/logs", status_code=status.HTTP_200_OK, response_model=List[schemas.LogEntry])
 async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[schemas.LogEntry]:
     try:
-        await check_admin_role(current_user)
+        await check_admin_role(current_user, method="GET", endpoint="/logs")
         log_file_path = Path("logs/server.log")
 
         if not log_file_path.exists() or log_file_path.stat().st_size == 0:

@@ -10,35 +10,50 @@ import json
 from pathlib import Path
 from collections import defaultdict, Counter
 from typing import Dict, Union, List, Any
+from pydantic import ValidationError
 import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
 from app.config import Settings
+from app.schemas import LoggingSchema
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
 dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
 
-async def check_netzbetreiber_role(current_user: models.Nutzer) -> None:
-    if current_user.rolle != models.Rolle.Netzbetreiber:
-        logger.error(f"Zugriff verweigert: Nutzer {current_user.user_id} ist kein Netzbetreiber")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
-#tarif erstellen
+async def check_netzbetreiber_role(current_user: models.Nutzer, method: str):
+    if current_user.rolle != models.Rolle.Netzbetreiber:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Netzbetreiber",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
+
+
+# tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse)
-async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user)
+async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "POST")
     new_tarif = models.Tarif(**tarif.dict())
     db.add(new_tarif)
     await db.commit()
     await db.refresh(new_tarif)
     return new_tarif
 
-#tarif aktualisieren
+
+# tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user)
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "PUT")
     query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
     result = await db.execute(query)
     existing_tarif = result.scalar_one_or_none()
@@ -53,10 +68,12 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, current_user: 
     await db.refresh(existing_tarif)
     return existing_tarif
 
-#tarif löschen
+
+# tarif löschen
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user)
+async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "DELETE")
 
     # Überprüfen, ob der Tarif existiert
     delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
@@ -77,11 +94,104 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
     await db.delete(db_tarif)
     await db.commit()
 
-#alle tarife abrufen
+
+# alle tarife abrufen
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
-async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user or models.Rolle.Admin) 
+async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                     db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET")
     select_stmt = select(models.Tarif)
     result = await db.execute(select_stmt)
     tarife = result.scalars().all()
     return tarife
+
+
+@router.post("/preisstrukturen", status_code=status.HTTP_201_CREATED,
+             response_model=schemas.PreisstrukturenResponse)
+async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
+                               current_user: models.Nutzer = Depends(oauth.get_current_user),
+                               db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "POST")
+    try:
+        preisstruktur = models.Preisstrukturen(**preisstruktur.dict())
+        db.add(preisstruktur)
+        await db.commit()
+        await db.refresh(preisstruktur)
+        logging_info = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="POST",
+            message=f"Preisstruktur {preisstruktur.preis_id} erstellt",
+            success=True
+        )
+        logger.info(logging_info.dict())
+        return preisstruktur
+    except SQLAlchemyError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="POST",
+            message=f"SQLAlchemy Fehler beim Erstellen der Preisstruktur: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=500, detail="Datenbankfehler beim Erstellen der Preisstruktur")
+    except ValidationError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="POST",
+            message=f"Validierungsfehler: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=400, detail="Ungültige Eingabedaten")
+
+
+@router.put("/preisstrukturen/{preis_id}", status_code=status.HTTP_200_OK,
+            response_model=schemas.PreisstrukturenResponse)
+async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.PreisstrukturenCreate,
+                               current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "PUT")
+
+    query = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
+    result = await db.execute(query)
+    preisstruktur = result.scalars().first()
+
+    if preisstruktur is None:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="PUT",
+            message=f"Preisstruktur mit ID {preis_id} nicht gefunden",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=404, detail=f"Preisstruktur mit ID {preis_id} nicht gefunden")
+
+    try:
+        for key, value in preisstruktur_data.dict().items():
+            setattr(preisstruktur, key, value)
+
+        await db.commit()
+        await db.refresh(preisstruktur)
+        logging_info = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/preisstrukturen/{preis_id}",
+            method="PUT",
+            message=f"Preisstruktur {preis_id} aktualisiert",
+            success=True
+        )
+        logger.info(logging_info.dict())
+        return preisstruktur
+
+    except SQLAlchemyError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/preisstrukturen/{preis_id}",
+            method="PUT",
+            message=f"Fehler beim Aktualisieren der Preisstruktur {preis_id}: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=500, detail="Interner Serverfehler")

@@ -137,6 +137,7 @@ class BarChartData(BaseModel):
     class Config:
         from_attributes = True
 
+
 class ChartDataCategorical(BaseModel):
     id: str
     data: List[ChartData]
@@ -153,12 +154,23 @@ class LogEntry(BaseModel):
     method: str
     success: bool
 
+
 class TarifCreate(BaseModel):
-    tarifname : str
-    preis_kwh : float
-    grundgebuehr : float
-    laufzeit : int
-    spezielle_konditionen : str
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
+
 
 class TarifResponse(BaseModel):
     tarif_id: int
+
+
+class PreisstrukturenCreate(BaseModel):
+    bezugspreis_kwh: float
+    einspeisung_kwh: float
+
+
+class PreisstrukturenResponse(BaseModel):
+    preis_id: int

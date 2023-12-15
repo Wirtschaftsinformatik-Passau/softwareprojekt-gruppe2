@@ -20,14 +20,18 @@ router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
 
+
 async def check_netzbetreiber_role(current_user: models.Nutzer) -> None:
     if current_user.rolle != models.Rolle.Netzbetreiber:
         logger.error(f"Zugriff verweigert: Nutzer {current_user.user_id} ist kein Netzbetreiber")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
-#tarif erstellen
+
+# tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
-async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
+async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     try:
         await check_netzbetreiber_role(current_user)
         new_tarif = models.Tarif(**tarif.dict())
@@ -39,9 +43,12 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
         logger.error(f"Tarif konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht erstellt werden: {e}")
 
-#tarif aktualisieren
-@router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
+
+# tarif aktualisieren
+@router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse, status_code=status.HTTP_200_OK)
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user)
     query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
     result = await db.execute(query)
@@ -57,9 +64,11 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, current_user: 
     await db.refresh(existing_tarif)
     return existing_tarif
 
-#tarif löschen
+
+# tarif löschen
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
+async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user)
 
     # Überprüfen, ob der Tarif existiert
@@ -81,11 +90,22 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
     await db.delete(db_tarif)
     await db.commit()
 
-#alle tarife abrufen
+
+# alle tarife abrufen
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
-async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user), db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user or models.Rolle.Admin) 
+async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                     db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user or models.Rolle.Admin)
     select_stmt = select(models.Tarif)
     result = await db.execute(select_stmt)
     tarife = result.scalars().all()
     return tarife
+
+@router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
+async def get_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                     db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user or models.Rolle.Admin)
+    select_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+    result = await db.execute(select_stmt)
+    tarif = result.scalars().all()
+    return tarif[0]

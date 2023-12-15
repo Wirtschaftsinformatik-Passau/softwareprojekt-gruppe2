@@ -10,7 +10,9 @@ import Sidebar from "../../components/netzbetreiber/dashboard/NetzSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import NetzHome from "../../components/netzbetreiber/dashboard/NetzHomeDashboard";
 import NetzbetreiberTarifCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifCreate";
-
+import NetzbetreiberTarifTable from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifTable";
+import NetzbetreiberTarifEditSelect from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifEditSelect";
+import NetzbetreiberTarifEdit from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifEdit";
 
 
 const  NetzbetreiberDashboard = () => {
@@ -37,6 +39,8 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/" element={<NetzHome/>}/>
                 <Route path="/faq" element={<FAQ items={faqItems}/>}/>
                 <Route path="/tarifCreate" element={<NetzbetreiberTarifCreate/>}/>
+                <Route path="/tarifTable" element={<NetzbetreiberTarifTable/>}/>
+                <Route path="/tarifEdit" element={<NetzbetreiberTarifEdit/>}/>
                 </Routes>
                 </div>
                 

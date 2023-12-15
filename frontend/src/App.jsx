@@ -29,8 +29,6 @@ const App = () => {
         })  
     },[])
 
-    console.log("is logged in or not ")
-    console.log(isLoggedIn)
     return (
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>

@@ -168,7 +168,7 @@ const Sidebar1 = () => {
             </Typography>
             <Item
               title="Tarifübersicht"
-              to="/tarif"
+              to="/tarifTable"
               icon={<TableViewIcon/>}
               selected={selected}
               setSelected={setSelected}
@@ -182,7 +182,7 @@ const Sidebar1 = () => {
             />
             <Item
               title="Tarif bearbeiten"
-              to="/tarif-edit"
+              to="/tarifEdit"
               icon={<EditIcon/>}
               selected={selected}
               setSelected={setSelected}

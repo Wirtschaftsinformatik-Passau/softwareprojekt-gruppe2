@@ -286,8 +286,10 @@ async def add_dashboard_smartmeter_data(db: AsyncSession = Depends(database.get_
 async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
-    haushalt_user = await db.get(models.Nutzer, haushalt_id)
-    if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
+    stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
+    result = await db.execute(stmt)
+    nutzer_rolle = result.scalar_one_or_none()
+    if nutzer_rolle is None or nutzer_rolle != models.Rolle.Haushalte:
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="dashboard/{haushalt_id}",

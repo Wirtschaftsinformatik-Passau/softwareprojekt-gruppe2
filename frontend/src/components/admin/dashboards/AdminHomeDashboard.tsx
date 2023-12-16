@@ -56,7 +56,13 @@ const AdminEndPointActivity = () => {
         setIsLoading2(false)
       })
       .catch((err) => { 
-        console.log(err)
+        if (err.response.status === 401) {
+          navigate("/login");
+        }
+        else if (err.response.status === 403) {
+          navigate("/login");
+
+        }
         setIsLoading(false)
         setIsLoading2(false)
       })

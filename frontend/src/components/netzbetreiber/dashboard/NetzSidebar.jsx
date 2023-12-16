@@ -164,7 +164,7 @@ const Sidebar1 = () => {
               color={colors.white[200]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Data
+              Tarife
             </Typography>
             <Item
               title="Tarifübersicht"
@@ -187,11 +187,31 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            
+             <Typography
+              variant="h6"
+              color={colors.white[200]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Strompreise
+            </Typography>
             <Item
-              title="Strompreiskonfiguration"
-              to="/priceConfig"
+              title="Preisübersicht"
+              to="/priceTable"
               icon={<AttachMoneyIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Preis erstellen"
+              to="/priceCreate"
+              icon={<AddBoxIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Preis bearbeiten"
+              to="/priceEdit"
+              icon={<EditIcon/>}
               selected={selected}
               setSelected={setSelected}
             />

@@ -87,3 +87,7 @@
 {"timestamp": "2023-12-14 20:21:01,610", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 43, "role": "Netzbetreiber", "msg": "User registriert"}
 {"timestamp": "2023-12-14 20:21:07,722", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 44, "role": "Netzbetreiber", "msg": "User registriert"}
 {"timestamp": "2023-12-14 22:03:27,459", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 45, "role": "Admin", "msg": "User registriert"}
+{"timestamp": "2023-12-16 14:57:52,402", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 46, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-16 14:57:56,620", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": null, "user_id": 0, "role": "unknown", "msg": "Email 1@m0.de bereits vergeben"}
+{"timestamp": "2023-12-16 14:58:02,346", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 47, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-16 14:58:08,756", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 48, "role": "Energieberatende", "msg": "User registriert"}

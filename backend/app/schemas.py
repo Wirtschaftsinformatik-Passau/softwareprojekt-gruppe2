@@ -191,7 +191,6 @@ class PreisstrukturenCreate(BaseModel):
 class PreisstrukturenResponse(BaseModel):
     preis_id: int
 
-
 class DashboardDataCreate(BaseModel):
     haushalt_id: int
     datum: str
@@ -211,3 +210,12 @@ class DashboardDataCreate(BaseModel):
 class DashboardDataResponse(BaseModel):
     dashboard_id: int
     message: str
+
+class RollenOverview(BaseModel):
+    rolle: str
+    count: int
+class NutzerDateResponse(BaseModel):
+    gestern: RollenOverview
+    heute: RollenOverview
+
+

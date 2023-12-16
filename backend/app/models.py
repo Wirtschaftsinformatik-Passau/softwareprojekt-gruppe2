@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey,Identity
+from sqlalchemy import (create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum,
+                        ForeignKey, Identity, TIMESTAMP, func)
 from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -31,6 +32,7 @@ class Nutzer(Base):
                                 create_type=False), nullable=False)
     telefonnummer = Column(String)
     adresse_id = Column(Integer, ForeignKey(f'adresse.adresse_id' if settings.OS == 'Linux' else "Adresse.adresse_id"))
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 
 class Netzbetreiber(Base):

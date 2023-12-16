@@ -209,14 +209,17 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
 
-@router.post("/dashboard", status_code=status.HTTP_201_CREATED, response_model=schemas.DashboardDataResponse)
-async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), file: UploadFile = File(...),
-                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "POST", "/dashboard/{user_id}")
+@router.post("/dashboard", status_code=status.HTTP_201_CREATED,
+             response_model=schemas.DashboardSmartMeterDataResponse)
+async def add_dashboard_smartmeter_data(db: AsyncSession = Depends(database.get_db_async), file: UploadFile = File(...),
+                                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "POST", "/dashboard")
     try:
         filename = file.filename
         match = re.search(r"_(\d+)\.csv$", filename)
-        if not match:
+        if match:
+            haushalt_id = int(match.group(1))
+        else:
             logging_error = schemas.LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint="/dashboard",
@@ -226,8 +229,6 @@ async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), 
             )
             logger.error(logging_error.dict())
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
-
-        haushalt_id = int(match.group(1))
 
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
         if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
@@ -245,8 +246,8 @@ async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), 
         df['Zeit'] = pd.to_datetime(df['Zeit'])
 
         for _, row in df.iterrows():
-            dashboard_data = models.DashboardData(
-                haushalt_id=current_user.user_id,
+            dashboard_data = models.DashboardSmartMeterData(
+                haushalt_id=haushalt_id,
                 datum=row['Zeit'],
                 pv_erzeugung=row['PV(W)'],
                 soc=row['SOC(%)'],
@@ -261,20 +262,89 @@ async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), 
             user_id=current_user.user_id,
             endpoint="/dashboard",
             method="POST",
-            message=f"Dashboard-Daten für Nutzer {haushalt_id} erfolgreich hinzugefügt",
+            message=f"Smart-Meter-Daten für Nutzer {haushalt_id} erfolgreich hinzugefügt",
             success=True
         )
         logger.info(logging_info.dict())
 
-        return {"dashboard_id": haushalt_id, "message": "Daten erfolgreich hochgeladen"}
+        return {"message": "Smart-Meter-Daten erfolgreich hochgeladen"}
 
     except Exception as e:
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/dashboard",
             method="POST",
-            message=f"Fehler beim Hinzufügen von Dashboard-Daten: {str(e)}",
+            message=f"Fehler beim Hinzufügen von Smart-Meter-Daten: {str(e)}",
             success=False
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
+
+
+@router.get("/dashboard/{haushalt_id}", status_code=status.HTTP_200_OK,
+            response_model=List[schemas.AggregatedDashboardSmartMeterData])
+async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSession = Depends(database.get_db_async),
+                                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
+    haushalt_user = await db.get(models.Nutzer, haushalt_id)
+    if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="dashboard/{haushalt_id}",
+            method="POST",
+            message="Haushalt nicht gefunden oder Rolle unpassend",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
+    try:
+        stmt = select(
+            models.DashboardSmartMeterData.datum,
+            func.sum(models.DashboardSmartMeterData.pv_erzeugung).label('gesamt_pv_erzeugung'),
+            func.avg(models.DashboardSmartMeterData.soc).label('gesamt_soc'),
+            func.sum(models.DashboardSmartMeterData.batterie_leistung).label('gesamt_batterie_leistung'),
+            func.sum(models.DashboardSmartMeterData.last).label('gesamt_last')
+        ).group_by(models.DashboardSmartMeterData.datum)
+        result = await db.execute(stmt)
+        aggregated_data = result.fetchall()
+
+        if not aggregated_data:
+            raise HTTPException(status_code=404, detail="Keine Dashboard-Daten für diesen Haushalt gefunden")
+
+        logging_info = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="dashboard/{haushalt_id}",
+            method="GET",
+            message="Dashboard-Daten erfolgreich abgerufen",
+            success=True
+        )
+        logger.info(logging_info.dict())
+
+        return [schemas.AggregatedDashboardSmartMeterData(
+            datum=row[0].isoformat() if row[0] else None,
+            gesamt_pv_erzeugung=row[1],
+            gesamt_soc=row[2],
+            gesamt_batterie_leistung=row[3],
+            gesamt_last=row[4]
+        ) for row in aggregated_data]
+
+    except HTTPException as e:
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/dashboard",
+            method="GET",
+            message=f"Ausnahme aufgetreten: {e.detail}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise
+    except Exception as e:
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/dashboard",
+            method="GET",
+            message=f"Fehler beim Abrufen aggregierter Dashboard-Daten: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=500, detail="Interner Serverfehler")

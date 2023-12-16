@@ -1,5 +1,5 @@
 import datetime
-from pydantic import BaseModel, EmailStr, PastDate, field_validator
+from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field
 from datetime import date
 from typing import Dict, List
 
@@ -177,26 +177,18 @@ class PreisstrukturenCreate(BaseModel):
             raise ValueError('Der Wert darf nicht negativ sein')
         return v
 
+
 class PreisstrukturenResponse(BaseModel):
     preis_id: int
 
 
-class DashboardDataCreate(BaseModel):
-    haushalt_id: int
+class AggregatedDashboardSmartMeterData(BaseModel):
     datum: str
-    pv_erzeugung: float
-    soc: float
-    batterie_leistung: float
-    zaehler: float
-    last: float
-
-    @field_validator('pv_erzeugung', 'soc', 'batterie_leistung', 'zaehler', 'last')
-    def check_positive_value(cls, v):
-        if v < 0:
-            raise ValueError('Der Wert darf nicht negativ sein')
-        return v
+    gesamt_pv_erzeugung: float = Field(..., description="Gesamtleistung der PV-Anlagen")
+    gesamt_soc: float = Field(..., description="Durchschnittlicher SOC aller Speicher")
+    gesamt_batterie_leistung: float = Field(..., description="Gesamtleistung der Batterien")
+    gesamt_last: float = Field(..., description="Gesamtlastverbrauch")
 
 
-class DashboardDataResponse(BaseModel):
-    dashboard_id: int
+class DashboardSmartMeterDataResponse(BaseModel):
     message: str

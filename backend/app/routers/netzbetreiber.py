@@ -47,8 +47,8 @@ def is_haushalt(user: models.Nutzer) -> bool:
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "POST", "/tarife")
     try:
-        await check_netzbetreiber_role(current_user)
         new_tarif = models.Tarif(**tarif.dict())
         db.add(new_tarif)
         await db.commit()
@@ -213,32 +213,68 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
 async def add_dashboard_data(db: AsyncSession = Depends(database.get_db_async), file: UploadFile = File(...),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{user_id}")
+    try:
+        filename = file.filename
+        match = re.search(r"_(\d+)\.csv$", filename)
+        if not match:
+            logging_error = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/dashboard",
+                method="POST",
+                message="Ungültiger Dateiname",
+                success=False
+            )
+            logger.error(logging_error.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
 
-    filename = file.filename
-    match = re.search(r"_(\d+)\.csv$", filename)
-    if not match:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
+        haushalt_id = int(match.group(1))
 
-    haushalt_id = int(match.group(1))
+        haushalt_user = await db.get(models.Nutzer, haushalt_id)
+        if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
+            logging_error = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/dashboard",
+                method="POST",
+                message=f"Nutzer {haushalt_id} ist nicht in der Rolle 'Haushalte'",
+                success=False
+            )
+            logger.error(logging_error.dict())
+            raise HTTPException(status_code=400, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
 
-    haushalt_user = await db.get(models.Nutzer, haushalt_id)
-    if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
-        raise HTTPException(status_code=400, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
+        df = pd.read_csv(io.StringIO(file.file.read().decode('utf-8')))
+        df['Zeit'] = pd.to_datetime(df['Zeit'])
 
-    df = pd.read_csv(io.StringIO(file.file.read().decode('utf-8')))
-    df['Zeit'] = pd.to_datetime(df['Zeit'])
+        for _, row in df.iterrows():
+            dashboard_data = models.DashboardData(
+                haushalt_id=current_user.user_id,
+                datum=row['Zeit'],
+                pv_erzeugung=row['PV(W)'],
+                soc=row['SOC(%)'],
+                batterie_leistung=row['Batterie(W)'],
+                zaehler=row['Zähler(W)'],
+                last=row['Last(W)']
+            )
+            db.add(dashboard_data)
+        await db.commit()
 
-    for _, row in df.iterrows():
-        dashboard_data = models.DashboardData(
-            haushalt_id=current_user.user_id,
-            datum=row['Zeit'],
-            pv_erzeugung=row['PV(W)'],
-            soc=row['SOC(%)'],
-            batterie_leistung=row['Batterie(W)'],
-            zaehler=row['Zähler(W)'],
-            last=row['Last(W)']
+        logging_info = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/dashboard",
+            method="POST",
+            message=f"Dashboard-Daten für Nutzer {haushalt_id} erfolgreich hinzugefügt",
+            success=True
         )
-        db.add(dashboard_data)
-    await db.commit()
+        logger.info(logging_info.dict())
 
-    return {"dashboard_id": haushalt_id, "message": "Daten erfolgreich hochgeladen"}
+        return {"dashboard_id": haushalt_id, "message": "Daten erfolgreich hochgeladen"}
+
+    except Exception as e:
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/dashboard",
+            method="POST",
+            message=f"Fehler beim Hinzufügen von Dashboard-Daten: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")

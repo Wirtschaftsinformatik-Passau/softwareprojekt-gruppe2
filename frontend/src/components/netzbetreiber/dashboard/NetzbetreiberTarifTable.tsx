@@ -86,6 +86,12 @@ const columns = [
         );
       },
     },
+    {
+      field: "spezielle_konditionen",
+      headerName: "Spezielle Konditionen",
+      flex: 1,
+      cellClassName: "name-column--cell",
+    },
     
   ];
 return (

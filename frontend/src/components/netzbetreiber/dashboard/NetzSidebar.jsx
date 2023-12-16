@@ -5,7 +5,7 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -164,7 +164,7 @@ const Sidebar1 = () => {
               color={colors.white[200]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Data
+              Tarife
             </Typography>
             <Item
               title="Tarifübersicht"
@@ -187,7 +187,34 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            
+             <Typography
+              variant="h6"
+              color={colors.white[200]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Strompreise
+            </Typography>
+            <Item
+              title="Preisübersicht"
+              to="/priceTable"
+              icon={<AttachMoneyIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Preis erstellen"
+              to="/priceCreate"
+              icon={<AddBoxIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Preis bearbeiten"
+              to="/priceEdit"
+              icon={<EditIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
           
 
             <Typography

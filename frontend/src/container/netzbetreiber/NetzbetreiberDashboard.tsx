@@ -13,7 +13,9 @@ import NetzbetreiberTarifCreate from "../../components/netzbetreiber/dashboard/N
 import NetzbetreiberTarifTable from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifTable.tsx";
 import NetzbetreiberTarifEditSelect from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifEditSelect";
 import NetzbetreiberTarifEdit from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifEdit";
-
+import NetzbetreiberPreisCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisCreate";
+import NetzbetreiberPreisEditSelect from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisEditSelect";
+import NetzbetreiberPreisEditCustom from "../../components/netzbetreiber/dashboard/NetzbetreibePreisEditCustom";
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -42,6 +44,9 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/tarifTable" element={<NetzbetreiberTarifTable/>}/>
                 <Route path="/tarifEdit" element={<NetzbetreiberTarifEditSelect/>}/>
                 <Route path="/tarifEdit/:tarifID" element={<NetzbetreiberTarifEdit/>}/>
+                <Route path="/priceCreate" element={<NetzbetreiberPreisCreate/>}/>
+                <Route path="/priceEdit" element={<NetzbetreiberPreisEditSelect/>}/>
+                <Route path="/priceEdit/:priceID" element={<NetzbetreiberPreisEditCustom/>}/>
                 </Routes>
                 </div>
                 

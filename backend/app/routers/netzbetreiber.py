@@ -39,11 +39,11 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
 
+
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
 
-
-# tarif erstellen
+#tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
@@ -64,20 +64,24 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
 async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
                        current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "PUT", "/tarife")
-    query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
-    result = await db.execute(query)
-    existing_tarif = result.scalar_one_or_none()
+    try:
+        await check_netzbetreiber_role(current_user, "PUT", "/tarife")
+        query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+        result = await db.execute(query)
+        existing_tarif = result.scalar_one_or_none()
 
-    if existing_tarif is None:
-        raise HTTPException(status_code=404, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
+        if existing_tarif is None:
+            raise HTTPException(status_code=404, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
 
-    for key, value in tarif.dict().items():
-        setattr(existing_tarif, key, value)
+        for key, value in tarif.dict().items():
+            setattr(existing_tarif, key, value)
 
-    await db.commit()
-    await db.refresh(existing_tarif)
-    return existing_tarif
+        await db.commit()
+        await db.refresh(existing_tarif)
+        return existing_tarif
+    except exc.IntegrityError as e:
+        logger.error(f"Tarif konnte nicht aktualisiert werden: {e}")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht aktualisiert werden: {e}")
 
 
 # tarif löschen
@@ -115,6 +119,23 @@ async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_use
     result = await db.execute(select_stmt)
     tarife = result.scalars().all()
     return tarife
+
+@router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
+async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth.get_current_user),
+                     db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
+
+    try:
+        select_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+        result = await db.execute(select_stmt)
+        tarif = result.scalars().all()
+        if len(tarif) == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
+        return tarif[0]
+
+    except exc.IntegrityError as e:
+        logger.error(f"Tarif konnte nicht gefunden werden: {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif {tarif_id} konnte nicht gefunden werden: {e}")
 
 
 @router.post("/preisstrukturen", status_code=status.HTTP_201_CREATED,

@@ -1,82 +1,192 @@
-import { Box, Button, TextField } from "@mui/material";
+import React, { useEffect } from "react";
+import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
+import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { CssBaseline } from "@material-ui/core";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import Header from "../../utility/Header";
-import { useTheme } from "@mui/material/styles";
 import { tokens } from "../../../utils/theme";
+import { useNavigate , useParams} from "react-router-dom";
+import Header from "../../utility/Header";
+import CircularProgress from '@mui/material/CircularProgress';
 import SuccessModal from "../../utility/SuccessModal";
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../../entitities/user"
-import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
 import axios from "axios";
 import { Iadresse, Adresse } from "../../../entitities/adress";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 
-const UserCreation = () => {
-  const navigate = useNavigate();
-  const isNonMobile = useMediaQuery("(min-width:600px)");
-  const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
-  const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
+class EditableUser{
+    public vorname;
+    public nachname;
+    public telefonnummer;
+    public titel;
+    public email;
+    public rolle;
+    public geburtsdatum;
+    public passwort;
+    public strasse;
+    public hausnr;
+    public plz;
+    public stadt;
+    public adresse_id;
 
-
-
-  const registerUser = (values: any, {setSubmitting}: any) => {
-
-    const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
-    axios.post(addSuffixToBackendURL("users/adresse"), adresse
-    )
-        .then((response) => {
-            const adresse_id = response.data.adresse_id
-            if (response.status === 201) {
-                console.log("Adresse erfolgreich gespeichert")
-                const user: IUser = new User(values.vorname, values.nachname, values.telefon, values.email, 
-                  values.passwort, values.nutzerrole, values.geburtstag, adresse_id, "Herr")
-                axios.post(addSuffixToBackendURL("users/registration"), user)
-                    .then((response) => {
-                        if (response.status === 201) {
-                            setSuccessModalIsOpen(true)
-                            console.log("User erfolgreich gespeichert")
-                        }
-                    })
-                    .catch((error) => {
-                        if (error.response && error.response.status === 422) {
-                    
-                            console.log("Server Response on Error 422:", error.response.data);
-                        }else if (error.response && error.response.status === 409) {
-                            setFailModalIsOpen(true)
-                        }
-                              else {
-                            console.log(error);
-                        }
-                    }
-                    )
-                    .finally(() => {
-                        setSubmitting(false);
-                    }
-                    )
-            }
-        })
-        .catch((error) => {
-            if (error.response && error.response.status === 422) {
-                console.log("Server Response on Error 422:", error.response.data);
-            } else {
-                console.log(error);
-            }
-        })
-
-
+    constructor(
+        vorname: string,
+        nachname: string,
+        telefon: string,
+        email: string,
+        passwort: string,
+        rolle:  string,
+        geburtsdatum: string,
+        strasse: string,
+        hausnr: number,
+        plz: number,
+        stadt: string,
+        title: string = "",
+        adresse_id: number = 0
+    ) {
+        this.vorname = vorname;
+        this.nachname = nachname
+        this.telefonnummer = telefon
+        this.email = email
+        this.passwort = passwort
+        this.rolle = rolle
+        this.geburtsdatum = geburtsdatum
+        this.adresse_id = adresse_id
+        this.titel = title
+        this.strasse = strasse
+        this.hausnr = hausnr
+        this.plz = plz
+        this.stadt = stadt  
+        this.adresse_id = adresse_id      
+    }
 }
 
+const extractAdressAndUser = (user: EditableUser) => {
+    const adresse: Iadresse = new Adresse(user.strasse, user.hausnr, user.plz, user.stadt, "Deutschland")
+    const userToSave: IUser = new User(user.vorname, user.nachname, user.telefonnummer, user.email, 
+        user.passwort, user.rolle, user.geburtsdatum, user.adresse_id)
+    return {adresse, userToSave}
+    
+}
+
+
+
+const AdminUserEdit = ({}) => {
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
+    const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
+    const [userID, setUserID] = React.useState("")
+    const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [editableUser, setEditableUser] = React.useState(null)
+    const [initialValues, setInitialValues] = React.useState({vorname: '',
+    nachname: '',
+    strasse: '',
+        hausnr: '',
+        plz: '',
+        stadt: '',
+        geburtstag: '2000-01-01',
+        telefon: '',
+        nutzerrole: '',
+        email: '',
+        passwort: '',
+        passwortWiederholen: '',
+        })
+    const navigate = useNavigate();
+    const { userId } = useParams();  
+    console.log("userId:", userId)
+
+    useEffect(() => {
+      const token = localStorage.getItem("accessToken");
+      console.log("userId:", userId)
+      axios.get(addSuffixToBackendURL("users/"+userId), {headers: {Authorization: `Bearer ${token}`}})
+        .then(response => {
+            const user = response.data
+          setInitialValues({
+            vorname: user.vorname,
+            nachname: user.nachname,
+            strasse: user.strasse,
+            hausnr: user.hausnr,
+            plz: user.plz,
+            stadt: user.stadt,
+            geburtstag: user.geburtsdatum,
+            telefon: user.telefonnummer,
+            nutzerrole: user.rolle,
+            email: user.email,
+            passwort: user.passwort,
+            passwortWiederholen: user.passwort,
+          })
+          setEditableUser(user)
+          setIsLoading(false);
+        })
+        .catch(error => {
+          console.log(error)
+          setIsLoading(false);
+        });
+    }, []);
+ 
+    const registerUser = (values: any, {setSubmitting}: any) => {
+
+      const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
+      axios.post(addSuffixToBackendURL("users/adresse"), adresse
+      )
+          .then((response) => {
+              const adresse_id = response.data.adresse_id
+              if (response.status === 201) {
+                  console.log("Adresse erfolgreich gespeichert")
+                  const user: IUser = new User(values.vorname, values.nachname, values.telefon, values.email, 
+                    values.passwort || "", values.nutzerrole, values.geburtstag, adresse_id, "Herr")
+                  axios.put(addSuffixToBackendURL("users/" + userId), user)
+                      .then((response) => {
+                          if (response.status === 204) {
+                              setSuccessModalIsOpen(true)
+                              console.log("User erfolgreich gespeichert")
+                          }
+                      })
+                      .catch((error) => {
+                          if (error.response && error.response.status === 422) {
+                      
+                              console.log("Server Response on Error 422:", error.response.data);
+                          }else if (error.response && error.response.status === 409) {
+                              setFailModalIsOpen(true)
+                          }
+                                else {
+                              console.log(error);
+                          }
+                      }
+                      )
+                      .finally(() => {
+                          setSubmitting(false);
+                      }
+                      )
+              }
+          })
+          .catch((error) => {
+              if (error.response && error.response.status === 422) {
+                  console.log("Server Response on Error 422:", error.response.data);
+              } else {
+                  console.log(error);
+              }
+          })
+  
+  
+  }
+ 
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Box m="20px">
-      <Header title="Registrieren" subtitle="Erstelle ein neues Nutzerprofil"/>
-      <Formik
+    <>
+      <Box m="20px">
+        <Header title="Nutzer bearbeiten" subtitle="Bearbeite die Daten" />
+      </Box>
+        <Box>
+        <Formik
         onSubmit={registerUser}
         initialValues={initialValues}
         validationSchema={checkoutSchema}
@@ -100,7 +210,7 @@ const UserCreation = () => {
               gap="30px"
               gridTemplateColumns="repeat(4, minmax(0, 1fr))"
               sx={{
-                "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
+                "& > div": { gridColumn: "span 2" },
               }}
             >
               <TextField
@@ -402,8 +512,14 @@ const UserCreation = () => {
                   },
               }}
               />
-            </Box>
-            <Box display="flex" justifyContent="end" mt="20px">
+            </Box >
+            <Box display="flex" justifyContent="space-between" mt="20px">
+            <Button type="button" sx={{background: theme.palette.neutral.main, color: theme.palette.background.default}}
+            variant="contained"
+            onClick={() => navigate("/admin/editUser")}
+            >
+                Abbrechen
+              </Button>
               <Button type="submit" sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
                 Profil erstellen
               </Button>
@@ -411,47 +527,35 @@ const UserCreation = () => {
           </form>
         )}
       </Formik>
-            
-    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Nutzer erfolgreich registriert!" navigationGoal="/admin"/>
+        </Box>
+    
+      <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
+    text="Nutzer erfolgreich gespeichert!" navigationGoal="/admin"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="E-Mail bereits vergeben!" />
-    </Box>
-  
-  );
-};
-
-const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
+    text="Nutzer ID existiert nicht" />
+    </>
+  )
+      };
 
 
-  const checkoutSchema = yup.object({
-    vorname: yup.string().required('Vorname ist erforderlich'),
-    nachname: yup.string().required('Nachname ist erforderlich'),
-    strasse: yup.string().required('Straße ist erforderlich'),
-    hausnr: yup.number().typeError("Keine valide Hausnummer").required('Hausnummer ist erforderlich'),
-    plz: yup.string().matches(/^\d{5}$/, 'PLZ muss 5 Ziffern lang sein').required('PLZ ist erforderlich'),
-    stadt: yup.string().required('Stadt ist erforderlich'),
-    geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
-    telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
-    nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Energieberatende, Nutzerrolle.Haushalte,
-      Nutzerrolle.Netzbetreiber, Nutzerrolle.Solarteure], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
-    passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein').required('Passwort ist erforderlich'),
-    passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen').required('Passwortbestätigung ist erforderlich'),
-  });
+      const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
 
-  const initialValues = {
-    vorname: '',
-    nachname: '',
-    strasse: '',
-    hausnr: '',
-    plz: '',
-    stadt: '',
-    geburtstag: '2000-01-01',
-    telefon: '',
-    nutzerrole: '',
-    email: '',
-    passwort: '',
-    passwortWiederholen: '',
-  };
 
-export default UserCreation;
+      const checkoutSchema = yup.object({
+        vorname: yup.string().required('Vorname ist erforderlich'),
+        nachname: yup.string().required('Nachname ist erforderlich'),
+        strasse: yup.string().required('Straße ist erforderlich'),
+        hausnr: yup.number().typeError("Keine valide Hausnummer").required('Hausnummer ist erforderlich'),
+        plz: yup.string().matches(/^\d{5}$/, 'PLZ muss 5 Ziffern lang sein').required('PLZ ist erforderlich'),
+        stadt: yup.string().required('Stadt ist erforderlich'),
+        geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
+        telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
+        nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Energieberatende, Nutzerrolle.Haushalte,
+           Nutzerrolle.Netzbetreiber, Nutzerrolle.Solarteure], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
+        email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
+        passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein'),
+        passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen'),
+      });
+    
+
+export default AdminUserEdit;

@@ -1,45 +1,172 @@
-import { Box, Button, TextField } from "@mui/material";
+import React, { useEffect } from "react";
+import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
+import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
 import { Formik } from "formik";
 import * as yup from "yup";
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { CssBaseline } from "@material-ui/core";
+import { tokens } from "../../utils/theme";
+import { useNavigate , useParams} from "react-router-dom";
+import Header from "../../components/utility/Header";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import Header from "../../utility/Header";
-import { useTheme } from "@mui/material/styles";
-import { tokens } from "../../../utils/theme";
-import SuccessModal from "../../utility/SuccessModal";
-import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../../entitities/user"
-import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
+import SuccessModal from "../../components/utility/SuccessModal";
+import { ILoginUser, IUser, UserDropDownOption, User } from "../../entitities/user";
 import axios from "axios";
-import { Iadresse, Adresse } from "../../../entitities/adress";
-import { addSuffixToBackendURL } from "../../../utils/networking_utils";
+import { Iadresse, Adresse } from "../../entitities/adress";
+import { addSuffixToBackendURL } from "../../utils/networking_utils";
+
+export class EditableUser{
+    public vorname;
+    public nachname;
+    public telefonnummer;
+    public titel;
+    public email;
+    public rolle;
+    public geburtsdatum;
+    public passwort;
+    public strasse;
+    public hausnr;
+    public plz;
+    public stadt;
+    public adresse_id;
+
+    constructor(
+        vorname: string,
+        nachname: string,
+        telefon: string,
+        email: string,
+        passwort: string,
+        rolle:  string,
+        geburtsdatum: string,
+        strasse: string,
+        hausnr: number,
+        plz: number,
+        stadt: string,
+        title: string = "",
+        adresse_id: number = 0
+    ) {
+        this.vorname = vorname;
+        this.nachname = nachname
+        this.telefonnummer = telefon
+        this.email = email
+        this.passwort = passwort
+        this.rolle = rolle
+        this.geburtsdatum = geburtsdatum
+        this.adresse_id = adresse_id
+        this.titel = title
+        this.strasse = strasse
+        this.hausnr = hausnr
+        this.plz = plz
+        this.stadt = stadt  
+        this.adresse_id = adresse_id      
+    }
+}
+
+const extractAdressAndUser = (user: EditableUser) => {
+    const adresse: Iadresse = new Adresse(user.strasse, user.hausnr, user.plz, user.stadt, "Deutschland")
+    const userToSave: IUser = new User(user.vorname, user.nachname, user.telefonnummer, user.email, 
+        user.passwort, user.rolle, user.geburtsdatum, user.adresse_id)
+    return {adresse, userToSave}
+    
+}
 
 
-const UserCreation = () => {
+
+const AdminUserEdit: React.FC = () => {
   const navigate = useNavigate();
-  const isNonMobile = useMediaQuery("(min-width:600px)");
-  const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
-  const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+  
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
+  const [userID, setUserID] = React.useState("")
+  const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editableUser, setEditableUser] = React.useState(null)
+  const [initialValues, setInitialValues] = React.useState({vorname: '',
+   nachname: '',
+   strasse: '',
+    hausnr: '',
+    plz: '',
+    stadt: '',
+    geburtstag: '2000-01-01',
+    telefon: '',
+    nutzerrole: '',
+    email: '',
+    passwort: '',
+    passwortWiederholen: '',
+    })
 
+  const { userId } = useParams();
 
-
-  const registerUser = (values: any, {setSubmitting}: any) => {
-
-    const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
-    axios.post(addSuffixToBackendURL("users/adresse"), adresse
+    useEffect(() => {
+      console.log(userId)
+      console.log("hello")
+      if (userId !== undefined && userId !== null && userId !== "undefined" && userId !== "null" && userId !== ""){
+        setUserID(userId)
+        handleEditButton()
+        console.log(editableUser)
+        
+      }
+    },[])
+  
+    const handleEditButton = () => {
+      console.log(userID)
+      console.log("hello")
+        const token = localStorage.getItem("accessToken");
+        axios.get(addSuffixToBackendURL("users/"+userID), {headers: { Authorization: `Bearer ${token}` }})
+      .then((response) => {
+        if(response.status === 200){
+          const user = response.data
+          setInitialValues({
+            vorname: user.vorname,
+            nachname: user.nachname,
+            strasse: user.strasse,
+            hausnr: user.hausnr,
+            plz: user.plz,
+            stadt: user.stadt,
+            geburtstag: user.geburtsdatum,
+            telefon: user.telefonnummer,
+            nutzerrole: user.rolle,
+            email: user.email,
+            passwort: "",
+            passwortWiederholen: "",
+          })
+          setEditableUser(user)
+          setIsEditing(true)
+        }
+      })
+      .catch((error) => {
+        if (error.response && error.response.status === 401 || error.response.status === 403) {
+          navigate("/login")
+        }
+        else if (error.response && error.response.status === 422) {
+          console.log("Server Response on Error 422:", error.response.data);
+      }  else if (error.response && error.response.status === 404) {
+          setFailModalIsOpen(true)
+      }
+      else {
+          console.log(error);
+      }
+    }
     )
+    }
+  
+    
+
+ 
+  const updateUser = (values: any, {setSubmitting}: any) => {
+    console.log("hello")
+    const { adresse, userToSave: newUser } = extractAdressAndUser(values);
+    console.log(adresse);
+    console.log(newUser);
+    axios.put(addSuffixToBackendURL("users/adresse" + newUser.adresse_id), adresse)
         .then((response) => {
             const adresse_id = response.data.adresse_id
+            newUser.adresse_id = adresse_id
             if (response.status === 201) {
                 console.log("Adresse erfolgreich gespeichert")
-                const user: IUser = new User(values.vorname, values.nachname, values.telefon, values.email, 
-                  values.passwort, values.nutzerrole, values.geburtstag, adresse_id, "Herr")
-                axios.post(addSuffixToBackendURL("users/registration"), user)
+                
+                axios.put(addSuffixToBackendURL("users/" + userID), newUser)
                     .then((response) => {
-                        if (response.status === 201) {
+                        if (response.status === 204) {
                             setSuccessModalIsOpen(true)
                             console.log("User erfolgreich gespeichert")
                         }
@@ -69,15 +196,24 @@ const UserCreation = () => {
                 console.log(error);
             }
         })
+        .finally(() => {
+            setSubmitting(false);
+        })
 
 
 }
+ 
+
 
   return (
-    <Box m="20px">
-      <Header title="Registrieren" subtitle="Erstelle ein neues Nutzerprofil"/>
-      <Formik
-        onSubmit={registerUser}
+    <>
+      <Box m="20px">
+        <Header title="Nutzer bearbeiten" subtitle= {isEditing ? "Bearbeite die Daten der Nutzer" : "Wähle die Nutzer ID"} />
+      </Box>
+      {isEditing ? (
+        <Box>
+            <Formik
+        onSubmit={(updateUser)}
         initialValues={initialValues}
         validationSchema={checkoutSchema}
         style={{
@@ -100,7 +236,7 @@ const UserCreation = () => {
               gap="30px"
               gridTemplateColumns="repeat(4, minmax(0, 1fr))"
               sx={{
-                "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
+                "& > div": { gridColumn: "span 2" },
               }}
             >
               <TextField
@@ -324,9 +460,10 @@ const UserCreation = () => {
               >
                 <MenuItem value={Nutzerrolle.Admin}>Admin</MenuItem>
                 <MenuItem value={Nutzerrolle.Netzbetreiber}>Netzbetreiber</MenuItem>
-                <MenuItem value={Nutzerrolle.Energieberatende}>Energieberatende</MenuItem>
                 <MenuItem value={Nutzerrolle.Haushalte}>Haushalte</MenuItem>
-                <MenuItem value={Nutzerrolle.Solarteure}>Solateure</MenuItem>
+                <MenuItem value={Nutzerrolle.Energieberatende}>Energieberatende</MenuItem>
+                <MenuItem value={Nutzerrolle.Solateuere}>Solateuere</MenuItem>
+                <MenuItem value={undefined}>Error</MenuItem>
               </Select>
               {touched.nutzerrole && errors.nutzerrole && <FormHelperText>{errors.nutzerrole}</FormHelperText>}
             </FormControl>
@@ -354,104 +491,85 @@ const UserCreation = () => {
                   },
               }}
               />
-              <TextField
-                fullWidth
-                variant="outlined"
-                type="password"
-                label="Passwort"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.passwort}
-                name="passwort"
-                error={!!touched.passwort && !!errors.passwort}
-                helperText={touched.passwort && errors.passwort}
-                InputLabelProps={{
-                  style: { color: touched.passwort && errors.passwort ? 'red' : `${colors.color1[500]}` }
-              }}
-              sx={{
-                  gridColumn: "span 2",
-                  '& .MuiInputBase-input': { 
-                      color: touched.passwort && errors.passwort ? 'red' : `${colors.color1[500]} !important`,
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: touched.passwort && errors.passwort   ? 'red' : `${colors.color1[500]} !important`,
-                  },
-              }}
-              />
-              <TextField
-                fullWidth
-                variant="outlined"
-                type="password"
-                label="Passwort wiederholen"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.passwortWiederholen}
-                name="passwortWiederholen"
-                error={!!touched.passwortWiederholen && !!errors.passwortWiederholen}
-                helperText={touched.passwortWiederholen && errors.passwortWiederholen}
-                InputLabelProps={{
-                  style: { color: touched.passwortWiederholen && errors.passwortWiederholen ? 'red' : `${colors.color1[500]}` }
-              }}
-              sx={{
-                  gridColumn: "span 2",
-                  '& .MuiInputBase-input': { 
-                      color: touched.passwortWiederholen && errors.passwortWiederholen ? 'red' : `${colors.color1[500]} !important`,
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: touched.passwortWiederholen && errors.passwortWiederholen   ? 'red' : `${colors.color1[500]} !important`,
-                  },
-              }}
-              />
+            
             </Box>
-            <Box display="flex" justifyContent="end" mt="20px">
-              <Button type="submit" sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
-                Profil erstellen
+            <Box display="flex" justifyContent="space-between" mt="20px">
+            <Button type="button" sx={{background: theme.palette.neutral.main, color: theme.palette.background.default}} 
+            variant="contained"
+            onClick={() => setIsEditing(false)}
+            >
+                Abbrechen
+              </Button>
+              <Button type="submit" 
+              sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
+                Profil bearbeiten
               </Button>
             </Box>
           </form>
         )}
       </Formik>
-            
-    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
+        </Box>
+      ) : (
+        <Box component="form"  m="20px" sx={{display: "grid"}}>
+            <TextField
+            label="Nutzer ID eingeben"
+            type="number"
+            variant="outlined"
+            //@ts-ignore
+            onChange={(e) => {
+                setUserID(e.target.value)
+                console.log(userID)
+            }
+            }
+            InputLabelProps={{
+                style: { color: `${colors.color1[500]}` }
+            }}
+            sx={{
+                gridColumn: "span 4",
+                '& .MuiInputBase-input': { color: `${colors.color1[500]} !important`,
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: `${colors.color1[500]} !important`,
+                },
+            }}
+            />
+            <Box sx={{display: "flex", justifyContent: "center", gridColumn: "span 4" , marginTop: "20px"}}>
+            <Button variant="contained" sx= {{
+                backgroundColor: `${colors.color1[400]} !important`,
+                color: theme.palette.background.default,
+                padding: "10px 20px",
+            }}  onClick={handleEditButton}>
+                Auswählen
+            </Button>
+            </Box>
+        </Box>
+      )}
+      <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
     text="Nutzer erfolgreich registriert!" navigationGoal="/admin"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="E-Mail bereits vergeben!" />
-    </Box>
-  
-  );
-};
-
-const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
+    text="Nutzer ID existiert nicht" />
+    </>
+  )
+      };
 
 
-  const checkoutSchema = yup.object({
-    vorname: yup.string().required('Vorname ist erforderlich'),
-    nachname: yup.string().required('Nachname ist erforderlich'),
-    strasse: yup.string().required('Straße ist erforderlich'),
-    hausnr: yup.number().typeError("Keine valide Hausnummer").required('Hausnummer ist erforderlich'),
-    plz: yup.string().matches(/^\d{5}$/, 'PLZ muss 5 Ziffern lang sein').required('PLZ ist erforderlich'),
-    stadt: yup.string().required('Stadt ist erforderlich'),
-    geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
-    telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
-    nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Energieberatende, Nutzerrolle.Haushalte,
-      Nutzerrolle.Netzbetreiber, Nutzerrolle.Solarteure], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
-    passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein').required('Passwort ist erforderlich'),
-    passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen').required('Passwortbestätigung ist erforderlich'),
-  });
+      const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
 
-  const initialValues = {
-    vorname: '',
-    nachname: '',
-    strasse: '',
-    hausnr: '',
-    plz: '',
-    stadt: '',
-    geburtstag: '2000-01-01',
-    telefon: '',
-    nutzerrole: '',
-    email: '',
-    passwort: '',
-    passwortWiederholen: '',
-  };
 
-export default UserCreation;
+      const checkoutSchema = yup.object({
+        vorname: yup.string().required('Vorname ist erforderlich'),
+        nachname: yup.string().required('Nachname ist erforderlich'),
+        strasse: yup.string().required('Straße ist erforderlich'),
+        hausnr: yup.number().typeError("Keine valide Hausnummer").required('Hausnummer ist erforderlich'),
+        plz: yup.string().matches(/^\d{5}$/, 'PLZ muss 5 Ziffern lang sein').required('PLZ ist erforderlich'),
+        stadt: yup.string().required('Stadt ist erforderlich'),
+        geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
+        telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
+        nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Berater, Nutzerrolle.Kunde, Nutzerrolle.Netzbetreiber], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
+        email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
+        passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein').required('Passwort ist erforderlich'),
+        passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen').required('Passwortbestätigung ist erforderlich'),
+      });
+    
+
+export default AdminUserEdit;

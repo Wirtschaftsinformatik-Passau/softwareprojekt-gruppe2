@@ -282,8 +282,8 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
 
 @router.get("/logs", status_code=status.HTTP_200_OK, response_model=List[schemas.LogEntry])
 async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[schemas.LogEntry]:
+    await check_admin_role(current_user, method="GET", endpoint="/logs")
     try:
-        await check_admin_role(current_user, method="GET", endpoint="/logs")
         log_file_path = Path("logs/server.log")
 
         if not log_file_path.exists() or log_file_path.stat().st_size == 0:
@@ -302,7 +302,19 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
                 try:
                     log_entry = json.loads(line)
                     log_entry["log_id"] = ind
-                    logs.append(log_entry)
+                    try:
+                        schemas.LogEntry.from_orm(log_entry)
+                        logs.append(log_entry)
+                    except Exception as e:
+                        logging_error = schemas.LoggingSchema(
+                            user_id=current_user.user_id,
+                            endpoint="/admin/logs",
+                            method="GET",
+                            message=f"Validierungsfehler: {str(e)}",
+                            success=False
+                        )
+                        logger.error(logging_error.dict())
+                        continue
                 except json.JSONDecodeError as e:
                     handle_json_decode_error(e, current_user.user_id, "/admin/logs")
                     continue

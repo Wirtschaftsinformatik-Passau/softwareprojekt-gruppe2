@@ -160,20 +160,31 @@ const LineChart = ({ data = mockData2,isDashboard = false }) => {
               tickPadding: 5,
               tickRotation: 0,
               legend: 'Datum',
+              
               legendOffset: 36,
               legendPosition: 'middle',
+              
               
           }}
           axisLeft={{
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: 'count',
+              legend: 'Anzahl Aufrufe',
               legendOffset: -40,
               legendPosition: 'middle'
           }}
           pointSize={10}
           pointColor={{ theme: 'background' }}
+          theme={{
+            axis: {
+              ticks: {
+                text: {
+                  fill: colors.grey[400], 
+                },
+              },
+            },
+          }}
           pointBorderWidth={2}
           pointBorderColor={{ from: 'serieColor' }}
           pointLabelYOffset={-12}
@@ -194,6 +205,7 @@ const LineChart = ({ data = mockData2,isDashboard = false }) => {
                   symbolSize: 12,
                   symbolShape: 'circle',
                   symbolBorderColor: 'rgba(0, 0, 0, .5)',
+                  itemTextColor: colors.grey[100],
                   effects: [
                       {
                           on: 'hover',

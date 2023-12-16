@@ -190,3 +190,11 @@ class PreisstrukturenCreate(BaseModel):
 
 class PreisstrukturenResponse(BaseModel):
     preis_id: int
+
+class RollenOverview(BaseModel):
+    rolle: str
+    count: int
+class NutzerDateResponse(BaseModel):
+    gestern: RollenOverview
+    heute: RollenOverview
+

@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func
 from sqlalchemy import exc
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from app import models, schemas, database, oauth
 import json
 from pathlib import Path
@@ -56,6 +56,69 @@ def handle_json_decode_error(e: Exception, current_user_id: int, endpoint: str) 
         success=False
     )
     logger.error(logging_error.dict())
+
+@router.get("/dateUserOverview", status_code=status.HTTP_200_OK)
+async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user),
+              db: AsyncSession = Depends(database.get_db_async)):
+
+    try:
+        await check_admin_role(current_user, method="GET", endpoint="/dateUserOverview")
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        start_of_yesterday = datetime.combine(yesterday, datetime.min.time())
+        start_of_today = datetime.combine(today, datetime.min.time())
+        end_of_today = start_of_today + timedelta(days=1)
+        try:
+            yesterday_stmt = select(models.Nutzer.rolle).where(
+                (models.Nutzer.created_at >= start_of_yesterday) &
+                (models.Nutzer.created_at < start_of_today)
+                    )
+            yesterday_result = await db.execute(yesterday_stmt)
+            today_stmt = select(models.Nutzer.rolle).where(
+                (models.Nutzer.created_at >= start_of_today) &
+                (models.Nutzer.created_at < end_of_today)  # Remove this condition if you want up to the current time
+            )
+            today_result = await db.execute(today_stmt)
+            yesterday_results = [x[0] for x in yesterday_result.all()]
+            today_results = [x[0] for x in today_result.all()]
+            yesterday_counter = Counter(yesterday_results)
+            today_counter = Counter(today_results)
+            formatted_data = {0: yesterday_counter, 1: today_counter}
+            logging_info = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/admin/userOverview",
+                method="GET",
+                message="Rollenübersicht erfolgreich abgerufen",
+                success=True
+            )
+            logger.info(logging_info.dict())
+            return formatted_data
+
+        except exc.IntegrityError as e:
+            if Settings.DEV:
+                msg = f"Error beim User Abfragen: {e.orig}"
+                logging_msg = msg
+            else:
+                logging_msg = f"Error beim User Abfragen: {e.orig}"
+                msg = "Es gab einen Fehler bei der user Abfrage."
+            logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/", method="GET",
+                                                message=logging_msg, success=False)
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+    except Exception as e:
+        raise e
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/admin/userOverview",
+            method="GET",
+            message=f"Fehler beim Abrufen der Rollenübersicht: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Fehler beim Abrufen der Rollenübersicht")
+
 
 
 @router.get("/logOverview", status_code=status.HTTP_200_OK,

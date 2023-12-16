@@ -194,6 +194,8 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
 
         if updated_user.passwort:
             db_user.passwort = hashing.Hashing.hash_password(updated_user.passwort)
+        else:
+            db_user.passwort = db_user.passwort
         if updated_user.geburtsdatum:
             db_user.geburtsdatum = datetime.strptime(updated_user.geburtsdatum, "%Y-%m-%d").date()
 
@@ -210,10 +212,6 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
                                                 message=logging_msg, success=False)
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
-        if user.passwort:
-            db_user.passwort = hashing.Hashing.hash_password(user.passwort)
-        else:
-            db_user.passwort = db_user.passwort
 
         await db.commit()
         await db.refresh(db_user)

@@ -1,5 +1,6 @@
-from sqlalchemy import (create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum,
-                        ForeignKey, Identity, TIMESTAMP, func)
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, \
+    Identity, TIMESTAMP, func
+
 from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -57,8 +58,9 @@ class Preisstrukturen(Base):
     einspeisung_kwh = Column(Float)
 
 
-class DashboardData(Base):
-    __tablename__ = "dashboard_data" if settings.OS == 'Linux' else "Dashboard_data"
+class DashboardSmartMeterData(Base):
+    __tablename__ = "dashboard_smartmeter_data" if settings.OS == 'Linux' else "Dashboard_smartmeter_data"
+
 
     id = Column(Integer, primary_key=True, index=True)
     haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))

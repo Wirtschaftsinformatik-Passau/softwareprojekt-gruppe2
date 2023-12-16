@@ -5,7 +5,7 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
@@ -188,6 +188,13 @@ const Sidebar1 = () => {
               setSelected={setSelected}
             />
             
+            <Item
+              title="Strompreiskonfiguration"
+              to="/priceConfig"
+              icon={<AttachMoneyIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
           
 
             <Typography

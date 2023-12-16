@@ -512,8 +512,14 @@ const AdminUserEdit = ({}) => {
                   },
               }}
               />
-            </Box>
-            <Box display="flex" justifyContent="end" mt="20px">
+            </Box >
+            <Box display="flex" justifyContent="space-between" mt="20px">
+            <Button type="button" sx={{background: theme.palette.neutral.main, color: theme.palette.background.default}}
+            variant="contained"
+            onClick={() => navigate("/admin/editUser")}
+            >
+                Abbrechen
+              </Button>
               <Button type="submit" sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
                 Profil erstellen
               </Button>

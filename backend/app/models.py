@@ -3,7 +3,6 @@ from sqlalchemy import (create_engine, Column, Integer, String, Float, Boolean, 
 from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
-
 from app.config import settings
 from app.types import Rolle
 
@@ -56,3 +55,16 @@ class Preisstrukturen(Base):
     preis_id = Column(Integer, Identity(), primary_key=True)
     bezugspreis_kwh = Column(Float)
     einspeisung_kwh = Column(Float)
+
+
+class DashboardData(Base):
+    __tablename__ = "dashboard_data" if settings.OS == 'Linux' else "Dashboard_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    datum = Column(DateTime)
+    pv_erzeugung = Column(Float)
+    soc = Column(Float)
+    batterie_leistung = Column(Float)
+    zaehler = Column(Float)
+    last = Column(Float)

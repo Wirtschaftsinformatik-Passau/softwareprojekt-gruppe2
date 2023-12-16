@@ -10,7 +10,6 @@ import logging
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
 
-
 dictConfig(LogConfigRegistration().dict())
 logger_registration = logging.getLogger("GreenEcoHubRegistration")
 
@@ -19,7 +18,6 @@ logger_adresse = logging.getLogger("GreenEcoHubAdresse")
 
 dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
-
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -57,7 +55,8 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
-        logging_msg = schemas.RegistrationLogging(user_id=db_user.user_id, role=db_user.rolle.value, msg="User registriert")
+        logging_msg = schemas.RegistrationLogging(user_id=db_user.user_id, role=db_user.rolle.value,
+                                                  msg="User registriert")
         logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/users/registration", method="POST",
                                             message="User registriert", success=True)
         logger_registration.info(logging_msg.dict())
@@ -116,9 +115,12 @@ async def get_adressen(skip: int = 0, limit: int = 100, db: AsyncSession = Depen
     } for adresse in adressen]
     return adressen_out
 
+
 @router.get("/{id}", status_code=status.HTTP_200_OK)
 async def get_user(id: int, db: AsyncSession = Depends(database.get_db_async)):
-    stmt = select(models.Nutzer, models.Adresse).join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id).where(models.Nutzer.user_id == id)
+    stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
+                                                      models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
+        models.Nutzer.user_id == id)
     result = await db.execute(stmt)
     user_adresse_pair = result.first()
     try:
@@ -142,6 +144,8 @@ async def get_user(id: int, db: AsyncSession = Depends(database.get_db_async)):
 
     }
     return user_out
+
+
 @router.put("/adresse/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
     stmt = select(models.Adresse).where(models.Adresse.adresse_id == id)
@@ -160,13 +164,14 @@ async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSessi
     await db.refresh(db_adresse)
     return {"adresse_id": db_adresse.adresse_id}
 
+
 @router.get("/current/single", status_code=status.HTTP_200_OK)
 async def read_current_user(current_user: models.Nutzer = Depends(oauth.get_current_user)):
     return current_user
 
 
 @router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
     stmt = select(models.Nutzer).where(models.Nutzer.user_id == id)
     try:
         result = await db.execute(stmt)
@@ -178,14 +183,22 @@ async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = De
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
 
-        db_user.email = user.email
-        db_user.adresse_id = user.adresse_id
-        db_user.vorname = user.vorname
-        db_user.nachname = user.nachname
-        db_user.geburtsdatum = datetime.strptime(user.geburtsdatum, "%Y-%m-%d").date()
-        db_user.telefonnummer = user.telefonnummer
+        changes = {}
+        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle",
+                      "passwort"]:
+            new_value = getattr(updated_user, field)
+            old_value = getattr(db_user, field)
+            if new_value != old_value:
+                changes[field] = {"old": old_value, "new": new_value}
+                setattr(db_user, field, new_value)
+
+        if updated_user.passwort:
+            db_user.passwort = hashing.Hashing.hash_password(updated_user.passwort)
+        if updated_user.geburtsdatum:
+            db_user.geburtsdatum = datetime.strptime(updated_user.geburtsdatum, "%Y-%m-%d").date()
+
         try:
-            db_user.rolle = models.Rolle(user.rolle)
+            db_user.rolle = models.Rolle(updated_user.rolle)
         except ValueError as e:
             if config.settings.DEV:
                 msg = f"Error beim User Update {e}"
@@ -204,9 +217,16 @@ async def update_user(id: int, user: schemas.NutzerCreate, db: AsyncSession = De
 
         await db.commit()
         await db.refresh(db_user)
-        logging_obj = schemas.LoggingSchema(user_id=id, endpoint="/users/{id}", method="PUT",
-                                            message="Nutzer erfolgreich bearbeitet", success=True)
-        logger.info(logging_obj.dict())
+        if changes:
+            logging_info = schemas.LoggingSchema(
+                user_id=id,
+                endpoint=f"/users/{id}",
+                method="PUT",
+                message=f"Änderungen an Nutzerdaten: {changes}",
+                success=True
+            )
+            logger.info(logging_info.dict())
+
         return {"user_id": db_user.user_id}
     except exc.IntegrityError as e:
         if config.settings.DEV:

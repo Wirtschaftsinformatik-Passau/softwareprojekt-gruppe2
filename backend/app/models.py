@@ -49,6 +49,8 @@ class Tarif(Base):
     grundgebuehr = Column(Float)
     laufzeit = Column(Integer)
     spezielle_konditionen = Column(String)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 
 class Preisstrukturen(Base):
@@ -56,12 +58,12 @@ class Preisstrukturen(Base):
     preis_id = Column(Integer, Identity(), primary_key=True)
     bezugspreis_kwh = Column(Float)
     einspeisung_kwh = Column(Float)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 
 class DashboardSmartMeterData(Base):
     __tablename__ = "dashboard_smartmeter_data" if settings.OS == 'Linux' else "Dashboard_smartmeter_data"
-
-
     id = Column(Integer, primary_key=True, index=True)
     haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     datum = Column(DateTime)
@@ -70,3 +72,4 @@ class DashboardSmartMeterData(Base):
     batterie_leistung = Column(Float)
     zaehler = Column(Float)
     last = Column(Float)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))

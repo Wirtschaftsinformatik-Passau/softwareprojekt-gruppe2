@@ -8,7 +8,7 @@ from datetime import datetime
 from app import models, schemas, database, oauth, types
 import json
 from pathlib import Path
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, OrderedDict
 from typing import Dict, Union, List, Any
 from pydantic import ValidationError
 import logging
@@ -49,6 +49,8 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
                        db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "POST", "/tarife")
     try:
+        user_id = current_user.user_id
+        tarif.user_id = user_id
         new_tarif = models.Tarif(**tarif.dict())
         db.add(new_tarif)
         await db.commit()
@@ -66,7 +68,9 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
                        db: AsyncSession = Depends(database.get_db_async)):
     try:
         await check_netzbetreiber_role(current_user, "PUT", "/tarife")
-        query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+        user_id = current_user.user_id
+        query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
+                                                 (models.Tarif.user_id == user_id))
         result = await db.execute(query)
         existing_tarif = result.scalar_one_or_none()
 
@@ -90,8 +94,11 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
                        db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
 
+    user_id = current_user.user_id
+
     # Überprüfen, ob der Tarif existiert
-    delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+    delete_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
+                                                 (models.Tarif.user_id == user_id))
     result = await db.execute(delete_stmt)
     db_tarif = result.scalar_one_or_none()
     if db_tarif is None:
@@ -115,10 +122,14 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
 async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user),
                      db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
-    select_stmt = select(models.Tarif)
+    user_id = current_user.user_id
+    select_stmt = select(models.Tarif).where(models.Tarif.user_id == user_id)
     result = await db.execute(select_stmt)
     tarife = result.scalars().all()
+    if len(tarife) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Keine Tarife gefunden")
     return tarife
+
 
 @router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
 async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth.get_current_user),
@@ -126,7 +137,9 @@ async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth
     await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
 
     try:
-        select_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+        user_id = current_user.user_id
+        select_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
+                                                 (models.Tarif.user_id == user_id))
         result = await db.execute(select_stmt)
         tarif = result.scalars().all()
         if len(tarif) == 0:
@@ -137,13 +150,43 @@ async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth
         logger.error(f"Tarif konnte nicht gefunden werden: {e}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif {tarif_id} konnte nicht gefunden werden: {e}")
 
+@router.get("/laufzeit", response_model=List[schemas.TarifLaufzeitResponse])
+async def count_laufzeit(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                        db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
+
+    try:
+        user_id = current_user.user_id
+        select_stmt = select(models.Tarif).where(models.Tarif.user_id == user_id)
+        result = await db.execute(select_stmt)
+        laufzeiten = result.scalars().all()
+        if len(laufzeiten) == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Keine Tarife gefunden")
+        laufzeiten = [x.laufzeit for x in laufzeiten]
+        laufzeit_dict = dict(Counter(laufzeiten))
+        laufzeit_response = [{"laufzeit": key, "value": value} for key, value in laufzeit_dict.items()]
+        laufzeit_response = sorted(laufzeit_response, key=lambda x: x['laufzeit'])
+        return laufzeit_response
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der Tarife: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Tarife: {e}")
+
+
 @router.get("/preisstrukturen", response_model=List[schemas.PreisstrukturenResponse])
 async def get_preisstrukturen(current_user: models.Nutzer = Depends(oauth.get_current_user),
                                 db: AsyncSession = Depends(database.get_db_async)):
 
     await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen")
     try:
-        select_stmt = select(models.Preisstrukturen)
+        user_id = current_user.user_id
+        select_stmt = select(models.Preisstrukturen).where(models.Preisstrukturen.user_id == user_id)
         result = await db.execute(select_stmt)
         preisstrukturen = result.scalars().all()
         return preisstrukturen
@@ -163,7 +206,9 @@ async def get_preisstrukturen(preis_id: int, current_user: models.Nutzer = Depen
                                 db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen/{preis_id}")
     try:
-        select_stmt = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
+        user_id = current_user.user_id
+        select_stmt = select(models.Preisstrukturen).where((models.Preisstrukturen.preis_id == preis_id) &
+                                                           (models.Preisstrukturen.user_id == user_id))
         result = await db.execute(select_stmt)
         preisstruktur = result.scalars().all()
         if len(preisstruktur) == 0:
@@ -188,6 +233,8 @@ async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
                                db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "POST", "/preisstrukturen")
     try:
+        user_id = current_user.user_id
+        preisstruktur.user_id = user_id
         preisstruktur = models.Preisstrukturen(**preisstruktur.dict())
         db.add(preisstruktur)
         await db.commit()
@@ -229,8 +276,9 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
                                current_user: models.Nutzer = Depends(oauth.get_current_user),
                                db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "PUT", "/preisstrukturen")
-
-    query = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
+    user_id = current_user.user_id
+    query = select(models.Preisstrukturen).where((models.Preisstrukturen.preis_id == preis_id) &
+                                                 (models.Preisstrukturen.user_id == user_id) )
     result = await db.execute(query)
     preisstruktur = result.scalars().first()
 
@@ -282,6 +330,7 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
     await check_netzbetreiber_role(current_user, "POST", "/dashboard")
     try:
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
+        user_id = current_user.user_id
         if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
             logging_error = schemas.LoggingSchema(
                 user_id=current_user.user_id,
@@ -304,7 +353,8 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
                 soc=row['SOC(%)'],
                 batterie_leistung=row['Batterie(W)'],
                 zaehler=row['Zähler(W)'],
-                last=row['Last(W)']
+                last=row['Last(W)'],
+                user_id=user_id
             )
             db.add(dashboard_data)
         await db.commit()
@@ -338,6 +388,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSe
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
     stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
+    user_id = current_user.user_id
     result = await db.execute(stmt)
     nutzer_rolle = result.scalar_one_or_none()
     if nutzer_rolle is None or nutzer_rolle != models.Rolle.Haushalte:
@@ -351,13 +402,14 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSe
         logger.error(logging_error.dict())
         raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
     try:
-        stmt = select(
+        stmt = (select(
             models.DashboardSmartMeterData.datum,
             func.sum(models.DashboardSmartMeterData.pv_erzeugung).label('gesamt_pv_erzeugung'),
             func.avg(models.DashboardSmartMeterData.soc).label('gesamt_soc'),
             func.sum(models.DashboardSmartMeterData.batterie_leistung).label('gesamt_batterie_leistung'),
             func.sum(models.DashboardSmartMeterData.last).label('gesamt_last')
-        ).group_by(models.DashboardSmartMeterData.datum)
+        ).where(models.DashboardSmartMeterData.user_id == user_id)
+                .group_by(models.DashboardSmartMeterData.datum))
         result = await db.execute(stmt)
         aggregated_data = result.fetchall()
 

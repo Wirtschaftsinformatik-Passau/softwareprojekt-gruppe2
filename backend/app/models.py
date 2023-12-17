@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, \
     Identity, TIMESTAMP, func
-
 from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -29,8 +28,8 @@ class Nutzer(Base):
     email = Column(String)
     passwort = Column(String)
     rolle = Column(Enum(Rolle), ENUM(*[r.value for r in Rolle],
-                                name='rolle' if settings.OS == 'Linux' else "Rolle",
-                                create_type=False), nullable=False)
+                                     name='rolle' if settings.OS == 'Linux' else "Rolle",
+                                     create_type=False), nullable=False)
     telefonnummer = Column(String)
     adresse_id = Column(Integer, ForeignKey(f'adresse.adresse_id' if settings.OS == 'Linux' else "Adresse.adresse_id"))
     created_at = Column(TIMESTAMP, server_default=func.now())
@@ -61,7 +60,6 @@ class Preisstrukturen(Base):
 class DashboardSmartMeterData(Base):
     __tablename__ = "dashboard_smartmeter_data" if settings.OS == 'Linux' else "Dashboard_smartmeter_data"
 
-
     id = Column(Integer, primary_key=True, index=True)
     haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     datum = Column(DateTime)
@@ -83,18 +81,19 @@ class PVAnlage(Base):
     installationsflaeche = Column(Float)
     installationsdatum = Column(Date)
     modulanordnung = Column(Enum(Orientierung), ENUM(*[r.value for r in Rolle],
-                                name='modulanordnung' if settings.OS == 'Linux' else "Modulanordnung",
-                                create_type=False), nullable=False)
+                                                     name='modulanordnung' if settings.OS == 'Linux' else "Modulanordnung",
+                                                     create_type=False), nullable=False)
     kabelwegfuehrung = Column(String)
     montagesystem = Column(Enum(Montagesystem), ENUM(*[r.value for r in Rolle],
-                                name='montagesystem' if settings.OS == 'Linux' else "Montagesystem",
-                                create_type=False), nullable=False)
+                                                     name='montagesystem' if settings.OS == 'Linux' else "Montagesystem",
+                                                     create_type=False), nullable=False)
     schattenanalyse = Column(Enum(Schatten), ENUM(*[r.value for r in Rolle],
-                                name='schattenanalyse' if settings.OS == 'Linux' else "Schattenanalyse",
-                                create_type=False), nullable=False)
+                                                  name='schattenanalyse' if settings.OS == 'Linux' else "Schattenanalyse",
+                                                  create_type=False), nullable=False)
     wechselrichterposition = Column(String)
     installationsplan = Column(String)  # Verweis auf Dateipfad oder URL
     prozess_status = Column(Enum(ProzessStatus), ENUM(*[r.value for r in Rolle],
-                                name='prozessstatus' if settings.OS == 'Linux' else "ProzessStatus",
-                                create_type=False), nullable=False)
+                                                      name='prozessstatus' if settings.OS == 'Linux' else "ProzessStatus",
+                                                      create_type=False), nullable=False)
     nvpruefung_status = Column(Boolean)
+    created_at = Column(TIMESTAMP, server_default=func.now())

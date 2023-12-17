@@ -1,7 +1,9 @@
 import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field
 from datetime import date
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+from app.types import ProzessStatus
 
 
 class AdresseCreate(BaseModel):
@@ -254,3 +256,12 @@ class RollenOverview(BaseModel):
 class NutzerDateResponse(BaseModel):
     gestern: RollenOverview
     heute: RollenOverview
+
+
+class PVAnlageAnfrage(BaseModel):
+    haushalt_id: int
+
+
+class PVAnlageResponse(BaseModel):
+    anlage_id: int
+    prozess_status: ProzessStatus

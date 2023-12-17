@@ -49,9 +49,11 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
 
     is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
     is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
-    is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost, models.Orientierung.Suedwest]
+    is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost,
+                                                           models.Orientierung.Suedwest]
     is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
-    is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten, models.Schatten.Minimalschatten]
+    is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
+                                                             models.Schatten.Minimalschatten]
 
     return all([
         is_within_kapazitaetsgrenze,
@@ -139,8 +141,9 @@ async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_use
     tarife = result.scalars().all()
     return tarife
 
+
 @router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth.get_current_user),
+async def get_tarife(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                      db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
 
@@ -154,12 +157,13 @@ async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth
 
     except exc.IntegrityError as e:
         logger.error(f"Tarif konnte nicht gefunden werden: {e}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif {tarif_id} konnte nicht gefunden werden: {e}")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Tarif {tarif_id} konnte nicht gefunden werden: {e}")
+
 
 @router.get("/preisstrukturen", response_model=List[schemas.PreisstrukturenResponse])
 async def get_preisstrukturen(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                                db: AsyncSession = Depends(database.get_db_async)):
-
+                              db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen")
     try:
         select_stmt = select(models.Preisstrukturen)
@@ -177,16 +181,18 @@ async def get_preisstrukturen(current_user: models.Nutzer = Depends(oauth.get_cu
         logger.error(logging_error.dict())
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Preisstrktur: {e}")
 
+
 @router.get("/preisstrukturen/{preis_id}", response_model=schemas.PreisstrukturenResponse)
 async def get_preisstrukturen(preis_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
-                                db: AsyncSession = Depends(database.get_db_async)):
+                              db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen/{preis_id}")
     try:
         select_stmt = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
         result = await db.execute(select_stmt)
         preisstruktur = result.scalars().all()
         if len(preisstruktur) == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Preisstruktur mit ID {preis_id} nicht gefunden")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Preisstruktur mit ID {preis_id} nicht gefunden")
         return preisstruktur[0]
     except exc.IntegrityError as e:
         logging_error = LoggingSchema(
@@ -291,7 +297,7 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         logger.error(logging_error.dict())
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
-        
+
 @router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
 async def add_dashboard_smartmeter_data(haushalt_id: int,

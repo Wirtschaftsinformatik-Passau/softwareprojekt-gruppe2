@@ -18,6 +18,7 @@ const App = () => {
     const [theme, colorMode] = useMode();
     
     useEffect(() => {  
+      try {
       const token = localStorage.getItem("accessToken");
         axios.get(addSuffixToBackendURL("users/current/single"), {headers: {Authorization: `Bearer ${token}`}})
         .then((res) => {
@@ -27,6 +28,10 @@ const App = () => {
 
           setIsLoggedIn(false)
         })  
+      }
+      catch(err) {
+        setIsLoggedIn(false)
+      }
     },[])
 
     return (

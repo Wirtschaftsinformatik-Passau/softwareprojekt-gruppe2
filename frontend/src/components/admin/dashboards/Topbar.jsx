@@ -1,7 +1,8 @@
 import { Box, IconButton, useTheme, Typography } from "@mui/material";
 import { useContext, useState } from "react";
 import { ColorModeContext, tokens } from "../../../utils/theme";
-import {ThemeProvider, CssBaseline } from "@mui/material";
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useNavigate } from "react-router-dom";
 import InputBase from "@mui/material/InputBase";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
@@ -14,6 +15,7 @@ import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
 
 
 const Topbar = ({fixed}) => {
+  const navigate = useNavigate();
     const isNonMobile = useMediaQuery("(min-width:700px)")
     const [helpModal, setHelpModal] = useState(false);
     const theme = useTheme();
@@ -67,10 +69,13 @@ const Topbar = ({fixed}) => {
             <QuestionMarkIcon />
           </IconButton>
           <IconButton>
-            <SettingsOutlinedIcon />
+            <PersonOutlinedIcon />
           </IconButton>
           <IconButton>
-            <PersonOutlinedIcon />
+            <LogoutIcon onClick={() => {
+              navigate("/login")
+   
+            }}/>
           </IconButton>
         </Box>
         {helpModal && (<HelpModal modalCloserState={setHelpModal}/>)}

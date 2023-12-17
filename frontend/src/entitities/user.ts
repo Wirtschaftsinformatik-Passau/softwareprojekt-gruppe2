@@ -18,8 +18,9 @@ export interface ILoginUser {
 export enum Nutzerrolle {
     Admin = "Admin",
     Netzbetreiber = "Netzbetreiber",
-    Kunde = "Kunde",
-    Berater = "Berater"
+    Solarteure = "Solarteure",
+    Energieberatende = "Energieberatende",
+    Haushalte = "Haushalte"
 }
 
 export class LoginUser implements ILoginUser{

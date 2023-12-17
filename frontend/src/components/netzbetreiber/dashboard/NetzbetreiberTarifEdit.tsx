@@ -64,9 +64,10 @@ const NetzbetreiberTarifEdit = ({}) => {
       const token = localStorage.getItem("accessToken");
       const tarif: ITarif = new Tarif(values.tarifName, Number(values.preisKwh), Number(values.grundgebuehr), Number(values.laufzeit), 
       values.spezielleKonditionen)
-      axios.post(addSuffixToBackendURL("netzbetreiber/tarife"), tarif, {headers: {Authorization: `Bearer ${token}`}})
+      console.log("tarif:", tarif )
+      axios.put(addSuffixToBackendURL("netzbetreiber/tarife/" + tarifID), tarif, {headers: {Authorization: `Bearer ${token}`}})
           .then((response) => {
-            if (response.status === 201) {
+            if (response.status === 200) {
               setSuccessModalIsOpen(true)
               console.log("Tarif erfolgreich gespeichert")
             } else {

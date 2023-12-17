@@ -4,7 +4,7 @@ from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
-from app.types import Rolle
+from app.types import Rolle, Orientierung, ProzessStatus, Montagesystem, Schatten
 
 
 class Adresse(Base):
@@ -68,3 +68,31 @@ class DashboardSmartMeterData(Base):
     batterie_leistung = Column(Float)
     zaehler = Column(Float)
     last = Column(Float)
+
+
+class PVAnlage(Base):
+    __tablename__ = 'pvanlage' if settings.OS == 'Linux' else 'PVAnlage'
+    anlage_id = Column(Integer, Identity(), primary_key=True)
+    haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    solarteur_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    modultyp = Column(String)
+    kapazitaet = Column(Float)
+    installationsflaeche = Column(Float)
+    installationsdatum = Column(Date)
+    modulanordnung = Column(Enum(Orientierung), ENUM(*[r.value for r in Rolle],
+                                name='modulanordnung' if settings.OS == 'Linux' else "Modulanordnung",
+                                create_type=False), nullable=False)
+    kabelwegfuehrung = Column(String)
+    montagesystem = Column(Enum(Montagesystem), ENUM(*[r.value for r in Rolle],
+                                name='montagesystem' if settings.OS == 'Linux' else "Montagesystem",
+                                create_type=False), nullable=False)
+    schattenanalyse = Column(Enum(Schatten), ENUM(*[r.value for r in Rolle],
+                                name='schattenanalyse' if settings.OS == 'Linux' else "Schattenanalyse",
+                                create_type=False), nullable=False)
+    wechselrichterposition = Column(String)
+    installationsplan = Column(String)  # Verweis auf Dateipfad oder URL
+    prozess_status = Column(Enum(ProzessStatus), ENUM(*[r.value for r in Rolle],
+                                name='prozessstatus' if settings.OS == 'Linux' else "ProzessStatus",
+                                create_type=False), nullable=False)
+    nvpruefung_status = Column(Boolean)

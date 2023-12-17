@@ -2,8 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
-from sqlalchemy import exc
+from sqlalchemy import func, exc, update
 from datetime import datetime
 from app import models, schemas, database, oauth
 import json
@@ -41,6 +40,26 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
 
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
+
+
+def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
+    # Annahmen für die Netzverträglichkeitsprüfung
+    max_kapazitaet_kw = 100.0  # Maximale Kapazität in Kilowatt
+    max_installationsflaeche_m2 = 1000.0  # Maximale Installationsfläche in Quadratmetern
+
+    is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
+    is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
+    is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost, models.Orientierung.Suedwest]
+    is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
+    is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten, models.Schatten.Minimalschatten]
+
+    return all([
+        is_within_kapazitaetsgrenze,
+        is_within_flaechengrenze,
+        is_valid_modulanordnung,
+        is_valid_montagesystem,
+        is_valid_schattenanalyse
+    ])
 
 
 # tarif erstellen
@@ -285,7 +304,7 @@ async def add_dashboard_smartmeter_data(db: AsyncSession = Depends(database.get_
             response_model=List[schemas.AggregatedDashboardSmartMeterData])
 async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
+    await check_netzbetreiber_role(current_user, "POST", f"/dashboard/{haushalt_id}")
     stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
     result = await db.execute(stmt)
     nutzer_rolle = result.scalar_one_or_none()
@@ -350,3 +369,108 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSe
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
+
+
+@router.put("/netzbetreiber/nvpruefung/{anlage_id}", status_code=status.HTTP_200_OK,
+            response_model=schemas.NetzvertraeglichkeitspruefungResponse)
+async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
+                                                     current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/nvpruefung/{anlage_id}")
+
+    stmt = select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id)
+    result = await db.execute(stmt)
+    pv_anlage = result.scalar_one_or_none()
+
+    if pv_anlage is None:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/netzbetreiber/nvpruefung/{anlage_id}",
+            method="PUT",
+            message="PV-Anlage nicht gefunden",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PV-Anlage nicht gefunden")
+
+    if pv_anlage.prozess_status != models.ProzessStatus.PlanErstellt:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/netzbetreiber/nvpruefung/{anlage_id}",
+            method="PUT",
+            message="PV-Anlage ist nicht im Status 'PlanErstellt'",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="PV-Anlage ist nicht im Status 'PlanErstellt'")
+
+    is_compatible = validate_pv_anlage(pv_anlage)
+
+    update_stmt = (
+        update(models.PVAnlage)
+        .where(models.PVAnlage.anlage_id == anlage_id)
+        .values(nvpruefung_status=is_compatible)
+        .execution_options(synchronize_session="fetch")
+    )
+    await db.execute(update_stmt)
+    await db.commit()
+
+    logging_obj = LoggingSchema(
+        user_id=current_user.user_id,
+        endpoint=f"/netzbetreiber/nvpruefung/{anlage_id}",
+        method="PUT",
+        message="Netzverträglichkeitsprüfung durchgeführt",
+        success=True
+    )
+    logger.info(logging_obj.dict())
+
+    return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
+
+
+@router.put("/netzbetreiber/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
+            response_model=schemas.EinspeisezusageResponse)
+async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async()),
+                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/einspeisezusage/{anlage_id}")
+
+    stmt = select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id)
+    result = await db.execute(stmt)
+    pv_anlage = result.scalars().first()
+
+    if pv_anlage is None:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/netzbetreiber/einspeisezusage/{anlage_id}",
+            method="PUT",
+            message="PV-Anlage nicht gefunden",
+            success=True
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PV-Anlage nicht gefunden")
+
+    if not pv_anlage.nvpruefung_status:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/netzbetreiber/einspeisezusage/{anlage_id}",
+            method="PUT",
+            message="Netzverträglichkeitsprüfung nicht bestanden",
+            success=True
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Netzverträglichkeitsprüfung nicht bestanden")
+
+    pv_anlage.prozess_status = models.ProzessStatus.Genehmigt
+    db.add(pv_anlage)
+    await db.commit()
+
+    logging_obj = LoggingSchema(
+        user_id=current_user.user_id,
+        endpoint=f"/netzbetreiber/einspeisezusage/{anlage_id}",
+        method="PUT",
+        message="Einspeisezusage erteilt",
+        success=True
+    )
+    logger.info(logging_obj.dict())
+
+    return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}

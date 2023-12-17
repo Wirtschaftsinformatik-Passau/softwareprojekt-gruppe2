@@ -192,3 +192,42 @@ class AggregatedDashboardSmartMeterData(BaseModel):
 
 class DashboardSmartMeterDataResponse(BaseModel):
     message: str
+
+
+class PVAnlageBase(BaseModel):
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    installationsdatum: str
+    installationsstatus: str
+    modulanordnung: str
+    kabelwegfuehrung: str
+    montagesystem: str
+    schattenanalyse: str
+    wechselrichterposition: str
+    installationsplan: str
+
+
+class PVAnlageCreate(PVAnlageBase):
+    haushalt_id: int
+    solarteur_id: int
+    netzbetreiber_id: int
+
+
+class PVAnlage(PVAnlageBase):
+    anlage_id: int
+    prozess_status: str
+    nvpruefung_status: bool
+
+    class Config:
+        from_attributes = True
+
+
+class NetzvertraeglichkeitspruefungResponse(BaseModel):
+    anlage_id: int
+    nvpruefung_status: bool
+
+
+class EinspeisezusageResponse(BaseModel):
+    message: str
+    anlage_id: int

@@ -16,12 +16,12 @@ import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 
-interface IPreis {
+export interface IPreis {
     bezugspreis_kwh: number;
     einspeisung_kwh: number;
 }
 
-class Preis implements IPreis {
+export class Preis implements IPreis {
     bezugspreis_kwh: number;
     einspeisung_kwh: number;
     constructor(bezugspreis_kwh: number, einspeisung_kwh: number) {
@@ -37,6 +37,7 @@ const NetzbetreiberTarifEdit = ({}) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
+    const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
     const [initialValues, setInitialValues] = React.useState({
         bezugspreis: "",
         einspeisepreis: "",
@@ -44,17 +45,15 @@ const NetzbetreiberTarifEdit = ({}) => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = React.useState(true);
     const { priceID } = useParams();  
-    console.log("preisID:", priceID)
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
       // Fetch your data here
       axios.get(addSuffixToBackendURL("netzbetreiber/preisstrukturen/"+priceID), {headers: {Authorization: `Bearer ${token}`}})
         .then(response => {
-            console.log(response.data)
-          setInitialValues({
-            bezugspreis: response.data.bezugspreis,
-            einspeisepreis: response.data.einspeisepreis,
+            setInitialValues({
+            bezugspreis: response.data.bezugspreis_kwh,
+            einspeisepreis: response.data.einspeisung_kwh,
           });
           setIsLoading(false);
           console.log("Initial Values:", initialValues)
@@ -65,7 +64,7 @@ const NetzbetreiberTarifEdit = ({}) => {
         });
     }, []);
  
-    const createTarif = (values: { tarifName: string; preisKwh: any; grundgebuehr: any; laufzeit: any; spezielleKonditionen: string; }, {setSubmitting}: any) => {
+    const createPreis = (values: { tarifName: string; preisKwh: any; grundgebuehr: any; laufzeit: any; spezielleKonditionen: string; }, {setSubmitting}: any) => {
 
       const token = localStorage.getItem("accessToken");
       const preis = new Preis(Number(values.bezugspreis), Number(values.einspeisepreis))
@@ -108,8 +107,9 @@ const NetzbetreiberTarifEdit = ({}) => {
 return (
     <Box m="20px">
       <Header title="Preis bearbeiten" subtitle="Bearbeite den Preis mit allen nötigen Daten"/>
+      {!isLoading &&(
       <Formik
-        onSubmit={createTarif}
+        onSubmit={createPreis}
         initialValues={initialValues}
         validationSchema={checkoutSchema}
         style={{
@@ -199,10 +199,13 @@ return (
         )}
         
       </Formik>
+      )}
 
             
     <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
     text="Preis erfolgreich erstellt!" navigationGoal="/netzbetreiber"/>
+    <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
+    text="Preis konnte nicht bearbeitet werden"/>
     </Box>
   
 )}

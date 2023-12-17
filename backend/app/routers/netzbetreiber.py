@@ -273,27 +273,14 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
         
-@router.post("/dashboard", status_code=status.HTTP_201_CREATED,
+@router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
-async def add_dashboard_smartmeter_data(db: AsyncSession = Depends(database.get_db_async), file: UploadFile = File(...),
+async def add_dashboard_smartmeter_data(haushalt_id: int,
+                                        db: AsyncSession = Depends(database.get_db_async),
+                                        file: UploadFile = File(...),
                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard")
     try:
-        filename = file.filename
-        match = re.search(r"_(\d+)\.csv$", filename)
-        if match:
-            haushalt_id = int(match.group(1))
-        else:
-            logging_error = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint="/dashboard",
-                method="POST",
-                message="Ungültiger Dateiname",
-                success=False
-            )
-            logger.error(logging_error.dict())
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
-
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
         if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
             logging_error = schemas.LoggingSchema(

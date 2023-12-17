@@ -14,6 +14,7 @@ import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/ma
 import axios from "axios";
 import { ITarif, Tarif } from "../../../entitities/tarif";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
+import {IPreis, Preis} from "./NetzbetreibePreisEditCustom"
 
 
 const PreisCreation = () => {
@@ -26,12 +27,11 @@ const PreisCreation = () => {
 
 
 
-  const createTarif = (values: any, {setSubmitting}: any) => {
+  const createPreis = (values: any, {setSubmitting}: any) => {
 
     const token = localStorage.getItem("accessToken");
-    const tarif: ITarif = new Tarif(values.tarifName, Number(values.preisKwh), Number(values.grundgebuehr), Number(values.laufzeit), 
-    values.spezielleKonditionen)
-    axios.post(addSuffixToBackendURL("netzbetreiber/tarife"), tarif, {headers: {Authorization: `Bearer ${token}`}})
+    const preis = new Preis(Number(values.bezugspreis), Number(values.einspeisepreis))
+    axios.post(addSuffixToBackendURL("netzbetreiber/preisstrukturen"), preis, {headers: {Authorization: `Bearer ${token}`}})
         .then((response) => {
           if (response.status === 201) {
             setSuccessModalIsOpen(true)
@@ -66,7 +66,7 @@ const PreisCreation = () => {
     <Box m="20px">
       <Header title="Preis erstellen" subtitle="Erstelle eine neue Preisstruktur"/>
       <Formik
-        onSubmit={createTarif}
+        onSubmit={createPreis}
         initialValues={initialValues}
         validationSchema={checkoutSchema}
         style={{
@@ -143,7 +143,7 @@ const PreisCreation = () => {
               
             <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">
-                Tarif erstellen
+                Preisstruktur erstellen
               </Button>
             </Box>
             </Box>
@@ -153,9 +153,9 @@ const PreisCreation = () => {
       </Formik>
             
     <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Tarif erfolgreich erstellt!" navigationGoal="/netzbetreiber"/>
+    text="Preisstruktur erfolgreich erstellt!" navigationGoal="/netzbetreiber"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="Tarifname bereits vergeben"/>
+    text="Preiserstellung nicht möglich"/>
     </Box>
   
   );

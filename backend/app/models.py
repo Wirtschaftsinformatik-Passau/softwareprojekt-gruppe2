@@ -5,7 +5,7 @@ from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
-from app.types import Rolle
+from app.types import Rolle, Isolierungsqualitaet, AusrichtungDach, Rechnungsart
 
 
 class Adresse(Base):
@@ -70,3 +70,34 @@ class DashboardSmartMeterData(Base):
     batterie_leistung = Column(Float)
     zaehler = Column(Float)
     last = Column(Float)
+
+class Energieberatende(Base):
+    __tablename__ = 'energieberatende' if settings.OS == 'Linux' else "Energieberatende"
+    user_id = Column(Integer, ForeignKey('nutzer.user_id'), primary_key=True)
+    spezialisierung = Column(String)
+
+class Solarteur(Base):
+    __tablename__ = 'solarteur' if settings.OS == 'Linux' else "Solarteur"
+    user_id = Column(Integer, ForeignKey('nutzer.user_id'), primary_key=True)
+
+class Haushalt(Base):
+    __tablename__ = 'haushalt' if settings.OS == 'Linux' else "Haushalt"
+    user_id = Column(Integer, ForeignKey('nutzer.user_id'), primary_key=True)
+    anzahl_bewohner = Column(Integer)
+    heizungsart = Column(String)
+    baujahr = Column(Integer)
+    wohnflaeche = Column(Float)
+    isolierungsqualitaet = Column(Enum(Isolierungsqualitaet)) 
+    ausrichtung_dach = Column(Enum(AusrichtungDach))  
+    dachflaeche = Column(Float)
+    energieeffizienzklasse = Column(String)
+
+class Rechnung(Base):
+    __tablename__ = 'rechnungen' if settings.OS == 'Linux' else "Rechnungen"
+    rechnung_id = Column(Integer, primary_key=True)
+    haushalt_id = Column(Integer, ForeignKey('haushalt.user_id'))
+    rechnungsbetrag = Column(Float)
+    rechnungsdatum = Column(Date)
+    faelligkeitsdatum = Column(Date)
+    rechnungsart = Column(Enum(Rechnungsart), nullable=False)
+    zeitraum = Column(Date)

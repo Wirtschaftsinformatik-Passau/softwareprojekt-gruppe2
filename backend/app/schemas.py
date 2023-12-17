@@ -1,7 +1,8 @@
 import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field
 from datetime import date
-from typing import Dict, List
+from typing import Dict, List, Optional
+from app.types import Isolierungsqualitaet, AusrichtungDach, Rechnungsart
 
 
 class AdresseCreate(BaseModel):
@@ -213,3 +214,57 @@ class RollenOverview(BaseModel):
 class NutzerDateResponse(BaseModel):
     gestern: RollenOverview
     heute: RollenOverview
+
+class EnergieberatendeCreate(BaseModel):
+    spezialisierung: str
+
+class EnergieberatendeResponse(BaseModel):
+    user_id: int
+    spezialisierung: str
+
+class SolarteurCreate(BaseModel):
+    pass
+
+class SolarteurResponse(BaseModel):
+    user_id: int
+
+class HaushaltCreate(BaseModel):
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: AusrichtungDach
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+class HaushaltResponse(BaseModel):
+    user_id: int
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: AusrichtungDach
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+class RechnungCreate(BaseModel):
+    haushalt_id: int
+    rechnungsbetrag: float
+    rechnungsdatum: date
+    faelligkeitsdatum: date
+    rechnungsart: Rechnungsart
+    zeitraum: Optional[date] = None
+
+class RechnungResponse(BaseModel):
+    rechnung_id: int
+    haushalt_id: int
+    rechnungsbetrag: float
+    rechnungsdatum: date
+    faelligkeitsdatum: date
+    rechnungsart: Rechnungsart
+    zeitraum: Optional[date] = None
+
+    class Config:
+        orm_mode = True

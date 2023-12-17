@@ -6,8 +6,6 @@ import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
-import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
@@ -215,7 +213,7 @@ const Sidebar1 = () => {
               color={colors.white[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Logging
+              Logs
             </Typography>
             <Item
               title="Log Files"

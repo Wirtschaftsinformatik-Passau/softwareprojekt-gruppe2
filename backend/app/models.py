@@ -48,6 +48,8 @@ class Tarif(Base):
     grundgebuehr = Column(Float)
     laufzeit = Column(Integer)
     spezielle_konditionen = Column(String)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 
 class Preisstrukturen(Base):
@@ -55,6 +57,8 @@ class Preisstrukturen(Base):
     preis_id = Column(Integer, Identity(), primary_key=True)
     bezugspreis_kwh = Column(Float)
     einspeisung_kwh = Column(Float)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    created_at = Column(TIMESTAMP, server_default=func.now())
 
 
 class DashboardSmartMeterData(Base):
@@ -68,7 +72,7 @@ class DashboardSmartMeterData(Base):
     batterie_leistung = Column(Float)
     zaehler = Column(Float)
     last = Column(Float)
-
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
 
 class PVAnlage(Base):
     __tablename__ = 'pvanlage' if settings.OS == 'Linux' else 'PVAnlage'

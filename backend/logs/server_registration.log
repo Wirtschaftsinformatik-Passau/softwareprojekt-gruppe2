@@ -260,3 +260,4 @@
 {"timestamp": "2023-12-17 16:35:15,951", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 89, "role": "Energieberatende", "msg": "User registriert"}
 {"timestamp": "2023-12-17 16:35:16,299", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 90, "role": "Netzbetreiber", "msg": "User registriert"}
 {"timestamp": "2023-12-17 16:35:16,654", "level": "INFO", "name": "GreenEcoHubRegistration", "message": null, "user_id": 91, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-17 22:54:49,751", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 92, "role": "Netzbetreiber", "msg": "User registriert"}

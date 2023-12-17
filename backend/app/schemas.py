@@ -1,5 +1,5 @@
 import datetime
-from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field
+from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra
 from datetime import date
 from typing import Dict, List, Optional
 
@@ -167,6 +167,9 @@ class TarifCreate(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
+    class Config:
+        extra = Extra.allow
+
 
 class TarifResponse(BaseModel):
     tarif_id: int
@@ -189,6 +192,9 @@ class PreisstrukturenCreate(BaseModel):
         if v < 0:
             raise ValueError('Der Wert darf nicht negativ sein')
         return v
+
+    class Config:
+        extra = Extra.allow
 
 
 class PreisstrukturenResponse(BaseModel):
@@ -251,8 +257,8 @@ class EinspeisezusageResponse(BaseModel):
 class RollenOverview(BaseModel):
     rolle: str
     count: int
-      
-      
+
+
 class NutzerDateResponse(BaseModel):
     gestern: RollenOverview
     heute: RollenOverview
@@ -265,3 +271,8 @@ class PVAnlageAnfrage(BaseModel):
 class PVAnlageResponse(BaseModel):
     anlage_id: int
     prozess_status: ProzessStatus
+
+
+class TarifLaufzeitResponse(BaseModel):
+    laufzeit: int
+    value: int

@@ -143,7 +143,7 @@ const PreisCreation = () => {
               
             <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">
-                Preis erstellen
+                Tarif erstellen
               </Button>
             </Box>
             </Box>

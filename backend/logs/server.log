@@ -4412,3 +4412,6 @@
 {"timestamp": "2023-12-16 18:11:45,641", "level": "INFO", "name": "GreenEcoHub", "message": "Rollen\u00fcbersicht erfolgreich abgerufen", "user_id": 1, "endpoint": "/admin/userOverview", "method": "GET", "success": true}
 {"timestamp": "2023-12-16 18:35:27,264", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 37, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-16 18:36:42,487", "level": "INFO", "name": "GreenEcoHub", "message": "Preisstruktur 1 erstellt", "user_id": 37, "endpoint": "/preisstrukturen", "method": "POST", "success": true}
+{"timestamp": "2023-12-17 15:37:40,813", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 37, "endpoint": "/auth/login", "method": "POST", "success": true}
+{"timestamp": "2023-12-17 15:55:28,942", "level": "ERROR", "name": "GreenEcoHub", "message": "Fehler beim Abrufen der Preisstrktur: ", "user_id": 37, "endpoint": "/preisstrukturen", "method": "GET", "success": false}
+{"timestamp": "2023-12-17 15:58:05,947", "level": "ERROR", "name": "GreenEcoHub", "message": "Fehler beim Abrufen der Preisstrktur: ", "user_id": 37, "endpoint": "/preisstrukturen", "method": "GET", "success": false}

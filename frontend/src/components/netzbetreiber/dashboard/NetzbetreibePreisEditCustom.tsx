@@ -14,8 +14,21 @@ import { Iadresse, Adresse } from "../../../entitities/adress";
 import CircularProgress from '@mui/material/CircularProgress';
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
-import { ITarif, Tarif } from "../../../entitities/tarif";
 
+
+interface IPreis {
+    bezugspreis_kwh: number;
+    einspeisung_kwh: number;
+}
+
+class Preis implements IPreis {
+    bezugspreis_kwh: number;
+    einspeisung_kwh: number;
+    constructor(bezugspreis_kwh: number, einspeisung_kwh: number) {
+        this.bezugspreis_kwh = bezugspreis_kwh;
+        this.einspeisung_kwh = einspeisung_kwh;
+    }
+}
 
 
 
@@ -24,27 +37,27 @@ const NetzbetreiberTarifEdit = ({}) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
-    const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
     const [initialValues, setInitialValues] = React.useState({
         bezugspreis: "",
         einspeisepreis: "",
     })
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = React.useState(true);
-    const { tarifID } = useParams();  
-    console.log("userId:", tarifID)
+    const { priceID } = useParams();  
+    console.log("preisID:", priceID)
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
       // Fetch your data here
-      axios.get(addSuffixToBackendURL("netzbetreiber/tarife/"+tarifID), {headers: {Authorization: `Bearer ${token}`}})
+      axios.get(addSuffixToBackendURL("netzbetreiber/preisstrukturen/"+priceID), {headers: {Authorization: `Bearer ${token}`}})
         .then(response => {
-          // Assuming response.data contains the tarif data
+            console.log(response.data)
           setInitialValues({
             bezugspreis: response.data.bezugspreis,
             einspeisepreis: response.data.einspeisepreis,
           });
           setIsLoading(false);
+          console.log("Initial Values:", initialValues)
         })
         .catch(error => {
           console.log(error)
@@ -55,17 +68,15 @@ const NetzbetreiberTarifEdit = ({}) => {
     const createTarif = (values: { tarifName: string; preisKwh: any; grundgebuehr: any; laufzeit: any; spezielleKonditionen: string; }, {setSubmitting}: any) => {
 
       const token = localStorage.getItem("accessToken");
-      const tarif: ITarif = new Tarif(values.tarifName, Number(values.preisKwh), Number(values.grundgebuehr), Number(values.laufzeit), 
-      values.spezielleKonditionen)
-      console.log("tarif:", tarif )
-      axios.put(addSuffixToBackendURL("netzbetreiber/tarife/" + tarifID), tarif, {headers: {Authorization: `Bearer ${token}`}})
+      const preis = new Preis(Number(values.bezugspreis), Number(values.einspeisepreis))
+      axios.put(addSuffixToBackendURL("netzbetreiber/preisstrukturen/" + priceID), preis, {headers: {Authorization: `Bearer ${token}`}})
           .then((response) => {
             if (response.status === 200) {
               setSuccessModalIsOpen(true)
-              console.log("Tarif erfolgreich gespeichert")
+              console.log("Preis erfolgreich gespeichert")
             } else {
               setFailModalIsOpen(true)
-              console.log("Tarif konnte nicht gespeichert werden")
+              console.log("Preis konnte nicht gespeichert werden")
             }
           
           })
@@ -173,7 +184,12 @@ return (
               }}
               />
               
-            <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
+            <Box display="flex" justifyContent="space-between" mt="20px" gridColumn= "span 4">
+            <Button sx={{background: colors.grey[300],  color: theme.palette.background.default}} variant="contained"
+            onClick={() => navigate("/netzbetreiber/priceEdit")}
+            >
+                Abbrechen
+              </Button>
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">
                 Tarif erstellen
               </Button>

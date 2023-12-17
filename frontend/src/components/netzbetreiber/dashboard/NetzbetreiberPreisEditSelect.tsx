@@ -18,17 +18,17 @@ const PreisEditSelect = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
-  const [tarifId, setTarifId] = React.useState(0)
+  const [preisID, setPreisID] = React.useState(0)
 
 
   
     const handleEditButton = () => {
         const token = localStorage.getItem("accessToken");
-        axios.get(addSuffixToBackendURL("netzbetreiber/tarife/"+tarifId), {headers: { Authorization: `Bearer ${token}` }})
+        axios.get(addSuffixToBackendURL("netzbetreiber/preisstrukturen/"+preisID), {headers: { Authorization: `Bearer ${token}` }})
       .then((response) => {
         if(response.status === 200){
-          console.log(tarifId)
-          navigate("/netzbetreiber/tarifEdit/"+Number(tarifId))
+          console.log(preisID)
+          navigate("/netzbetreiber/priceEdit/"+Number(preisID))
         }
       })
       .catch((error) => {
@@ -59,7 +59,7 @@ const PreisEditSelect = () => {
             variant="outlined"
             //@ts-ignore
             onChange={(e) => {
-                setTarifId(e.target.value)
+                setPreisID(e.target.value)
             }
             }
             InputLabelProps={{

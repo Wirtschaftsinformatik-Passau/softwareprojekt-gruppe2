@@ -6,9 +6,13 @@ import uuid
 url = 'http://localhost:8000/users/registration'
 
 # List of possible roles
-roles = ['Solarteur', 'Energieberatende', 'Haushalte', 'Netzbetreiber']
+roles = ['Solarteure', 'Energieberatende', 'Haushalte', 'Netzbetreiber']
 
 # Function to send a POST request
+
+hh = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"h@h.de","passwort":"123","rolle":"Haushalte","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
+admin = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"1@0.de","passwort":"123","rolle":"Admin","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
+nb = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"n@b.de","passwort":"123","rolle":"Netzbetreiber","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
 def send_post_request(request_number):
     # Randomly choose a role
     role = random.choice(roles)
@@ -32,6 +36,11 @@ def send_post_request(request_number):
     # Sending the POST request
     response = requests.post(url, json=data)
     return response
+
+
+for x in [hh,admin,nb]:
+    response = requests.post(url, json=x)
+    print(response)
 
 # Sending 50 requests
 for i in range(50):

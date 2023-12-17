@@ -156,6 +156,49 @@ async def get_tarife(tarif_id: int,  current_user: models.Nutzer = Depends(oauth
         logger.error(f"Tarif konnte nicht gefunden werden: {e}")
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif {tarif_id} konnte nicht gefunden werden: {e}")
 
+@router.get("/preisstrukturen", response_model=List[schemas.PreisstrukturenResponse])
+async def get_preisstrukturen(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                                db: AsyncSession = Depends(database.get_db_async)):
+
+    await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen")
+    try:
+        select_stmt = select(models.Preisstrukturen)
+        result = await db.execute(select_stmt)
+        preisstrukturen = result.scalars().all()
+        return preisstrukturen
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der Preisstrktur: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Preisstrktur: {e}")
+
+@router.get("/preisstrukturen/{preis_id}", response_model=schemas.PreisstrukturenResponse)
+async def get_preisstrukturen(preis_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                                db: AsyncSession = Depends(database.get_db_async)):
+    await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen/{preis_id}")
+    try:
+        select_stmt = select(models.Preisstrukturen).where(models.Preisstrukturen.preis_id == preis_id)
+        result = await db.execute(select_stmt)
+        preisstruktur = result.scalars().all()
+        if len(preisstruktur) == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Preisstruktur mit ID {preis_id} nicht gefunden")
+        return preisstruktur[0]
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/preisstrukturen",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der Preisstrktur: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Preisstrktur: {e}")
+
 
 @router.post("/preisstrukturen", status_code=status.HTTP_201_CREATED,
              response_model=schemas.PreisstrukturenResponse)
@@ -249,27 +292,14 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
         
-@router.post("/dashboard", status_code=status.HTTP_201_CREATED,
+@router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
-async def add_dashboard_smartmeter_data(db: AsyncSession = Depends(database.get_db_async), file: UploadFile = File(...),
+async def add_dashboard_smartmeter_data(haushalt_id: int,
+                                        db: AsyncSession = Depends(database.get_db_async),
+                                        file: UploadFile = File(...),
                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard")
     try:
-        filename = file.filename
-        match = re.search(r"_(\d+)\.csv$", filename)
-        if match:
-            haushalt_id = int(match.group(1))
-        else:
-            logging_error = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint="/dashboard",
-                method="POST",
-                message="Ungültiger Dateiname",
-                success=False
-            )
-            logger.error(logging_error.dict())
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Dateiname")
-
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
         if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
             logging_error = schemas.LoggingSchema(

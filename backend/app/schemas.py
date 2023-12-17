@@ -191,6 +191,8 @@ class PreisstrukturenCreate(BaseModel):
 
 class PreisstrukturenResponse(BaseModel):
     preis_id: int
+    bezugspreis_kwh: float
+    einspeisung_kwh: float
 
 
 class AggregatedDashboardSmartMeterData(BaseModel):

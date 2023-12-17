@@ -57,6 +57,7 @@ def handle_json_decode_error(e: Exception, current_user_id: int, endpoint: str) 
     )
     logger.error(logging_error.dict())
 
+
 @router.get("/dateUserOverview", status_code=status.HTTP_200_OK)
 async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user),
               db: AsyncSession = Depends(database.get_db_async)):

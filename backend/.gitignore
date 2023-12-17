@@ -1,5 +1,6 @@
 ./backend_tose_venv/
 ./backend_tose/venv/
+venv/
 ./logs/
 # Byte-compiled / optimized / DLL files
 __pycache__/

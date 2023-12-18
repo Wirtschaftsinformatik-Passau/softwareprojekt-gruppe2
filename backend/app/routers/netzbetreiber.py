@@ -389,6 +389,7 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
                                  List[schemas.AggregatedDashboardSmartMeterDataResponseBatterie],
                                  List[schemas.AggregatedDashboardSmartMeterDataResponseLast]])
 async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str = "all", period: str = "DAY",
+                                                   start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
@@ -418,6 +419,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 sum(last) as gesamt_last
                 from dashboard_smartmeter_data 
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                and datum >= '{start}' and  datum < '{end}'
                 group by 
                 DATE_TRUNC('{period}', datum) 
                 ORDER BY DATE_TRUNC('{period}', datum) 
@@ -431,6 +433,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 sum(pv_erzeugung) as gesamt_pv_erzeugung
                 from dashboard_smartmeter_data 
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                and datum >= '{start}' and  datum < '{end}'
                 group by 
                 DATE_TRUNC('{period}', datum) 
                 ORDER BY DATE_TRUNC('{period}', datum) 
@@ -445,6 +448,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 avg(soc) as gesamt_soc
                 from dashboard_smartmeter_data
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id}  
+                and datum >= '{start}' and  datum < '{end}'
                 group by 
                 DATE_TRUNC('{period}', datum) 
                 ORDER BY DATE_TRUNC('{period}', datum) 
@@ -455,10 +459,11 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
             raw_sql = text(
                 f"""
                 SELECT 
-                DATE_TRUNC('{period}', datum)
-                sum(batterie_leistung) as gesamt_batterie_leistung,
+                DATE_TRUNC('{period}', datum),
+                sum(batterie_leistung) as gesamt_batterie_leistung
                 from dashboard_smartmeter_data
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                and datum >= '{start}' and  datum < '{end}'
                 group by 
                 DATE_TRUNC('{period}', datum) 
                 ORDER BY DATE_TRUNC('{period}', datum) 
@@ -472,7 +477,8 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 DATE_TRUNC('{period}', datum), 
                 sum(last) as gesamt_last
                 from dashboard_smartmeter_data
-                HERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                and datum >= '{start}' and  datum < '{end}'
                 group by 
                 DATE_TRUNC('{period}', datum) 
                 ORDER BY DATE_TRUNC('{period}', datum) 

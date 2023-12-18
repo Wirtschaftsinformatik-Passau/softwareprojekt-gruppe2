@@ -96,11 +96,13 @@ const mockData2 = [
   },]
 
   const getNthTickValues = (data, interval) => {
+    if (data === undefined || data.length === 0) return [];
     const allTicks = data[0].data.map(point => point.x);
     return allTicks.filter((_, index) => index % interval === 0);
   };
 
-const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => {
+const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true, marginRight=180, legendOffset=-50,
+xLabel="Datum", ylabel="Anzahl Aufrufe"}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -118,7 +120,8 @@ const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => 
     );
   };
 
-  const tickValues = getNthTickValues(data, tickInterval)
+  const tickValues = getNthTickValues(data, tickInterval);
+
 
   return (
       <ResponsiveLine
@@ -150,7 +153,7 @@ const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => 
     enablePoints={enablePoints}
       colors={{ scheme: 'set3' }}
           data={data}
-          margin={{ top: 50, right: 180, bottom: 50, left: 60 }}
+          margin={{ top: 50, right: marginRight, bottom: 50, left: 70 }}
           xScale={{ type: 'point' }}
           yScale={{
               type: 'linear',
@@ -167,7 +170,7 @@ const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => 
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: 'Datum',
+              legend: xLabel,
               
               legendOffset: 36,
               legendPosition: 'middle',
@@ -179,8 +182,9 @@ const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => 
               tickSize: 5,
               tickPadding: 5,
               tickRotation: 0,
-              legend: 'Anzahl Aufrufe',
-              legendOffset: -40,
+              translateX: 100,
+              legend: ylabel,
+              legendOffset: legendOffset,
               legendPosition: 'middle'
           }}
           pointSize={10}
@@ -215,15 +219,7 @@ const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => 
                   symbolShape: 'circle',
                   symbolBorderColor: 'rgba(0, 0, 0, .5)',
                   itemTextColor: colors.grey[100],
-                  effects: [
-                      {
-                          on: 'hover',
-                          style: {
-                              itemBackground: 'rgba(0, 0, 0, .03)',
-                              itemOpacity: 1
-                          }
-                      }
-                  ]
+                 
               }
           ]}
       />

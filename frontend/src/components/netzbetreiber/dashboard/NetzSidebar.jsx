@@ -217,16 +217,9 @@ const Sidebar1 = () => {
               Board
             </Typography>
             <Item
-              title="Smart Meter Übesicht"
+              title="Smart Meter Übersicht"
               to="/smartmeterOverview"
               icon={<DashboardIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="FAQ Page"
-              to="/faq"
-              icon={<HelpOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
@@ -253,34 +246,7 @@ const Sidebar1 = () => {
               setSelected={setSelected}
             />
 
-            <Typography
-              variant="h6"
-              color={colors.white[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Logging
-            </Typography>
-            <Item
-              title="Log Files"
-              to="/logOverview"
-              icon={<InventoryIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Endpunktaktivität"
-              to="/endpointActivity"
-              icon={<TimelineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Nutzerübersicht"
-              to="/roleOverview"
-              icon={<PieChartOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            
           </Box>
         </Menu>
       </ProSidebar>

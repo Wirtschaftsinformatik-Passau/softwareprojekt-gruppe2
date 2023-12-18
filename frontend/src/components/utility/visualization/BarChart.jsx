@@ -46,7 +46,7 @@ const mockBarData = [
 ]
 
 
-const BarChart = ({ data= mockBarData, isDashboard = false, key="date", legend="Datum", indexBy="date"}) => {
+const BarChart = ({ data= mockBarData, isDashboard = false, key="date", legend="Datum", indexBy="date", ylabel="Anzahl Aufrufe"}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -133,7 +133,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false, key="date", legend="
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "Anzahl Aufrufe", // changed
+        legend: isDashboard ? undefined : ylabel, // changed
         legendPosition: "middle",
         legendOffset: -40,
       }}

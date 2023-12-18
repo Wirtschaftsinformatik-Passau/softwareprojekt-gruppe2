@@ -154,7 +154,7 @@ const NetzHome = () => {
             borderRadius={"15px"}
             boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
             justifyContent="center">
-                <BarChart isDashboard={false} data={laufzeitData} legend="Laufzeit" indexBy="laufzeit"/>
+                <BarChart isDashboard={false} data={laufzeitData} legend="Laufzeit" indexBy="laufzeit" ylabel="Anzahl"/>
                  </Box>
         </Grow>
 

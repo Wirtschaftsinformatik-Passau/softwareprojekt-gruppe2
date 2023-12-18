@@ -268,3 +268,21 @@ class RechnungResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class TarifAntragCreate(BaseModel):
+    haushalt_id: int
+    tarif_id: int
+
+class VertragResponse(BaseModel):
+    vertrag_id: str
+    haushalt_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+
+    class Config:
+        orm_mode = True
+
+

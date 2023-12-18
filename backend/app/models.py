@@ -102,4 +102,12 @@ class Rechnung(Base):
     rechnungsart = Column(Enum(Rechnungsart), nullable=False)
     zeitraum = Column(Date)
 
-#2do: aus Tarif Rechnung automatisch generieren lassen
+class Vertrag(Base):
+    __tablename__ = 'vertrag' if settings.OS == 'Linux' else "Vertrag"
+    vertrag_id = Column(String, primary_key=True)
+    haushalt_id = Column(Integer, ForeignKey('Haushalte.user_id'))
+    tarif_id = Column(Integer, ForeignKey('Tarife.tarif_id'))
+    beginn_datum = Column(Date)
+    end_datum = Column(Date)
+    jahresabschlag = Column(Float)
+    vertragstatus = Column(Boolean, default=True) 

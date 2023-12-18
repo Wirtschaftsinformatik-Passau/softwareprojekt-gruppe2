@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy import exc
 from datetime import datetime
 from app import models, schemas, database, oauth, types
@@ -383,8 +383,13 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
 
 
 @router.get("/dashboard/{haushalt_id}", status_code=status.HTTP_200_OK,
-            response_model=List[schemas.AggregatedDashboardSmartMeterData])
-async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSession = Depends(database.get_db_async),
+            response_model=Union[List[schemas.AggregatedDashboardSmartMeterData],
+                                 List[schemas.AggregatedDashboardSmartMeterDataResponsePV],
+                                 List[schemas.AggregatedDashboardSmartMeterDataResponseSOC],
+                                 List[schemas.AggregatedDashboardSmartMeterDataResponseBatterie],
+                                 List[schemas.AggregatedDashboardSmartMeterDataResponseLast]])
+async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str = "all", period: str = "DAY",
+                                                   db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
     stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
@@ -402,15 +407,82 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSe
         logger.error(logging_error.dict())
         raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
     try:
-        stmt = (select(
-            models.DashboardSmartMeterData.datum,
-            func.sum(models.DashboardSmartMeterData.pv_erzeugung).label('gesamt_pv_erzeugung'),
-            func.avg(models.DashboardSmartMeterData.soc).label('gesamt_soc'),
-            func.sum(models.DashboardSmartMeterData.batterie_leistung).label('gesamt_batterie_leistung'),
-            func.sum(models.DashboardSmartMeterData.last).label('gesamt_last')
-        ).where(models.DashboardSmartMeterData.user_id == user_id)
-                .group_by(models.DashboardSmartMeterData.datum))
-        result = await db.execute(stmt)
+        if field == "all":
+            raw_sql = text(
+                f"""
+                SELECT 
+                DATE_TRUNC('{period}', datum), 
+                sum(pv_erzeugung) as gesamt_pv_erzeugung,
+                avg(soc) as gesamt_soc,
+                sum(batterie_leistung) as gesamt_batterie_leistung,
+                sum(last) as gesamt_last
+                from dashboard_smartmeter_data 
+                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                group by 
+                DATE_TRUNC('{period}', datum) 
+                ORDER BY DATE_TRUNC('{period}', datum) 
+                """
+            )
+        elif field == "pv":
+            raw_sql = text(
+                f"""
+                SELECT 
+                DATE_TRUNC('{period}', datum), 
+                sum(pv_erzeugung) as gesamt_pv_erzeugung
+                from dashboard_smartmeter_data 
+                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                group by 
+                DATE_TRUNC('{period}', datum) 
+                ORDER BY DATE_TRUNC('{period}', datum) 
+                            """
+            )
+
+        elif field == "soc":
+            raw_sql = text(
+                f"""
+                SELECT 
+                DATE_TRUNC('{period}', datum), 
+                avg(soc) as gesamt_soc
+                from dashboard_smartmeter_data
+                WHERE user_id = {user_id} and haushalt_id = {haushalt_id}  
+                group by 
+                DATE_TRUNC('{period}', datum) 
+                ORDER BY DATE_TRUNC('{period}', datum) 
+                            """
+            )
+
+        elif field == "batterie":
+            raw_sql = text(
+                f"""
+                SELECT 
+                DATE_TRUNC('{period}', datum)
+                sum(batterie_leistung) as gesamt_batterie_leistung,
+                from dashboard_smartmeter_data
+                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                group by 
+                DATE_TRUNC('{period}', datum) 
+                ORDER BY DATE_TRUNC('{period}', datum) 
+                """
+            )
+
+        elif field == "last":
+            raw_sql = text(
+                f"""
+                SELECT 
+                DATE_TRUNC('{period}', datum), 
+                sum(last) as gesamt_last
+                from dashboard_smartmeter_data
+                HERE user_id = {user_id} and haushalt_id = {haushalt_id} 
+                group by 
+                DATE_TRUNC('{period}', datum) 
+                ORDER BY DATE_TRUNC('{period}', datum) 
+                """
+            )
+
+        else:
+            raise HTTPException(status_code=400, detail="Ungültiges Feld")
+
+        result = await db.execute(raw_sql)
         aggregated_data = result.fetchall()
 
         if not aggregated_data:
@@ -425,13 +497,38 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSe
         )
         logger.info(logging_info.dict())
 
-        return [schemas.AggregatedDashboardSmartMeterData(
-            datum=row[0].isoformat() if row[0] else None,
-            gesamt_pv_erzeugung=row[1],
-            gesamt_soc=row[2],
-            gesamt_batterie_leistung=row[3],
-            gesamt_last=row[4]
-        ) for row in aggregated_data]
+        if field == "all":
+            return [schemas.AggregatedDashboardSmartMeterData(
+                datum=row[0].isoformat() if row[0] else None,
+                gesamt_pv_erzeugung=row[1],
+                gesamt_soc=row[2],
+                gesamt_batterie_leistung=row[3],
+                gesamt_last=row[4]
+            ) for row in aggregated_data]
+
+        elif field == "pv":
+            return [schemas.AggregatedDashboardSmartMeterDataResponsePV(
+                x=row[0].isoformat() if row[0] else None,
+                y=row[1]
+            ) for row in aggregated_data[:1000]]
+
+        elif field == "soc":
+            return [schemas.AggregatedDashboardSmartMeterDataResponseSOC(
+                x=row[0].isoformat() if row[0] else None,
+                y=row[1]
+            ) for row in aggregated_data]
+
+        elif field == "batterie":
+            return [schemas.AggregatedDashboardSmartMeterDataResponseBatterie(
+                x=row[0].isoformat() if row[0] else None,
+                y=row[1]
+            ) for row in aggregated_data]
+
+        elif field == "last":
+            return [schemas.AggregatedDashboardSmartMeterDataResponseLast(
+                x=row[0].isoformat(),
+                y=row[1]
+            ) for row in aggregated_data]
 
     except HTTPException as e:
         logging_error = schemas.LoggingSchema(
@@ -444,6 +541,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, db: AsyncSe
         logger.error(logging_error.dict())
         raise
     except Exception as e:
+        raise e
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/dashboard",

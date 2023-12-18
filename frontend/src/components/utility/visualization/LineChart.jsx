@@ -95,9 +95,12 @@ const mockData2 = [
       ]
   },]
 
+  const getNthTickValues = (data, interval) => {
+    const allTicks = data[0].data.map(point => point.x);
+    return allTicks.filter((_, index) => index % interval === 0);
+  };
 
-
-const LineChart = ({ data = mockData2,isDashboard = false }) => {
+const LineChart = ({ data = mockData2, tickInterval=10 , enablePoints=true}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -115,8 +118,11 @@ const LineChart = ({ data = mockData2,isDashboard = false }) => {
     );
   };
 
+  const tickValues = getNthTickValues(data, tickInterval)
+
   return (
       <ResponsiveLine
+
       sliceTooltip={({ slice }) => {
         return (
             <div
@@ -141,6 +147,7 @@ const LineChart = ({ data = mockData2,isDashboard = false }) => {
             </div>
         )
     }}
+    enablePoints={enablePoints}
       colors={{ scheme: 'set3' }}
           data={data}
           margin={{ top: 50, right: 180, bottom: 50, left: 60 }}
@@ -155,6 +162,7 @@ const LineChart = ({ data = mockData2,isDashboard = false }) => {
           yFormat=" >-.2f"
           axisTop={null}
           axisRight={null}
+          enableGridX={false}
           axisBottom={{
               tickSize: 5,
               tickPadding: 5,
@@ -163,6 +171,7 @@ const LineChart = ({ data = mockData2,isDashboard = false }) => {
               
               legendOffset: 36,
               legendPosition: 'middle',
+              tickValues: tickValues
               
               
           }}

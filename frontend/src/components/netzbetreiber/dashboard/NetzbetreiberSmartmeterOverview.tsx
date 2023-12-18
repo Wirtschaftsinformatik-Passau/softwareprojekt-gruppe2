@@ -106,7 +106,7 @@ const NetzbetreiberSmartmeterOverview = () => {
         "MONTH": 1,
         "DAY": 4,
         "HOUR": 2,
-        "MINUTE": 50
+        "MINUTE": 60
     }
 
     const periodMapping = {
@@ -289,7 +289,7 @@ const NetzbetreiberSmartmeterOverview = () => {
                  </Box>
             </Grow>
             <Box gridColumn={"span 2"} m="0px">
-             <Header title="Batterielestung in Watt" subtitle="" variant="h3"/>
+             <Header title="Batterieleistung in Watt" subtitle="" variant="h3"/>
              </Box>
              <Box gridColumn={"span 2"} m="0px">
              <Header title="Gesamtlast in Watt" subtitle="" variant="h3"/>

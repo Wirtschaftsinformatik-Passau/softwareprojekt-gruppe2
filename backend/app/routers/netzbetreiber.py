@@ -405,6 +405,37 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
+@router.get("/haushalte", status_code=status.HTTP_200_OK,)
+async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                  db: AsyncSession = Depends(database.get_db_async)):
+    try:
+        await check_netzbetreiber_role(current_user, "GET", "/haushalte")
+        user_id = current_user.user_id
+        stmt = select(models.Nutzer).where(models.Nutzer.user_id != user_id)
+        result = await db.execute(stmt)
+        haushalte = result.scalars().all()
+        return haushalte
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/haushalte",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der Haushalte: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Haushalte: {e}")
+
+    except Exception as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/haushalte",
+            method="GET",
+            message=f"Fehler beim Abrufen der Haushalte: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=500, detail=f"Fehler beim Abrufen der Haushalte: {e}")
 
 @router.get("/dashboard/{haushalt_id}", status_code=status.HTTP_200_OK,
             response_model=Union[List[schemas.AggregatedDashboardSmartMeterData],
@@ -416,7 +447,9 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "POST", f"/dashboard/{haushalt_id}")
+
+    # TODO: parameter validierung für sql injections
+    await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
     stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
     user_id = current_user.user_id
     result = await db.execute(stmt)

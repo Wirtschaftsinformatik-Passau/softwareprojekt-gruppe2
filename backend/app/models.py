@@ -17,6 +17,8 @@ class Adresse(Base):
     plz = Column(Integer)
     stadt = Column(String)
     land = Column(String)
+    longitude = Column(Float)
+    latitude = Column(Float)
 
 
 class Nutzer(Base):
@@ -114,3 +116,4 @@ class Angebot(Base):
     kapazitaet = Column(Float)
     installationsflaeche = Column(Integer)
     kosten = Column(Float)
+

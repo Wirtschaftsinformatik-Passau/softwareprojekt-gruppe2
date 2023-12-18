@@ -8,15 +8,16 @@ from app.oauth import get_current_user
 from app.logger import LogConfig
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], # which origins are allowed
+app.add_middleware(CORSMiddleware, allow_origins=["*"],  # which origins are allowed
                    allow_credentials=True,
-                   allow_methods=["*"], # which http methods are allowed
-                   allow_headers=["*"]) # which headers are allowed
+                   allow_methods=["*"],  # which http methods are allowed
+                   allow_headers=["*"])  # which headers are allowed
 
 
 @app.get("/")
 def test(user_id: dict = Depends(get_current_user)):
     return {"message": "Hello World"}
+
 
 app.include_router(users.router)
 app.include_router(auth.router)

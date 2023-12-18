@@ -70,8 +70,7 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
                        db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "POST", "/tarife")
     try:
-        user_id = current_user.user_id
-        tarif.user_id = user_id
+        tarif.user_id = current_user.user_id
         new_tarif = models.Tarif(**tarif.dict())
         db.add(new_tarif)
         await db.commit()

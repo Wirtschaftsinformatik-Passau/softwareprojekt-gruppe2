@@ -107,8 +107,8 @@ async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
+
     except Exception as e:
-        raise e
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/admin/userOverview",

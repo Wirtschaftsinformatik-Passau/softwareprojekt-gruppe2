@@ -55,6 +55,7 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
     is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
                                                              models.Schatten.Minimalschatten]
 
+    print(f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
     return all([
         is_within_kapazitaetsgrenze,
         is_within_flaechengrenze,
@@ -569,20 +570,9 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
         )
         logger.error(logging_error.dict())
         raise
-    except Exception as e:
-        raise e
-        logging_error = schemas.LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/dashboard",
-            method="GET",
-            message=f"Fehler beim Abrufen aggregierter Dashboard-Daten: {str(e)}",
-            success=False
-        )
-        logger.error(logging_error.dict())
-        raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
 
-@router.put("/netzbetreiber/nvpruefung/{anlage_id}", status_code=status.HTTP_200_OK,
+@router.put("/nvpruefung/{anlage_id}", status_code=status.HTTP_200_OK,
             response_model=schemas.NetzvertraeglichkeitspruefungResponse)
 async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
@@ -638,9 +628,9 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
     return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
 
 
-@router.put("/netzbetreiber/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
+@router.put("/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
             response_model=schemas.EinspeisezusageResponse)
-async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async()),
+async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/einspeisezusage/{anlage_id}")
 

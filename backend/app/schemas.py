@@ -1,9 +1,9 @@
 import datetime
-from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra
+from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
 from typing import Dict, List, Optional
 
-from app.types import ProzessStatus
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung
 
 
 class AdresseCreate(BaseModel):
@@ -295,11 +295,47 @@ class PVAnlageAnfrage(BaseModel):
     haushalt_id: int
 
 
-class PVAnlageResponse(BaseModel):
+class PVAnforderungResponse(BaseModel):
     anlage_id: int
     prozess_status: ProzessStatus
+    solarteur_id: int
 
 
 class TarifLaufzeitResponse(BaseModel):
     laufzeit: int
     value: int
+
+
+class AngebotCreate(BaseModel):
+    anlage_id: int
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    modulanordnung: Orientierung
+    kosten: float
+
+
+class AngebotResponse(BaseModel):
+    angebot_id: int
+    anlage_id: int
+    kosten: float
+    class Config:
+        from_attributes = True
+
+
+class InstallationsplanCreate(BaseModel):
+    kabelwegfuehrung: str
+    montagesystem: Montagesystem
+    schattenanalyse: Schatten
+    wechselrichterposition: str
+    installationsdatum: date
+    
+
+class InstallationsplanResponse(BaseModel):
+    installationsplan: str
+
+
+class PVAngebotResponse:
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float

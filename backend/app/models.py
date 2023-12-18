@@ -74,30 +74,43 @@ class DashboardSmartMeterData(Base):
     last = Column(Float)
     user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
 
+
 class PVAnlage(Base):
     __tablename__ = 'pvanlage' if settings.OS == 'Linux' else 'PVAnlage'
     anlage_id = Column(Integer, Identity(), primary_key=True)
     haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     solarteur_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
-    netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
-    modultyp = Column(String)
-    kapazitaet = Column(Float)
-    installationsflaeche = Column(Float)
-    installationsdatum = Column(Date)
+    netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
+                              nullable=True)
+    modultyp = Column(String, nullable=True)
+    kapazitaet = Column(Float, nullable=True)
+    installationsflaeche = Column(Float, nullable=True)
+    installationsdatum = Column(Date, nullable=True)
     modulanordnung = Column(Enum(Orientierung), ENUM(*[r.value for r in Rolle],
                                                      name='modulanordnung' if settings.OS == 'Linux' else "Modulanordnung",
-                                                     create_type=False), nullable=False)
+                                                     create_type=False), nullable=True)
     kabelwegfuehrung = Column(String)
     montagesystem = Column(Enum(Montagesystem), ENUM(*[r.value for r in Rolle],
                                                      name='montagesystem' if settings.OS == 'Linux' else "Montagesystem",
-                                                     create_type=False), nullable=False)
+                                                     create_type=False), nullable=True)
     schattenanalyse = Column(Enum(Schatten), ENUM(*[r.value for r in Rolle],
                                                   name='schattenanalyse' if settings.OS == 'Linux' else "Schattenanalyse",
-                                                  create_type=False), nullable=False)
-    wechselrichterposition = Column(String)
+                                                  create_type=False), nullable=True)
+    wechselrichterposition = Column(String, nullable=True)
     installationsplan = Column(String)  # Verweis auf Dateipfad oder URL
     prozess_status = Column(Enum(ProzessStatus), ENUM(*[r.value for r in Rolle],
                                                       name='prozessstatus' if settings.OS == 'Linux' else "ProzessStatus",
-                                                      create_type=False), nullable=False)
-    nvpruefung_status = Column(Boolean)
+                                                      create_type=False), nullable=True)
+    nvpruefung_status = Column(Boolean, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
+
+
+class Angebot(Base):
+    __tablename__ = "angebote" if settings.OS == 'Linux' else 'Angebote'
+
+    angebot_id = Column(Integer, primary_key=True, index=True)
+    anlage_id = Column(Integer, ForeignKey("pvanlage.anlage_id" if settings.OS == 'Linux' else "PVAnlage.anlage_id"))
+    modultyp = Column(String)
+    kapazitaet = Column(Float)
+    installationsflaeche = Column(Integer)
+    kosten = Column(Float)

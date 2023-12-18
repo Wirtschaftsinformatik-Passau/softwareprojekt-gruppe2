@@ -101,3 +101,5 @@ class Rechnung(Base):
     faelligkeitsdatum = Column(Date)
     rechnungsart = Column(Enum(Rechnungsart), nullable=False)
     zeitraum = Column(Date)
+
+#2do: aus Tarif Rechnung automatisch generieren lassen

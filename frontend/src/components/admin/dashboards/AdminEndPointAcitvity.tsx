@@ -76,7 +76,7 @@ const AdminEndPointActivity = () => {
        boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
        justifyContent="center">
           
-           <LineChart isDashboard={false} data={lineData}/>
+           <LineChart isDashboard={false} data={lineData} tickInterval={2} marginRight={179}/>
             </Box>
    </Grow>
    <Box gridColumn={"span 1"} m="20px">

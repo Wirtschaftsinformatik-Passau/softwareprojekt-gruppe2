@@ -211,9 +211,36 @@ class AggregatedDashboardSmartMeterData(BaseModel):
     gesamt_last: float = Field(..., description="Gesamtlastverbrauch")
 
 
+class AggregatedDashboardSmartMeterDataResponseSOC(BaseModel):
+    x: str
+    y: float = Field(..., description="Durchschnittlicher SOC aller Speicher")
+
+
+class AggregatedDashboardSmartMeterDataResponsePV(BaseModel):
+    x: str
+    y: float = Field(..., description="Gesamtleistung der PV-Anlagen")
+
+
+class AggregatedDashboardSmartMeterDataResponseBatterie(BaseModel):
+    x: str
+    y: float = Field(..., description="Gesamtleistung der Batterien")
+
+
+class AggregatedDashboardSmartMeterDataResponseLast(BaseModel):
+    x: str
+    y: float = Field(..., description="Gesamtlastverbrauch")
+
+
 class DashboardSmartMeterDataResponse(BaseModel):
     message: str
 
+field_to_schema_mapping = {
+    "all": AggregatedDashboardSmartMeterData,
+    "soc": AggregatedDashboardSmartMeterDataResponseSOC,
+    "pv": AggregatedDashboardSmartMeterDataResponsePV,
+    "batterie": AggregatedDashboardSmartMeterDataResponseBatterie,
+    "last": AggregatedDashboardSmartMeterDataResponseLast
+}
 
 class PVAnlageBase(BaseModel):
     modultyp: str

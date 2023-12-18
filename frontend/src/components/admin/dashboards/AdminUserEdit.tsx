@@ -462,7 +462,7 @@ const AdminUserEdit: React.FC = () => {
                 <MenuItem value={Nutzerrolle.Netzbetreiber}>Netzbetreiber</MenuItem>
                 <MenuItem value={Nutzerrolle.Haushalte}>Haushalte</MenuItem>
                 <MenuItem value={Nutzerrolle.Energieberatende}>Energieberatende</MenuItem>
-                <MenuItem value={Nutzerrolle.Solateuere}>Solateuere</MenuItem>
+                <MenuItem value={Nutzerrolle.Solarteure}>Solateuere</MenuItem>
                 <MenuItem value={undefined}>Error</MenuItem>
               </Select>
               {touched.nutzerrole && errors.nutzerrole && <FormHelperText>{errors.nutzerrole}</FormHelperText>}

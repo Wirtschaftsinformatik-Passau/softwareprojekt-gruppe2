@@ -18,6 +18,8 @@ class Adresse(Base):
     plz = Column(Integer)
     stadt = Column(String)
     land = Column(String)
+    longitude = Column(Float)
+    latitude = Column(Float)
 
 
 class Nutzer(Base):
@@ -73,3 +75,4 @@ class DashboardSmartMeterData(Base):
     zaehler = Column(Float)
     last = Column(Float)
     user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+

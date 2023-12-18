@@ -54,7 +54,7 @@ const AdminUserEditSelect = () => {
       </Box>
         <Box component="form"  m="20px" sx={{display: "grid"}}>
             <TextField
-            label="Tarif ID eingeben"
+            label="Nutzer ID eingeben"
             type="number"
             variant="outlined"
             //@ts-ignore

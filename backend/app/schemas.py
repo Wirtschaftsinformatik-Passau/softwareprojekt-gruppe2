@@ -15,7 +15,22 @@ class AdresseCreate(BaseModel):
 
 class AdresseResponse(BaseModel):
     adresse_id: int
+    strasse: str
+    stadt: str
+    plz: int
+    hausnummer: int
+    land: str
 
+    class Config:
+        from_attributes = True
+
+class AdresseResponseLongLat(BaseModel):
+    id: int
+    position: List[float]
+    name: str
+
+    class Config:
+        from_attributes = True
 
 class NutzerCreate(BaseModel):
     email: EmailStr
@@ -199,6 +214,7 @@ class PreisstrukturenResponse(BaseModel):
     preis_id: int
     bezugspreis_kwh: float
     einspeisung_kwh: float
+
 
 
 class AggregatedDashboardSmartMeterData(BaseModel):

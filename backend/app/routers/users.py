@@ -133,7 +133,7 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
     return {"nutzer_id": db_user.user_id}
 
 
-@router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseResponse)
+@router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
         db_adresse = models.Adresse(**adresse.dict())

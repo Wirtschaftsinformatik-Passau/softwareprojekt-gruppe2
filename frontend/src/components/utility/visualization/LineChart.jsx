@@ -151,7 +151,7 @@ xLabel="Datum", ylabel="Anzahl Aufrufe"}) => {
         )
     }}
     enablePoints={enablePoints}
-      colors={{ scheme: 'set3' }}
+      colors={{ scheme: 'category10' }}
           data={data}
           margin={{ top: 50, right: marginRight, bottom: 50, left: 70 }}
           xScale={{ type: 'point' }}

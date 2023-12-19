@@ -5,7 +5,7 @@ import numpy as np
 
 # The endpoint URL
 url = "http://localhost:8000/netzbetreiber/tarife"
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJleHAiOjE3MDMwNDg5Mzd9.7pKNrpd8IxAZ5RArYE2_6emZs2fJAS2fCO1h5ZoPsaU"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJleHAiOjE3MDMwOTk5MDh9.euw3-wn7WzKRWvLvk1qfK1YPOsIlO2gWOBZGnh8Lh28"
 headers = {"Authorization": f"Bearer {token}"}
 
 def send_post_request(request_number):

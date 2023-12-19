@@ -13,6 +13,9 @@ class AdresseCreate(BaseModel):
     land: str
 
 
+class AdresseIDResponse(BaseModel):
+    adresse_id: int
+
 class AdresseResponse(BaseModel):
     adresse_id: int
     strasse: str

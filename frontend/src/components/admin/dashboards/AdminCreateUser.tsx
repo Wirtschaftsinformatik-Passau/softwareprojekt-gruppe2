@@ -29,9 +29,10 @@ const UserCreation = () => {
   const registerUser = (values: any, {setSubmitting}: any) => {
 
     const adresse: Iadresse = new Adresse(values.strasse, Number(values.hausnr), Number(values.plz), values.stadt, "Deutschland")
-    axios.post(addSuffixToBackendURL("users/adresse"), adresse
-    )
+    console.log(adresse)
+    axios.post(addSuffixToBackendURL("users/adresse"), adresse)
         .then((response) => {
+          console.log(response)
             const adresse_id = response.data.adresse_id
             if (response.status === 201) {
                 console.log("Adresse erfolgreich gespeichert")

@@ -16,6 +16,7 @@ from logging.config import dictConfig
 from app.logger import LogConfig
 from app.config import Settings
 from app.schemas import LoggingSchema
+from app import config
 import pandas as pd
 import io
 import re
@@ -440,6 +441,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
         logger.error(logging_error.dict())
         raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
     try:
+        table_name = dashboard_smartmeter_data if config.settings.OS == 'Linux' else '"Dashboard_smartmeter_data"'
         if field == "all":
             raw_sql = text(
                 f"""
@@ -449,7 +451,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 avg(soc) as gesamt_soc,
                 sum(batterie_leistung) as gesamt_batterie_leistung,
                 sum(last) as gesamt_last
-                from dashboard_smartmeter_data 
+                from {table_name}
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
                 and datum >= '{start}' and  datum < '{end}'
                 group by 
@@ -463,7 +465,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 SELECT 
                 DATE_TRUNC('{period}', datum), 
                 sum(pv_erzeugung) as gesamt_pv_erzeugung
-                from dashboard_smartmeter_data 
+                from {table_name} 
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
                 and datum >= '{start}' and  datum < '{end}'
                 group by 
@@ -478,7 +480,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 SELECT 
                 DATE_TRUNC('{period}', datum), 
                 avg(soc) as gesamt_soc
-                from dashboard_smartmeter_data
+                from {table_name}
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id}  
                 and datum >= '{start}' and  datum < '{end}'
                 group by 
@@ -493,7 +495,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 SELECT 
                 DATE_TRUNC('{period}', datum),
                 sum(batterie_leistung) as gesamt_batterie_leistung
-                from dashboard_smartmeter_data
+                from {table_name}
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
                 and datum >= '{start}' and  datum < '{end}'
                 group by 
@@ -508,7 +510,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                 SELECT 
                 DATE_TRUNC('{period}', datum), 
                 sum(last) as gesamt_last
-                from dashboard_smartmeter_data
+                from {table_name}
                 WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
                 and datum >= '{start}' and  datum < '{end}'
                 group by 

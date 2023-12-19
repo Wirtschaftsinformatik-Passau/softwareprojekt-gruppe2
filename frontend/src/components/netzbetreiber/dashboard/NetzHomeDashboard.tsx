@@ -168,7 +168,7 @@ const NetzHome = () => {
         gridAutoRows="140px"
         gridColumn={"span 3"}
          gridRow={"span 3"}
-        gap="0px">
+        gap="20px">
             <Box gridColumn={"span 3"} m="20px">
              <Header title="Laufzeitübersicht der Tarife" variant="h3"/>
              </Box>
@@ -181,6 +181,7 @@ const NetzHome = () => {
           
             gridColumn={"span 3"} 
             gridRow={"span 3"}
+            border={"1px solid grey"}
             display="flex"
             alignItems="center"
             sx={{
@@ -211,6 +212,7 @@ const NetzHome = () => {
             }}
           
             borderRadius={"15px"}
+            border={"1px solid grey"}
             boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
             justifyContent="center">
                 <LeafletGeo locations={geoData}/>

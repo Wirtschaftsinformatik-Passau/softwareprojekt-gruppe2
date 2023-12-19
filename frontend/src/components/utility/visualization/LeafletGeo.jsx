@@ -2,7 +2,7 @@ import { MapContainer, TileLayer, Marker, Popup} from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-import pin from "/home/lubi/Documents/Projects/ToSe/GreenEcoHub/frontend_repo/frontend/src/assets/pin_icon.png"
+import pin from "../../../assets/pin_icon.png"
 
 const greenNeedleIcon = new L.Icon({
     iconUrl: pin,

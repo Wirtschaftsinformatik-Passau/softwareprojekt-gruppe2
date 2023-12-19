@@ -1,7 +1,9 @@
 import datetime
-from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra
+from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung
 
 
 class AdresseCreate(BaseModel):
@@ -259,15 +261,100 @@ field_to_schema_mapping = {
     "last": AggregatedDashboardSmartMeterDataResponseLast
 }
 
+class PVAnlageBase(BaseModel):
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    installationsdatum: str
+    installationsstatus: str
+    modulanordnung: str
+    kabelwegfuehrung: str
+    montagesystem: str
+    schattenanalyse: str
+    wechselrichterposition: str
+    installationsplan: str
+
+
+class PVAnlageCreate(PVAnlageBase):
+    haushalt_id: int
+    solarteur_id: int
+    netzbetreiber_id: int
+
+
+class PVAnlage(PVAnlageBase):
+    anlage_id: int
+    prozess_status: str
+    nvpruefung_status: bool
+
+    class Config:
+        from_attributes = True
+
+
+class NetzvertraeglichkeitspruefungResponse(BaseModel):
+    anlage_id: int
+    nvpruefung_status: bool
+
+
+class EinspeisezusageResponse(BaseModel):
+    message: str
+    anlage_id: int
+
+
 class RollenOverview(BaseModel):
     rolle: str
     count: int
-      
-      
+
+
 class NutzerDateResponse(BaseModel):
     gestern: RollenOverview
     heute: RollenOverview
 
+
+class PVAnlageAnfrage(BaseModel):
+    haushalt_id: int
+
+
+class PVAnforderungResponse(BaseModel):
+    anlage_id: int
+    prozess_status: ProzessStatus
+    solarteur_id: int
+
+
 class TarifLaufzeitResponse(BaseModel):
     laufzeit: int
     value: int
+
+
+class AngebotCreate(BaseModel):
+    anlage_id: int
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    modulanordnung: Orientierung
+    kosten: float
+
+
+class AngebotResponse(BaseModel):
+    angebot_id: int
+    anlage_id: int
+    kosten: float
+    class Config:
+        from_attributes = True
+
+
+class InstallationsplanCreate(BaseModel):
+    kabelwegfuehrung: str
+    montagesystem: Montagesystem
+    schattenanalyse: Schatten
+    wechselrichterposition: str
+    installationsdatum: date
+    
+
+class InstallationsplanResponse(BaseModel):
+    installationsplan: str
+
+
+class PVAngebotResponse:
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float

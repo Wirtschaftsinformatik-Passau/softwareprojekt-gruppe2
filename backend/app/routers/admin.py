@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -60,8 +60,7 @@ def handle_json_decode_error(e: Exception, current_user_id: int, endpoint: str) 
 
 @router.get("/dateUserOverview", status_code=status.HTTP_200_OK)
 async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user),
-              db: AsyncSession = Depends(database.get_db_async)):
-
+                    db: AsyncSession = Depends(database.get_db_async)):
     try:
         await check_admin_role(current_user, method="GET", endpoint="/dateUserOverview")
         today = date.today()
@@ -73,7 +72,7 @@ async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user
             yesterday_stmt = select(models.Nutzer.rolle).where(
                 (models.Nutzer.created_at >= start_of_yesterday) &
                 (models.Nutzer.created_at < start_of_today)
-                    )
+            )
             yesterday_result = await db.execute(yesterday_stmt)
             today_stmt = select(models.Nutzer.rolle).where(
                 (models.Nutzer.created_at >= start_of_today) &
@@ -119,7 +118,6 @@ async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Fehler beim Abrufen der Rollenübersicht")
-
 
 
 @router.get("/logOverview", status_code=status.HTTP_200_OK,
@@ -394,3 +392,59 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Logs")
+
+
+@router.post("/kalendereintrag/", status_code=status.HTTP_201_CREATED, response_model=schemas.KalenderEintrag)
+async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
+                                  db: AsyncSession = Depends(database.get_db_async),
+                                  current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "POST", "/kalendereintrag/")
+
+    if isinstance(eintrag.zeitpunkt, str):
+        eintrag.zeitpunkt = datetime.strptime(eintrag.zeitpunkt, '%Y-%m-%d').date()
+    db_eintrag = models.Kalendereintrag(**eintrag.dict())
+    db.add(db_eintrag)
+    await db.commit()
+    await db.refresh(db_eintrag)
+    return db_eintrag
+
+
+@router.get("/kalendereintrag/", response_model=List[schemas.KalenderEintrag])
+async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async)):
+    stmt = select(models.Kalendereintrag)
+    result = await db.execute(stmt)
+    eintraege = result.scalars().all()
+    return eintraege
+
+
+@router.get("/kalendereintrag/{eintrag_id}", response_model=schemas.KalenderEintrag)
+async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    eintrag = await db.get(models.Kalendereintrag, eintrag_id)
+    if eintrag is None:
+        raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
+    return eintrag
+
+
+@router.put("/kalendereintrag/{eintrag_id}", response_model=schemas.KalenderEintrag)
+async def update_kalendereintrag(eintrag_id: int, eintrag_data: schemas.KalenderEintragCreate, db: AsyncSession = Depends(database.get_db_async)):
+    db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
+    if db_eintrag is None:
+        raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
+
+    for key, value in eintrag_data.dict().items():
+        setattr(db_eintrag, key, value)
+
+    await db.commit()
+    await db.refresh(db_eintrag)
+    return db_eintrag
+
+
+@router.delete("/kalendereintrag/{eintrag_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
+    if db_eintrag is None:
+        raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
+
+    await db.delete(db_eintrag)
+    await db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

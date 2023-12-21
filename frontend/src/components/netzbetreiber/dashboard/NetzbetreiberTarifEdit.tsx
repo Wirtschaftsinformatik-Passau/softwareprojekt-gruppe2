@@ -257,7 +257,7 @@ return (
               
             <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">
-                Tarif erstellen
+                Tarif bearbeiten
               </Button>
             </Box>
             </Box>
@@ -268,7 +268,7 @@ return (
 
             
     <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Tarif erfolgreich erstellt!" navigationGoal="/netzbetreiber"/>
+    text="Tarif erfolgreich bearbeitet!" navigationGoal="/netzbetreiber/tarifTable"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Tarifname bereits vergeben!"/>
     </Box>

@@ -29,6 +29,7 @@
     "axios": "^1.6.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "date-fns": "^3.0.0",
     "install": "^0.13.0",
     "lucide-react": "^0.292.0",
     "npm": "^10.2.5",

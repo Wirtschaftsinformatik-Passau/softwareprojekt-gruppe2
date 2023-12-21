@@ -46,15 +46,15 @@ const mockBarData = [
 ]
 
 
-const BarChart = ({ data= mockBarData, isDashboard = false }) => {
+const BarChart = ({ data= mockBarData, isDashboard = false, key="date", legend="Datum", indexBy="date", ylabel="Anzahl Aufrufe"}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
   return (
     <ResponsiveBar
-      data={data}
+     data={data}
       keys={['value']}
-      indexBy="date"    
+      indexBy={indexBy}  
       theme={{
         axis: {
           domain: {
@@ -88,7 +88,7 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
         {indexValue}: {value}</div>
           }}
           
-      margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+      margin={{ top: 50, right: 10, bottom: 50, left: 60 }}
       padding={0.3}
       valueScale={{ type: "linear" }}
       indexScale={{ type: "band", round: true }}
@@ -124,16 +124,16 @@ const BarChart = ({ data= mockBarData, isDashboard = false }) => {
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: "Datum",
+        legend: legend,
         legendPosition: "middle",
         legendOffset: isDashboard ? 10 : 32,
-        tickValues: isDashboard ? undefined :  data.map((item, index) => index % 3 === 0 ? item.date : null).filter(Boolean), // Updated line
+        tickValues: isDashboard ? undefined :  data.map((item, index) => index % 3 === 0 ? item[indexBy] : null).filter(Boolean), // Updated line
     }}
       axisLeft={{
         tickSize: 5,
         tickPadding: 5,
         tickRotation: 0,
-        legend: isDashboard ? undefined : "Anzahl Aufrufe", // changed
+        legend: isDashboard ? undefined : ylabel, // changed
         legendPosition: "middle",
         legendOffset: -40,
       }}

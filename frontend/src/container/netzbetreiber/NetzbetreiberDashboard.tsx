@@ -16,6 +16,8 @@ import NetzbetreiberTarifEdit from "../../components/netzbetreiber/dashboard/Net
 import NetzbetreiberPreisCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisCreate";
 import NetzbetreiberPreisEditSelect from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisEditSelect";
 import NetzbetreiberPreisEditCustom from "../../components/netzbetreiber/dashboard/NetzbetreibePreisEditCustom";
+import NetzbetreiberPreisTable from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisTable";
+import NetzbetreiberSmartmeterOverview from "../../components/netzbetreiber/dashboard/NetzbetreiberSmartmeterOverview";
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -47,6 +49,8 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/priceCreate" element={<NetzbetreiberPreisCreate/>}/>
                 <Route path="/priceEdit" element={<NetzbetreiberPreisEditSelect/>}/>
                 <Route path="/priceEdit/:priceID" element={<NetzbetreiberPreisEditCustom/>}/>
+                <Route path="/priceTable" element={<NetzbetreiberPreisTable/>}/>
+                <Route path="/smartmeterOverview" element={<NetzbetreiberSmartmeterOverview/>}/>
                 </Routes>
                 </div>
                 

@@ -6,16 +6,10 @@ import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
-import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TableViewIcon from '@mui/icons-material/TableView';
-import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
+import DashboardIcon from '@mui/icons-material/Dashboard';import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -112,7 +106,7 @@ const Sidebar1 = () => {
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
-                ml="15px"
+                ml="1px"
               >
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
@@ -192,7 +186,7 @@ const Sidebar1 = () => {
               color={colors.white[200]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Strompreise
+              Preise
             </Typography>
             <Item
               title="Preisübersicht"
@@ -215,7 +209,20 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-          
+          <Typography
+              variant="h6"
+              color={colors.white[300]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Board
+            </Typography>
+            <Item
+              title="Smart Meter Übersicht"
+              to="/smartmeterOverview"
+              icon={<DashboardIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
 
             <Typography
               variant="h6"
@@ -239,34 +246,7 @@ const Sidebar1 = () => {
               setSelected={setSelected}
             />
 
-            <Typography
-              variant="h6"
-              color={colors.white[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Logging
-            </Typography>
-            <Item
-              title="Log Files"
-              to="/logOverview"
-              icon={<InventoryIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Endpunktaktivität"
-              to="/endpointActivity"
-              icon={<TimelineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Nutzerübersicht"
-              to="/roleOverview"
-              icon={<PieChartOutlineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            
           </Box>
         </Menu>
       </ProSidebar>

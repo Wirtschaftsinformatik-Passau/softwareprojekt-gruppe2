@@ -6,9 +6,13 @@ from sqlalchemy import exc
 from sqlalchemy.future import select
 from logging.config import dictConfig
 import logging
+from typing import List, Union
+from time import sleep
 
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
+from app.geo_utils import geocode_address
+
 
 dictConfig(LogConfigRegistration().dict())
 logger_registration = logging.getLogger("GreenEcoHubRegistration")
@@ -20,6 +24,56 @@ dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+
+@router.post("/geocode", status_code=status.HTTP_200_OK)
+async def geocode_entries(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                          db: AsyncSession = Depends(database.get_db_async)):
+    try:
+        stmt = select(models.Adresse)
+        result = await db.execute(stmt)
+        adressen = result.all()
+        for adresse in adressen:
+            if not adresse[0].latitude or not adresse[0].longitude:
+                latitude, longitude = geocode_address(adresse[0].strasse, adresse[0].hausnummer, adresse[0].plz,
+                                                      adresse[0].stadt)
+                if latitude and longitude:
+                    adresse[0].latitude = latitude
+                    adresse[0].longitude = longitude
+                    await db.commit()
+                    await db.refresh(adresse[0])
+                    logging_msg = f"Adresse {adresse[0].adresse_id} erfolgreich geocodiert"
+                    logging_obj = schemas.LoggingSchema(user_id=current_user.user_id, endpoint="/geocode", method="POST",
+                                                        message=logging_msg, success=True)
+                    logger_adresse.info(logging_obj.dict())
+                    sleep(0.5)
+                else:
+                    continue
+        return {"msg": "Geocodierung erfolgreich"}
+
+    except exc.IntegrityError as e:
+        if config.settings.DEV:
+            msg = f"Error beim geocode Update {e.orig}"
+            logging_msg = msg
+        else:
+            logging_msg = f"Error beim geocode Update: {e.orig}"
+            msg = "Es gab einen Fehler bei der geocodierung."
+        logging_obj = schemas.LoggingSchema(user_id=current_user.user_id, endpoint="/geocode", method="POST",
+                                            message=logging_msg, success=False)
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+    except Exception as e:
+        logging_error = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/geocode",
+            method="POST",
+            message=f"Interner Serverfehler bei Geocodierung: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
+
+
 
 
 @router.post("/registration", status_code=status.HTTP_201_CREATED, response_model=schemas.NutzerResponse)
@@ -79,7 +133,7 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
     return {"nutzer_id": db_user.user_id}
 
 
-@router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseResponse)
+@router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
         db_adresse = models.Adresse(**adresse.dict())
@@ -101,18 +155,36 @@ async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depe
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
 
-@router.get("/adresse", status_code=status.HTTP_200_OK)
-async def get_adressen(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(database.get_db_async)):
+@router.get("/adresse", status_code=status.HTTP_200_OK,
+            response_model=Union[List[schemas.AdresseResponse],List[schemas.AdresseResponseLongLat]])
+async def get_adressen(skip: int = 0, limit: int = 100, type: str = "geo", db: AsyncSession = Depends(database.get_db_async)):
+    # TODO nur die adressen die im vertrag auch sind!!
     stmt = select(models.Adresse).offset(skip).limit(limit)
     result = await db.execute(stmt)
     adressen = result.all()
-    adressen_out = [{
-        "adresse_id": adresse[0].adresse_id,
-        "strasse": adresse[0].strasse,
-        "stadt": adresse[0].stadt,
-        "plz": adresse[0].plz,
-        "land": adresse[0].land
-    } for adresse in adressen]
+
+    if type == "geo":
+        adressen_out = []
+        for adresse in adressen:
+            if adresse[0].longitude is None or adresse[0].latitude is None:
+                continue
+            else:
+                adressen_out.append({
+                    "id": adresse[0].adresse_id,
+                    "position": [adresse[0].latitude, adresse[0].longitude],
+                    "name": str(adresse[0].adresse_id)
+                })
+
+    else:
+        adressen_out = [{
+            "adresse_id": adresse[0].adresse_id,
+            "strasse": adresse[0].strasse,
+            "stadt": adresse[0].stadt,
+            "hausnummer": adresse[0].hausnummer,
+            "plz": adresse[0].plz,
+            "land": adresse[0].land
+        } for adresse in adressen]
+
     return adressen_out
 
 

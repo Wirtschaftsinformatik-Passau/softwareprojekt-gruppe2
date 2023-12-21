@@ -1,9 +1,8 @@
 import datetime
-from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field
+from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
 from typing import Dict, List, Optional
-from app.types import Isolierungsqualitaet, AusrichtungDach, Rechnungsart
-
+from app.types import *
 
 class AdresseCreate(BaseModel):
     strasse: str
@@ -14,9 +13,27 @@ class AdresseCreate(BaseModel):
     land: str
 
 
-class AdresseResponse(BaseModel):
+class AdresseIDResponse(BaseModel):
     adresse_id: int
 
+class AdresseResponse(BaseModel):
+    adresse_id: int
+    strasse: str
+    stadt: str
+    plz: int
+    hausnummer: int
+    land: str
+
+    class Config:
+        from_attributes = True
+
+class AdresseResponseLongLat(BaseModel):
+    id: int
+    position: List[float]
+    name: str
+
+    class Config:
+        from_attributes = True
 
 class NutzerCreate(BaseModel):
     email: EmailStr
@@ -166,6 +183,9 @@ class TarifCreate(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
+    class Config:
+        extra = Extra.allow
+
 
 class TarifResponse(BaseModel):
     tarif_id: int
@@ -189,9 +209,15 @@ class PreisstrukturenCreate(BaseModel):
             raise ValueError('Der Wert darf nicht negativ sein')
         return v
 
+    class Config:
+        extra = Extra.allow
+
 
 class PreisstrukturenResponse(BaseModel):
     preis_id: int
+    bezugspreis_kwh: float
+    einspeisung_kwh: float
+
 
 
 class AggregatedDashboardSmartMeterData(BaseModel):
@@ -202,15 +228,81 @@ class AggregatedDashboardSmartMeterData(BaseModel):
     gesamt_last: float = Field(..., description="Gesamtlastverbrauch")
 
 
+class AggregatedDashboardSmartMeterDataResponseSOC(BaseModel):
+    x: str
+    y: float = Field(..., description="Durchschnittlicher SOC aller Speicher")
+
+
+class AggregatedDashboardSmartMeterDataResponsePV(BaseModel):
+    x: str
+    y: float = Field(..., description="Gesamtleistung der PV-Anlagen")
+
+
+class AggregatedDashboardSmartMeterDataResponseBatterie(BaseModel):
+    x: str
+    y: float = Field(..., description="Gesamtleistung der Batterien")
+
+
+class AggregatedDashboardSmartMeterDataResponseLast(BaseModel):
+    x: str
+    y: float = Field(..., description="Gesamtlastverbrauch")
+
+
 class DashboardSmartMeterDataResponse(BaseModel):
     message: str
+
+field_to_schema_mapping = {
+    "all": AggregatedDashboardSmartMeterData,
+    "soc": AggregatedDashboardSmartMeterDataResponseSOC,
+    "pv": AggregatedDashboardSmartMeterDataResponsePV,
+    "batterie": AggregatedDashboardSmartMeterDataResponseBatterie,
+    "last": AggregatedDashboardSmartMeterDataResponseLast
+}
+
+class PVAnlageBase(BaseModel):
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    installationsdatum: str
+    installationsstatus: str
+    modulanordnung: str
+    kabelwegfuehrung: str
+    montagesystem: str
+    schattenanalyse: str
+    wechselrichterposition: str
+    installationsplan: str
+
+
+class PVAnlageCreate(PVAnlageBase):
+    haushalt_id: int
+    solarteur_id: int
+    netzbetreiber_id: int
+
+
+class PVAnlage(PVAnlageBase):
+    anlage_id: int
+    prozess_status: str
+    nvpruefung_status: bool
+
+    class Config:
+        from_attributes = True
+
+
+class NetzvertraeglichkeitspruefungResponse(BaseModel):
+    anlage_id: int
+    nvpruefung_status: bool
+
+
+class EinspeisezusageResponse(BaseModel):
+    message: str
+    anlage_id: int
 
 
 class RollenOverview(BaseModel):
     rolle: str
     count: int
-      
-      
+
+
 class NutzerDateResponse(BaseModel):
     gestern: RollenOverview
     heute: RollenOverview
@@ -286,3 +378,52 @@ class VertragResponse(BaseModel):
         orm_mode = True
 
 
+
+class PVAnlageAnfrage(BaseModel):
+    haushalt_id: int
+
+
+class PVAnforderungResponse(BaseModel):
+    anlage_id: int
+    prozess_status: ProzessStatus
+    solarteur_id: int
+
+
+class TarifLaufzeitResponse(BaseModel):
+    laufzeit: int
+    value: int
+
+
+class AngebotCreate(BaseModel):
+    anlage_id: int
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    modulanordnung: Orientierung
+    kosten: float
+
+
+class AngebotResponse(BaseModel):
+    angebot_id: int
+    anlage_id: int
+    kosten: float
+    class Config:
+        from_attributes = True
+
+
+class InstallationsplanCreate(BaseModel):
+    kabelwegfuehrung: str
+    montagesystem: Montagesystem
+    schattenanalyse: Schatten
+    wechselrichterposition: str
+    installationsdatum: date
+    
+
+class InstallationsplanResponse(BaseModel):
+    installationsplan: str
+
+
+class PVAngebotResponse:
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float

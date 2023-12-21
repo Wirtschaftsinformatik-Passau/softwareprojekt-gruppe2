@@ -710,14 +710,14 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
     logger.info(logging_obj.dict())
 
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
- 
+
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
                           db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user, "POST", "/rechnungen")
 
     try:
-        neue_rechnung = models.Rechnung(**rechnung.dict())
+        neue_rechnung = models.Rechnung(**rechnung.dict(), user_id=current_user.user_id)
         db.add(neue_rechnung)
         await db.commit()
         await db.refresh(neue_rechnung)

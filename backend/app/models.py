@@ -95,21 +95,23 @@ class Haushalt(Base):
     dachflaeche = Column(Float)
     energieeffizienzklasse = Column(String)
 
-class Rechnung(Base):
-    __tablename__ = 'rechnungen' if settings.OS == 'Linux' else "Rechnungen"
+class Rechnungen(Base):
+    __tablename__ = 'rechnungen' if settings.OS == 'Linux' else 'Rechnungen'
     rechnung_id = Column(Integer, primary_key=True)
-    haushalt_id = Column(Integer, ForeignKey('Haushalt.user_id'))
+    haushalt_id = Column(Integer, ForeignKey('haushalt.user_id' if settings.OS == 'Linux' else "Haushalt.user_id"))
     rechnungsbetrag = Column(Float)
     rechnungsdatum = Column(Date)
     faelligkeitsdatum = Column(Date)
-    rechnungsart = Column(Enum(Rechnungsart), nullable=False)
+    rechnungsart = Column(Enum(Rechnungsart), ENUM(*[r.value for r in Rechnungsart],
+                                    name='rechnungsart' if settings.OS == 'Linux' else "Rechnungsart",
+                                    create_type=False))
     zeitraum = Column(Date)
 
 class Vertrag(Base):
     __tablename__ = 'vertrag' if settings.OS == 'Linux' else "Vertrag"
     vertrag_id = Column(String, primary_key=True)
-    haushalt_id = Column(Integer, ForeignKey('Haushalt.user_id'))
-    tarif_id = Column(Integer, ForeignKey('Tarif.tarif_id'))
+    haushalt_id = Column(Integer, ForeignKey('haushalt.user_id' if settings.OS == 'Linux' else "Haushalt.user_id"))
+    tarif_id = Column(Integer, ForeignKey('tarif.tarif_id'if settings.OS == 'Linux' else 'Tarif.tarif_id')) #hier auch OS Unterscheidung notwendig????
     beginn_datum = Column(Date)
     end_datum = Column(Date)
     jahresabschlag = Column(Float)

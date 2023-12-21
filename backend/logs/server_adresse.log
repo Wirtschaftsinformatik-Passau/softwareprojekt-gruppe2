@@ -50,3 +50,4 @@
 {"timestamp": "2023-12-15 16:04:37,564", "level": "INFO", "name": "GreenEcoHubAdresse", "message": null, "adresse_id": 14, "msg": "Adresse created"}
 {"timestamp": "2023-12-16 16:41:23,006", "level": "INFO", "name": "GreenEcoHubAdresse", "message": null, "adresse_id": 1, "msg": "Adresse created"}
 {"timestamp": "2023-12-16 16:41:25,406", "level": "INFO", "name": "GreenEcoHubAdresse", "message": null, "adresse_id": 2, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:23:36,966", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 1, "msg": "Adresse created", "taskName": "Task-11"}

@@ -32,7 +32,7 @@ class Nutzer(Base):
                                 name='rolle' if settings.OS == 'Linux' else "Rolle",
                                 create_type=False), nullable=False)
     telefonnummer = Column(String)
-    adresse_id = Column(Integer, ForeignKey(f'adresse.adresse_id' if settings.OS == 'Linux' else "Adresse.adresse_id"))
+    adresse_id = Column(Integer, ForeignKey(f'Adresse.adresse_id' if settings.OS == 'Linux' else "Adresse.adresse_id"))
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
@@ -63,7 +63,7 @@ class DashboardSmartMeterData(Base):
 
 
     id = Column(Integer, primary_key=True, index=True)
-    haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    haushalt_id = Column(Integer, ForeignKey('Nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     datum = Column(DateTime)
     pv_erzeugung = Column(Float)
     soc = Column(Float)
@@ -73,16 +73,16 @@ class DashboardSmartMeterData(Base):
 
 class Energieberatende(Base):
     __tablename__ = 'energieberatende' if settings.OS == 'Linux' else "Energieberatende"
-    user_id = Column(Integer, ForeignKey('nutzer.user_id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('Nutzer.user_id'), primary_key=True)
     spezialisierung = Column(String)
 
 class Solarteur(Base):
     __tablename__ = 'solarteur' if settings.OS == 'Linux' else "Solarteur"
-    user_id = Column(Integer, ForeignKey('nutzer.user_id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('Nutzer.user_id'), primary_key=True)
 
 class Haushalt(Base):
     __tablename__ = 'haushalt' if settings.OS == 'Linux' else "Haushalt"
-    user_id = Column(Integer, ForeignKey('nutzer.user_id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('Nutzer.user_id'), primary_key=True)
     anzahl_bewohner = Column(Integer)
     heizungsart = Column(String)
     baujahr = Column(Integer)
@@ -95,7 +95,7 @@ class Haushalt(Base):
 class Rechnung(Base):
     __tablename__ = 'rechnungen' if settings.OS == 'Linux' else "Rechnungen"
     rechnung_id = Column(Integer, primary_key=True)
-    haushalt_id = Column(Integer, ForeignKey('haushalt.user_id'))
+    haushalt_id = Column(Integer, ForeignKey('Haushalt.user_id'))
     rechnungsbetrag = Column(Float)
     rechnungsdatum = Column(Date)
     faelligkeitsdatum = Column(Date)
@@ -105,8 +105,8 @@ class Rechnung(Base):
 class Vertrag(Base):
     __tablename__ = 'vertrag' if settings.OS == 'Linux' else "Vertrag"
     vertrag_id = Column(String, primary_key=True)
-    haushalt_id = Column(Integer, ForeignKey('Haushalte.user_id'))
-    tarif_id = Column(Integer, ForeignKey('Tarife.tarif_id'))
+    haushalt_id = Column(Integer, ForeignKey('Haushalt.user_id'))
+    tarif_id = Column(Integer, ForeignKey('Tarif.tarif_id'))
     beginn_datum = Column(Date)
     end_datum = Column(Date)
     jahresabschlag = Column(Float)

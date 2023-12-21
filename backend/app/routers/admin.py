@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
 from sqlalchemy import exc
 from datetime import datetime, date, timedelta
 from app import models, schemas, database, oauth
@@ -394,57 +392,196 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Logs")
 
 
-@router.post("/kalendereintrag/", status_code=status.HTTP_201_CREATED, response_model=schemas.KalenderEintrag)
+@router.post("/kalendereintrag", status_code=status.HTTP_201_CREATED, response_model=schemas.KalenderEintrag)
 async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
                                   db: AsyncSession = Depends(database.get_db_async),
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_admin_role(current_user, "POST", "/kalendereintrag/")
+    try:
+        if isinstance(eintrag.zeitpunkt, str):
+            eintrag.zeitpunkt = datetime.strptime(eintrag.zeitpunkt, '%Y-%m-%d').date()
+        db_eintrag = models.Kalendereintrag(**eintrag.dict())
+        db.add(db_eintrag)
+        await db.commit()
+        await db.refresh(db_eintrag)
 
-    if isinstance(eintrag.zeitpunkt, str):
-        eintrag.zeitpunkt = datetime.strptime(eintrag.zeitpunkt, '%Y-%m-%d').date()
-    db_eintrag = models.Kalendereintrag(**eintrag.dict())
-    db.add(db_eintrag)
-    await db.commit()
-    await db.refresh(db_eintrag)
-    return db_eintrag
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/kalendereintrag/",
+            method="POST",
+            message="Neuer Kalendereintrag erstellt",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return db_eintrag
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/kalendereintrag",
+            method="POST",
+            message=f"Fehler beim Erstellen eines Kalendereintrags: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/kalendereintrag/", response_model=List[schemas.KalenderEintrag])
-async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async)):
-    stmt = select(models.Kalendereintrag)
-    result = await db.execute(stmt)
-    eintraege = result.scalars().all()
-    return eintraege
+@router.get("/kalendereintrag", status_code=status.HTTP_200_OK, response_model=List[schemas.KalenderEintrag])
+async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async),
+                                current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "GET", "/kalendereintrag")
+    try:
+        stmt = select(models.Kalendereintrag)
+        result = await db.execute(stmt)
+        eintraege = result.scalars().all()
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/kalendereintrag/",
+            method="GET",
+            message="Alle Kalendereinträge erfolgreich abgerufen",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return eintraege
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/kalendereintrag/",
+            method="GET",
+            message=f"Fehler beim Abrufen von Kalendereinträgen: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/kalendereintrag/{eintrag_id}", response_model=schemas.KalenderEintrag)
-async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async)):
-    eintrag = await db.get(models.Kalendereintrag, eintrag_id)
-    if eintrag is None:
-        raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
-    return eintrag
+@router.get("/kalendereintrag/{eintrag_id}", status_code=status.HTTP_200_OK,
+            response_model=schemas.KalenderEintrag)
+async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async),
+                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "GET", f"/kalendereintrag/{eintrag_id}")
+    try:
+        db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
+        if db_eintrag is None:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/kalendereintrag/{eintrag_id}",
+                method="GET",
+                message=f"Kalendereintrag {eintrag_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kalendereintrag/{eintrag_id}",
+            method="GET",
+            message=f"Kalendereintrag {eintrag_id} erfolgreich abgerufen",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return db_eintrag
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kalendereintrag/{eintrag_id}",
+            method="GET",
+            message=f"Fehler beim Abrufen des Kalendereintrags {eintrag_id}: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/kalendereintrag/{eintrag_id}", response_model=schemas.KalenderEintrag)
-async def update_kalendereintrag(eintrag_id: int, eintrag_data: schemas.KalenderEintragCreate, db: AsyncSession = Depends(database.get_db_async)):
-    db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
-    if db_eintrag is None:
-        raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
+@router.put("/kalendereintrag/{eintrag_id}", status_code=status.HTTP_200_OK,
+            response_model=schemas.KalenderEintrag)
+async def update_kalendereintrag(eintrag_id: int, eintrag_data: schemas.KalenderEintragCreate,
+                                 db: AsyncSession = Depends(database.get_db_async),
+                                 current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "PUT", f"/kalendereintrag/{eintrag_id}")
+    try:
+        db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
+        if db_eintrag is None:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/kalendereintrag/{eintrag_id}",
+                method="PUT",
+                message=f"Kalendereintrag {eintrag_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
 
-    for key, value in eintrag_data.dict().items():
-        setattr(db_eintrag, key, value)
+        for key, value in eintrag_data.dict().items():
+            setattr(db_eintrag, key, value)
 
-    await db.commit()
-    await db.refresh(db_eintrag)
-    return db_eintrag
+        await db.commit()
+        await db.refresh(db_eintrag)
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kalendereintrag/{eintrag_id}",
+            method="PUT",
+            message=f"Kalendereintrag {eintrag_id} aktualisiert",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return db_eintrag
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kalendereintrag/{eintrag_id}",
+            method="PUT",
+            message=f"Fehler beim Aktualisieren des Kalendereintrags {eintrag_id}: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/kalendereintrag/{eintrag_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async)):
-    db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
-    if db_eintrag is None:
-        raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
+async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async),
+                                 current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "DELETE", f"/kalendereintrag/{eintrag_id}")
+    try:
+        db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
+        if db_eintrag is None:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/kalendereintrag/{eintrag_id}",
+                method="DELETE",
+                message=f"Kalendereintrag {eintrag_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=404, detail="Kalendereintrag nicht gefunden")
 
-    await db.delete(db_eintrag)
-    await db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+        await db.delete(db_eintrag)
+        await db.commit()
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kalendereintrag/{eintrag_id}",
+            method="PUT",
+            message=f"Kalendereintrag {eintrag_id} gelöscht",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kalendereintrag/{eintrag_id}",
+            method="DELETE",
+            message=f"Fehler beim Löschen des Kalendereintrags {eintrag_id}: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail=str(e))

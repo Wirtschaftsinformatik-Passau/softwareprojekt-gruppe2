@@ -13,6 +13,8 @@ roles = ['Solarteure', 'Energieberatende', 'Haushalte', 'Netzbetreiber']
 hh = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"h@h.de","passwort":"123","rolle":"Haushalte","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
 admin = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"1@0.de","passwort":"123","rolle":"Admin","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
 nb = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"n@b.de","passwort":"123","rolle":"Netzbetreiber","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
+ss = {"vorname":"Max","nachname":"Mustermann","telefonnummer":"1","email":"s@s.de","passwort":"123","rolle":"Solarteure","geburtsdatum":"2002-04-02","adresse_id":1,"titel":"dd"}
+
 def send_post_request(request_number):
     # Randomly choose a role
     role = random.choice(roles)

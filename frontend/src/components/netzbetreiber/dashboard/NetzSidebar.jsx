@@ -223,7 +223,13 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-
+            <Typography
+              variant="h6"
+              color={colors.white[300]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              PV-Anlage
+            </Typography>
             <Typography
               variant="h6"
               color={colors.white[300]}

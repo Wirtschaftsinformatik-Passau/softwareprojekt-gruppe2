@@ -354,7 +354,7 @@ class InstallationsplanResponse(BaseModel):
     installationsplan: str
 
 
-class PVAngebotResponse:
+class PVAngebotResponse(BaseModel):
     modultyp: str
     kapazitaet: float
     installationsflaeche: float

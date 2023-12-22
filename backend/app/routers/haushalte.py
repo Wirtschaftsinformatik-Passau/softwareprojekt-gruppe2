@@ -69,7 +69,7 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
         )
         logger.info(logging_obj.dict())
 
-        return schemas.PVAnlageResponse(
+        return schemas.PVAnforderungResponse(
             anlage_id=pv_anlage.anlage_id,
             prozess_status=pv_anlage.prozess_status,
             solarteur_id=solarteur.user_id

@@ -18,6 +18,7 @@ class AdresseCreate(BaseModel):
 class AdresseIDResponse(BaseModel):
     adresse_id: int
 
+
 class AdresseResponse(BaseModel):
     adresse_id: int
     strasse: str
@@ -29,6 +30,7 @@ class AdresseResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AdresseResponseLongLat(BaseModel):
     id: int
     position: List[float]
@@ -36,6 +38,7 @@ class AdresseResponseLongLat(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class NutzerCreate(BaseModel):
     email: EmailStr
@@ -221,7 +224,6 @@ class PreisstrukturenResponse(BaseModel):
     einspeisung_kwh: float
 
 
-
 class AggregatedDashboardSmartMeterData(BaseModel):
     datum: str
     gesamt_pv_erzeugung: float = Field(..., description="Gesamtleistung der PV-Anlagen")
@@ -253,6 +255,7 @@ class AggregatedDashboardSmartMeterDataResponseLast(BaseModel):
 class DashboardSmartMeterDataResponse(BaseModel):
     message: str
 
+
 field_to_schema_mapping = {
     "all": AggregatedDashboardSmartMeterData,
     "soc": AggregatedDashboardSmartMeterDataResponseSOC,
@@ -260,6 +263,7 @@ field_to_schema_mapping = {
     "batterie": AggregatedDashboardSmartMeterDataResponseBatterie,
     "last": AggregatedDashboardSmartMeterDataResponseLast
 }
+
 
 class PVAnlageBase(BaseModel):
     modultyp: str
@@ -338,6 +342,7 @@ class AngebotResponse(BaseModel):
     angebot_id: int
     anlage_id: int
     kosten: float
+
     class Config:
         from_attributes = True
 
@@ -348,7 +353,7 @@ class InstallationsplanCreate(BaseModel):
     schattenanalyse: Schatten
     wechselrichterposition: str
     installationsdatum: date
-    
+
 
 class InstallationsplanResponse(BaseModel):
     installationsplan: str
@@ -358,3 +363,16 @@ class PVAngebotResponse(BaseModel):
     modultyp: str
     kapazitaet: float
     installationsflaeche: float
+
+
+class KalenderEintragCreate(BaseModel):
+    zeitpunkt: date
+    user_id: int
+    beschreibung: str
+
+
+class KalenderEintrag(KalenderEintragCreate):
+    kalender_id: int
+
+    class Config:
+        from_attributes = True

@@ -1,6 +1,7 @@
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 
+
 def geocode_address(street, number, postal_code, city):
     """
     Geocodes an address.
@@ -25,4 +26,3 @@ def geocode_address(street, number, postal_code, city):
             return (None, None)
     except GeocoderTimedOut:
         return (None, None)
-

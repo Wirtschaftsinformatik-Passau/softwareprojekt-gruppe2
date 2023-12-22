@@ -117,3 +117,11 @@ class Angebot(Base):
     installationsflaeche = Column(Integer)
     kosten = Column(Float)
 
+
+class Kalendereintrag(Base):
+    __tablename__ = "kalendereintraege" if settings.OS == 'Linux' else 'Kalendereintraege'
+
+    kalender_id = Column(Integer, Identity(), primary_key=True)
+    zeitpunkt = Column(Date)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    beschreibung = Column(String)

@@ -14,7 +14,7 @@ import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
 from app.config import Settings
-from app.schemas import LoggingSchema
+from app.schemas import LoggingSchema, TarifCreate, TarifResponse
 from app import config
 import pandas as pd
 import io
@@ -65,14 +65,10 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
         is_valid_schattenanalyse
     ])
 
-
-# tarif erstellen
+# Tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
-async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer = Depends(oauth.get_current_user),
-                       db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "POST", "/tarife")
+async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
-        tarif.user_id = current_user.user_id
         new_tarif = models.Tarif(**tarif.dict())
         db.add(new_tarif)
         await db.commit()
@@ -82,17 +78,11 @@ async def create_tarif(tarif: schemas.TarifCreate, current_user: models.Nutzer =
         logger.error(f"Tarif konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht erstellt werden: {e}")
 
-
-# tarif aktualisieren
+# Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
-                       current_user: models.Nutzer = Depends(oauth.get_current_user),
-                       db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
-        await check_netzbetreiber_role(current_user, "PUT", "/tarife")
-        user_id = current_user.user_id
-        query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
+        query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
         result = await db.execute(query)
         existing_tarif = result.scalar_one_or_none()
 
@@ -109,69 +99,36 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
         logger.error(f"Tarif konnte nicht aktualisiert werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht aktualisiert werden: {e}")
 
-
-# tarif löschen
+# Tarif löschen
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
-                       db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
-
-    user_id = current_user.user_id
-
-    # Überprüfen, ob der Tarif existiert
-    delete_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
+async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
     result = await db.execute(delete_stmt)
     db_tarif = result.scalar_one_or_none()
     if db_tarif is None:
         raise HTTPException(status_code=404, detail="Tarif nicht gefunden")
 
-    # Überprüfen, ob es mehr als einen Tarif in der Datenbank gibt
-    count_stmt = select(func.count(models.Tarif.tarif_id))
-    total_tarife = await db.execute(count_stmt)
-    total_count = total_tarife.scalar_one()
-
-    if total_count <= 1:
-        raise HTTPException(status_code=403, detail="Mindestens ein Tarif muss im System vorhanden sein")
-
-    # Löschen des Tarifs
     await db.delete(db_tarif)
     await db.commit()
 
-
-# alle tarife abrufen
+# Alle Tarife abrufen
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
-async def get_tarife(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                     db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
-    user_id = current_user.user_id
-    select_stmt = select(models.Tarif).where(models.Tarif.user_id == user_id)
-    result = await db.execute(select_stmt)
+async def get_tarife(db: AsyncSession = Depends(database.get_db_async)):
+    result = await db.execute(select(models.Tarif))
     tarife = result.scalars().all()
-    if len(tarife) == 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Keine Tarife gefunden")
+    if not tarife:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Keine Tarife gefunden")
     return tarife
 
-
+# Einzelnen Tarif abrufen
 @router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def get_tarife(tarif_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
-                     db: AsyncSession = Depends(database.get_db_async)):
-    await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
-
-    try:
-        user_id = current_user.user_id
-        select_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
-        result = await db.execute(select_stmt)
-        tarif = result.scalars().all()
-        if len(tarif) == 0:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
-        return tarif[0]
-
-    except exc.IntegrityError as e:
-        logger.error(f"Tarif konnte nicht gefunden werden: {e}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Tarif {tarif_id} konnte nicht gefunden werden: {e}")
+async def get_tarif_by_id(tarif_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+    result = await db.execute(query)
+    tarif = result.scalar_one_or_none()
+    if tarif is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
+    return tarif
 
 
 @router.get("/laufzeit", response_model=List[schemas.TarifLaufzeitResponse])
@@ -710,3 +667,16 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
     logger.info(logging_obj.dict())
 
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
+
+@router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
+async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
+    try:
+        neue_rechnung = models.Rechnungen(**rechnung.dict())
+        db.add(neue_rechnung)
+        await db.commit()
+        await db.refresh(neue_rechnung)
+        return neue_rechnung
+    except SQLAlchemyError as e:
+        logger.error(f"Rechnung konnte nicht erstellt werden: {e}")
+        raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
+    

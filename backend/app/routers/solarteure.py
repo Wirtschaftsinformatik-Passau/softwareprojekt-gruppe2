@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
-from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app import models, schemas, database, oauth, types
 import logging

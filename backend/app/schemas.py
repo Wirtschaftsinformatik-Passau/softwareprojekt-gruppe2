@@ -359,7 +359,7 @@ class InstallationsplanResponse(BaseModel):
     installationsplan: str
 
 
-class PVAngebotResponse:
+class PVAngebotResponse(BaseModel):
     modultyp: str
     kapazitaet: float
     installationsflaeche: float
@@ -398,6 +398,16 @@ class AngebotAnnahmeResponse(BaseModel):
     kosten: float
     angebotstatus: bool
     created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+
+
+
+class KalenderEintrag(KalenderEintragCreate):
+    kalender_id: int
 
     class Config:
         from_attributes = True

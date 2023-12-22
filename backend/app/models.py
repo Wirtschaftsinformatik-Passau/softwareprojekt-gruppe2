@@ -142,3 +142,4 @@ class Energieausweise(Base):
     ausweis_status = Column(Enum(AusweisStatus), ENUM(*[r.value for r in Rolle],
                                                       name='ausweisstatus' if settings.OS == 'Linux' else "AusweisStatus",
                                                       create_type=False), nullable=False)
+

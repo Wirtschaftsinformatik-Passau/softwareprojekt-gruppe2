@@ -1,5 +1,6 @@
 ./backend_tose_venv/
 ./backend_tose/venv/
+./tose_backend/
 venv/
 ./logs/
 # Byte-compiled / optimized / DLL files

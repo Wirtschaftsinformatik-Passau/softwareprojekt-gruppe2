@@ -129,6 +129,7 @@
 {"timestamp": "2023-12-19 00:10:35,434", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 17, "msg": "Adresse created"}
 {"timestamp": "2023-12-19 00:10:43,422", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 15 erfolgreich geocodiert", "user_id": 3, "endpoint": "/geocode", "method": "POST", "success": true}
 {"timestamp": "2023-12-19 00:10:44,166", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 16 erfolgreich geocodiert", "user_id": 3, "endpoint": "/geocode", "method": "POST", "success": true}
+<<<<<<< HEAD
 {"timestamp": "2023-12-20 03:07:33,967", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 1, "msg": "Adresse created"}
 {"timestamp": "2023-12-20 03:07:33,988", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 2, "msg": "Adresse created"}
 {"timestamp": "2023-12-20 03:07:34,010", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 3, "msg": "Adresse created"}
@@ -143,3 +144,18 @@
 {"timestamp": "2023-12-20 16:28:14,050", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 5, "msg": "Adresse created"}
 {"timestamp": "2023-12-20 16:28:14,085", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 6, "msg": "Adresse created"}
 {"timestamp": "2023-12-20 16:28:14,126", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 7, "msg": "Adresse created"}
+=======
+{"timestamp": "2023-12-19 17:46:24,247", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 1, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:46:24,259", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 2, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:46:24,271", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 3, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:46:24,281", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 4, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:46:24,292", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 5, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:46:24,303", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 6, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:46:24,313", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 7, "msg": "Adresse created"}
+{"timestamp": "2023-12-19 17:49:02,029", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 2 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+{"timestamp": "2023-12-19 17:49:02,726", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 3 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+{"timestamp": "2023-12-19 17:49:03,456", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 4 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+{"timestamp": "2023-12-19 17:49:04,261", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 5 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+{"timestamp": "2023-12-19 17:49:04,968", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 6 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+{"timestamp": "2023-12-19 17:49:05,671", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 7 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+>>>>>>> main

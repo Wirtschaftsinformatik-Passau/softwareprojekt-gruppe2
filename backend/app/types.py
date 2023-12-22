@@ -45,3 +45,8 @@ class Schatten(enum.Enum):
     Moderater_Schatten = "Moderater_Schatten"
     Ausgedehnter_Schatten = "Ausgedehnter_Schatten"
     Dauerhafter_Schatten = "Dauerhafter_Schatten"
+
+
+class AusweisStatus(enum.Enum):
+    AnfrageGestellt = "AnfrageGestellt"
+    Ausgestellt = "Ausgestellt"

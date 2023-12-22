@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extr
 from datetime import date
 from typing import Dict, List, Optional
 
-from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
 
 
 class AdresseCreate(BaseModel):
@@ -369,6 +369,41 @@ class KalenderEintragCreate(BaseModel):
     zeitpunkt: date
     user_id: int
     beschreibung: str
+
+
+class KalenderEintrag(KalenderEintragCreate):
+    kalender_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class EnergieausweisAnfrage(BaseModel):
+    pass
+
+
+class EnergieausweisAnfrageResponse(BaseModel):
+    energieausweis_id: int
+    haushalt_id: int
+    energieberater_id: int
+    ausweis_status: AusweisStatus
+
+    class Config:
+        from_attributes = True
+
+
+class AngebotAnnahmeResponse(BaseModel):
+    angebot_id: int
+    anlage_id: int
+    kosten: float
+    angebotstatus: bool
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+
 
 
 class KalenderEintrag(KalenderEintragCreate):

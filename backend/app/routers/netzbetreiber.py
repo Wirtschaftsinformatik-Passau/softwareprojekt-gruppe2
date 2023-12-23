@@ -55,7 +55,8 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
     is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
                                                              models.Schatten.Minimalschatten]
 
-    print(f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
+    print(
+        f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
     return all([
         is_within_kapazitaetsgrenze,
         is_within_flaechengrenze,
@@ -91,7 +92,7 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
         await check_netzbetreiber_role(current_user, "PUT", "/tarife")
         user_id = current_user.user_id
         query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
+                                           (models.Tarif.user_id == user_id))
         result = await db.execute(query)
         existing_tarif = result.scalar_one_or_none()
 
@@ -119,7 +120,7 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
 
     # Überprüfen, ob der Tarif existiert
     delete_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
+                                             (models.Tarif.user_id == user_id))
     result = await db.execute(delete_stmt)
     db_tarif = result.scalar_one_or_none()
     if db_tarif is None:
@@ -175,7 +176,7 @@ async def get_tarife(tarif_id: int, current_user: models.Nutzer = Depends(oauth.
 
 @router.get("/laufzeit", response_model=List[schemas.TarifLaufzeitResponse])
 async def count_laufzeit(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                        db: AsyncSession = Depends(database.get_db_async)):
+                         db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
 
     try:
@@ -302,7 +303,7 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
     await check_netzbetreiber_role(current_user, "PUT", "/preisstrukturen")
     user_id = current_user.user_id
     query = select(models.Preisstrukturen).where((models.Preisstrukturen.preis_id == preis_id) &
-                                                 (models.Preisstrukturen.user_id == user_id) )
+                                                 (models.Preisstrukturen.user_id == user_id))
     result = await db.execute(query)
     preisstruktur = result.scalars().first()
 
@@ -405,16 +406,33 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
-@router.get("/haushalte", status_code=status.HTTP_200_OK,)
+
+@router.get("/haushalte", status_code=status.HTTP_200_OK, )
 async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                  db: AsyncSession = Depends(database.get_db_async)):
+                        db: AsyncSession = Depends(database.get_db_async)):
     try:
         await check_netzbetreiber_role(current_user, "GET", "/haushalte")
         user_id = current_user.user_id
-        stmt = select(models.Nutzer).where(models.Nutzer.user_id != user_id)
+        stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
+                                                      models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
+        models.Nutzer.rolle == models.Rolle.Haushalte)
         result = await db.execute(stmt)
-        haushalte = result.scalars().all()
-        return haushalte
+        haushalte = result.all()
+        response = [{
+            "nachname": user.nachname,
+            "email": user.email,
+            "user_id": user.user_id,
+            "vorname": user.vorname,
+            "rolle": user.rolle if user.rolle is not None else "unknown",
+            "adresse_id": user.adresse_id,
+            "geburtsdatum": user.geburtsdatum,
+            "telefonnummer": user.telefonnummer,
+            "strasse": adresse.strasse,
+            "stadt": adresse.stadt,
+            "hausnr": adresse.hausnummer,
+            "plz": adresse.plz,
+        } for user, adresse in haushalte]
+        return response
     except exc.IntegrityError as e:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -437,17 +455,17 @@ async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_
         logger.error(logging_error.dict())
         raise HTTPException(status_code=500, detail=f"Fehler beim Abrufen der Haushalte: {e}")
 
+
 @router.get("/dashboard/{haushalt_id}", status_code=status.HTTP_200_OK,
             response_model=Union[List[schemas.AggregatedDashboardSmartMeterData],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponsePV],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponseSOC],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponseBatterie],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponseLast]])
+            List[schemas.AggregatedDashboardSmartMeterDataResponsePV],
+            List[schemas.AggregatedDashboardSmartMeterDataResponseSOC],
+            List[schemas.AggregatedDashboardSmartMeterDataResponseBatterie],
+            List[schemas.AggregatedDashboardSmartMeterDataResponseLast]])
 async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str = "all", period: str = "DAY",
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
-
     # TODO: parameter validierung für sql injections
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
     stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
@@ -465,7 +483,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
         logger.error(logging_error.dict())
         raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
     try:
-        table_name = dashboard_smartmeter_data if config.settings.OS == 'Linux' else '"Dashboard_smartmeter_data"'
+        table_name = "dashboard_smartmeter_data" if config.settings.OS == 'Linux' else '"Dashboard_smartmeter_data"'
         if field == "all":
             raw_sql = text(
                 f"""
@@ -709,3 +727,87 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
     logger.info(logging_obj.dict())
 
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
+
+
+@router.get("/einspeisezusagen", response_model=List[schemas.AngebotVorschlag])
+async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get_db_async),
+                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
+    try:
+        stmt = select(models.PVAnlage).where((models.PVAnlage.netzbetreiber_id is None) or
+                                             (models.PVAnlage.prozess_status != models.ProzessStatus.Genehmigt))
+        result = await db.execute(stmt)
+        pv_anlagen = result.scalars().all()
+
+        response = [{
+            "anlage_id": x.anlage_id,
+            "haushalt_id": x.haushalt_id,
+            "solarteur_id": x.solarteur_id,
+            "modultyp": x.modultyp,
+            "kapazitaet": x.kapazitaet,
+            "installationsflaeche": x.installationsflaeche,
+            "installationsdatum": x.installationsdatum,
+            "modulanordnung": x.modulanordnung,
+            "kabelwegfuehrung": x.kabelwegfuehrung,
+            "montagesystem": x.montagesystem,
+            "schattenanalyse": x.schattenanalyse,
+            "wechselrichterposition": x.wechselrichterposition,
+            "installationsplan": x.installationsplan,
+            "prozess_status": x.prozess_status,
+            "nvpruefung_status": x.nvpruefung_status
+        } for x in pv_anlagen]
+
+        return response
+
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/einspeisezusagen",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
+
+
+@router.get("/einspeisezusagen/{anlage_id}", response_model=List[schemas.AngebotVorschlag])
+async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get_db_async),
+                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
+    try:
+        stmt = select(models.PVAnlage).where((models.PVAnlage.netzbetreiber_id is None) or
+                                             (models.PVAnlage.prozess_status != models.ProzessStatus.Genehmigt))
+        result = await db.execute(stmt)
+        pv_anlagen = result.scalars().all()
+
+        response = [{
+            "anlage_id": x.anlage_id,
+            "haushalt_id": x.haushalt_id,
+            "solarteur_id": x.solarteur_id,
+            "modultyp": x.modultyp,
+            "kapazitaet": x.kapazitaet,
+            "installationsflaeche": x.installationsflaeche,
+            "installationsdatum": x.installationsdatum,
+            "modulanordnung": x.modulanordnung,
+            "kabelwegfuehrung": x.kabelwegfuehrung,
+            "montagesystem": x.montagesystem,
+            "schattenanalyse": x.schattenanalyse,
+            "wechselrichterposition": x.wechselrichterposition,
+            "installationsplan": x.installationsplan,
+            "prozess_status": x.prozess_status,
+            "nvpruefung_status": x.nvpruefung_status
+        } for x in pv_anlagen]
+
+        return response
+
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/einspeisezusagen",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")

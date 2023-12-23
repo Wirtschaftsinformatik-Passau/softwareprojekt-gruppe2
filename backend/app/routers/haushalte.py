@@ -1,3 +1,6 @@
+from datetime import MAXYEAR, date
+from datetime import date, datetime
+from uuid import uuid4
 from typing import List
 
 import sqlalchemy
@@ -10,7 +13,8 @@ from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
-from app.schemas import LoggingSchema
+from app.schemas import LoggingSchema, TarifAntragCreate, VertragResponse
+
 
 router = APIRouter(prefix="/haushalte", tags=["Haushalte"])
 
@@ -91,6 +95,50 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Internet Serverfehler")
+
+
+# haushalt sieht alle tarife und kann sich für einen entscheiden
+@router.post("/tarifantrag", response_model=schemas.VertragResponse)
+async def tarifantrag(tarifantrag: schemas.TarifAntragCreate, db: AsyncSession = Depends(database.get_db_async)):
+    logger.info(f"Tarifantrag erhalten: {tarifantrag}")
+
+    # Prüfen, ob der angeforderte Tarif existiert
+    try:
+        tarif = await db.get(models.Tarif, tarifantrag.tarif_id)
+        if not tarif:
+            logger.error(f"Tarif mit ID {tarifantrag.tarif_id} nicht gefunden für Nutzer ID {tarifantrag.user_id}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
+    except Exception as e:
+        logger.error(f"Fehler beim Abrufen des Tarifs: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
+
+    try:
+        vertrag = models.Vertrag(
+            user_id=tarifantrag.user_id,
+            tarif_id=tarifantrag.tarif_id,
+            beginn_datum=tarifantrag.beginn_datum,
+            end_datum=tarifantrag.end_datum,
+            jahresabschlag=tarifantrag.jahresabschlag,
+            vertragstatus=tarifantrag.vertragstatus,
+            netzbetreiber_id=tarif.netzbetreiber_id
+        )
+        db.add(vertrag)
+        await db.commit()
+        await db.refresh(vertrag)
+        logger.info(f"Vertrag {vertrag.vertrag_id} erfolgreich erstellt für Nutzer ID {tarifantrag.user_id}")
+        return schemas.VertragResponse(
+            vertrag_id=vertrag.vertrag_id,
+            user_id=vertrag.user_id,
+            tarif_id=vertrag.tarif_id,
+            beginn_datum=vertrag.beginn_datum,
+            end_datum=vertrag.end_datum,
+            jahresabschlag=vertrag.jahresabschlag,
+            vertragstatus=vertrag.vertragstatus
+        )
+    except Exception as e:
+        logger.error(f"Fehler bei der Erstellung des Vertrags für Nutzer ID {tarifantrag.user_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler bei der Vertragserstellung: {e}")
 
 
 @router.post("/kontaktaufnahme-energieberatenden", status_code=status.HTTP_201_CREATED,

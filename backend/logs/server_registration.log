@@ -319,7 +319,6 @@
 {"timestamp": "2023-12-19 00:04:01,606", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 56, "role": "Admin", "msg": "User registriert"}
 {"timestamp": "2023-12-19 00:05:49,925", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 57, "role": "Admin", "msg": "User registriert"}
 {"timestamp": "2023-12-19 00:10:36,123", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 58, "role": "Haushalte", "msg": "User registriert"}
-<<<<<<< HEAD
 {"timestamp": "2023-12-20 03:07:40,391", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 1, "role": "Haushalte", "msg": "User registriert"}
 {"timestamp": "2023-12-20 03:07:40,669", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 2, "role": "Admin", "msg": "User registriert"}
 {"timestamp": "2023-12-20 03:07:40,960", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 3, "role": "Netzbetreiber", "msg": "User registriert"}
@@ -426,7 +425,6 @@
 {"timestamp": "2023-12-20 16:28:48,409", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 51, "role": "Energieberatende", "msg": "User registriert"}
 {"timestamp": "2023-12-20 16:28:48,690", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 52, "role": "Netzbetreiber", "msg": "User registriert"}
 {"timestamp": "2023-12-20 16:28:48,963", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 53, "role": "Haushalte", "msg": "User registriert"}
-=======
 {"timestamp": "2023-12-19 17:45:01,391", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Es gab folgenden SQL Fehler: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table \"nutzer\" violates foreign key constraint \"nutzer_adresse_id_fkey\"\nDETAIL:  Key (adresse_id)=(1) is not present in table \"adresse\"."}
 {"timestamp": "2023-12-19 17:45:01,769", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Es gab folgenden SQL Fehler: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table \"nutzer\" violates foreign key constraint \"nutzer_adresse_id_fkey\"\nDETAIL:  Key (adresse_id)=(1) is not present in table \"adresse\"."}
 {"timestamp": "2023-12-19 17:45:02,137", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Es gab folgenden SQL Fehler: <class 'asyncpg.exceptions.ForeignKeyViolationError'>: insert or update on table \"nutzer\" violates foreign key constraint \"nutzer_adresse_id_fkey\"\nDETAIL:  Key (adresse_id)=(1) is not present in table \"adresse\"."}
@@ -486,4 +484,3 @@
 {"timestamp": "2023-12-19 17:46:47,862", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 57, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:46:48,238", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 58, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:56:52,929", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 59, "role": "Solarteure", "msg": "User registriert"}
->>>>>>> main

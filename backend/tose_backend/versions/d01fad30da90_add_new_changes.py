@@ -160,3 +160,4 @@ def downgrade() -> None:
     op.drop_table('netzbetreiber')
     op.drop_table('adresse')
     # ### end Alembic commands ###
+

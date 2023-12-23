@@ -2,6 +2,7 @@ import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
 from typing import Dict, List, Optional
+from app.types import *
 
 from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
 
@@ -187,6 +188,7 @@ class TarifCreate(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
+    netzbetreiber_id: int
 
     class Config:
         extra = Extra.allow
@@ -200,8 +202,8 @@ class TarifResponse(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
-    class Config:
-        from_attributes = True
+    #class Config:
+        #orm_mode = True
 
 
 class PreisstrukturenCreate(BaseModel):
@@ -365,6 +367,82 @@ class PVAngebotResponse(BaseModel):
     installationsflaeche: float
 
 
+class EnergieberatendeCreate(BaseModel):
+    spezialisierung: str
+
+class EnergieberatendeResponse(BaseModel):
+    user_id: int
+    spezialisierung: str
+
+class SolarteurCreate(BaseModel):
+    pass
+
+class SolarteurResponse(BaseModel):
+    user_id: int
+
+class HaushaltCreate(BaseModel):
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: AusrichtungDach
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+class HaushaltResponse(BaseModel):
+    user_id: int
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: AusrichtungDach
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+class RechnungCreate(BaseModel):
+    user_id: int
+    rechnungsbetrag: float
+    rechnungsdatum: date
+    faelligkeitsdatum: date
+    rechnungsart: Rechnungsart
+    zeitraum: Optional[date] = None
+    
+    class Config:
+        extra = Extra.allow
+
+class RechnungResponse(BaseModel):
+    rechnung_id: int
+    user_id: int
+    rechnungsbetrag: float
+    rechnungsdatum: date
+    faelligkeitsdatum: date
+    rechnungsart: Rechnungsart
+    zeitraum: Optional[date] = None
+
+    class Config:
+        extra = Extra.allow
+
+class TarifAntragCreate(BaseModel):
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    netzbetreiber_id: int
+    vertragstatus: bool
+
+class VertragResponse(BaseModel):
+    vertrag_id: int
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+
+
 class KalenderEintragCreate(BaseModel):
     zeitpunkt: date
     user_id: int
@@ -401,3 +479,21 @@ class AngebotAnnahmeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class AngebotVorschlag(BaseModel):
+    anlage_id: int = None
+    haushalt_id: int = None
+    solarteur_id: int = None
+    modultyp: Optional[str] = None
+    kapazitaet: Optional[float] = None
+    installationsflaeche: Optional[float] = None
+    installationsdatum: Optional[date] = None
+    modulanordnung: Optional[Orientierung] = None
+    kabelwegfuehrung: Optional[str] = None
+    montagesystem: Optional[Montagesystem] = None
+    schattenanalyse: Optional[Schatten] = None
+    wechselrichterposition: Optional[str] = None
+    installationsplan: Optional[str] = None
+    prozess_status: ProzessStatus = None
+    nvpruefung_status: Optional[bool] = None

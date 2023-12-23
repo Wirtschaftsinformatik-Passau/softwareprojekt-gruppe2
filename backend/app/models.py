@@ -52,6 +52,7 @@ class Tarif(Base):
     grundgebuehr = Column(Float)
     laufzeit = Column(Integer)
     spezielle_konditionen = Column(String)
+    netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
@@ -177,6 +178,7 @@ class Rechnungen(Base):
                                     create_type=False))
     zeitraum = Column(Date)
 
+
 class Vertrag(Base):
     __tablename__ = 'vertrag' if settings.OS == 'Linux' else "Vertrag"
     vertrag_id = Column(Integer, Identity(), primary_key=True)
@@ -184,6 +186,7 @@ class Vertrag(Base):
     tarif_id = Column(Integer, ForeignKey('tarif.tarif_id'if settings.OS == 'Linux' else 'Tarif.tarif_id')) 
     beginn_datum = Column(Date)
     end_datum = Column(Date)
+    netzbetreiber_id= Column(Integer, ForeignKey('nutzer.user_id'if settings.OS == 'Linux' else "Nutzer.user_id"))
     jahresabschlag = Column(Float)
     vertragstatus = Column(Boolean, default=True) 
 

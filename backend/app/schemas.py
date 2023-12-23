@@ -188,6 +188,7 @@ class TarifCreate(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
+    netzbetreiber_id: int
 
     class Config:
         extra = Extra.allow
@@ -430,6 +431,7 @@ class TarifAntragCreate(BaseModel):
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
+    netzbetreiber_id: int
     vertragstatus: bool
 
 class VertragResponse(BaseModel):
@@ -499,8 +501,3 @@ class AngebotVorschlag(BaseModel):
     nvpruefung_status: Optional[bool] = None
 
 
-class KalenderEintrag(KalenderEintragCreate):
-    kalender_id: int
-
-    class Config:
-        from_attributes = True

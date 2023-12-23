@@ -67,8 +67,11 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
 
 # Tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
-async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async),
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),):
     try:
+        user_id = current_user.user_id
+        tarif.netzbetreiber_id = user_id
         new_tarif = models.Tarif(**tarif.dict())
         db.add(new_tarif)
         await db.commit()
@@ -80,7 +83,9 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 

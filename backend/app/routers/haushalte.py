@@ -97,6 +97,7 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
                             detail="Internet Serverfehler")
 
 
+# haushalt sieht alle tarife und kann sich für einen entscheiden
 @router.post("/tarifantrag", response_model=schemas.VertragResponse)
 async def tarifantrag(tarifantrag: schemas.TarifAntragCreate, db: AsyncSession = Depends(database.get_db_async)):
     logger.info(f"Tarifantrag erhalten: {tarifantrag}")
@@ -118,7 +119,8 @@ async def tarifantrag(tarifantrag: schemas.TarifAntragCreate, db: AsyncSession =
             beginn_datum=tarifantrag.beginn_datum,
             end_datum=tarifantrag.end_datum,
             jahresabschlag=tarifantrag.jahresabschlag,
-            vertragstatus=tarifantrag.vertragstatus
+            vertragstatus=tarifantrag.vertragstatus,
+            netzbetreiber_id=tarif.netzbetreiber_id
         )
         db.add(vertrag)
         await db.commit()

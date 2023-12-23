@@ -4,6 +4,10 @@ from datetime import date
 from typing import Dict, List, Optional
 from app.types import *
 
+
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
+
+
 class AdresseCreate(BaseModel):
     strasse: str
     hausnummer: int
@@ -16,6 +20,7 @@ class AdresseCreate(BaseModel):
 class AdresseIDResponse(BaseModel):
     adresse_id: int
 
+
 class AdresseResponse(BaseModel):
     adresse_id: int
     strasse: str
@@ -27,6 +32,7 @@ class AdresseResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AdresseResponseLongLat(BaseModel):
     id: int
     position: List[float]
@@ -34,6 +40,7 @@ class AdresseResponseLongLat(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class NutzerCreate(BaseModel):
     email: EmailStr
@@ -219,7 +226,6 @@ class PreisstrukturenResponse(BaseModel):
     einspeisung_kwh: float
 
 
-
 class AggregatedDashboardSmartMeterData(BaseModel):
     datum: str
     gesamt_pv_erzeugung: float = Field(..., description="Gesamtleistung der PV-Anlagen")
@@ -251,6 +257,7 @@ class AggregatedDashboardSmartMeterDataResponseLast(BaseModel):
 class DashboardSmartMeterDataResponse(BaseModel):
     message: str
 
+
 field_to_schema_mapping = {
     "all": AggregatedDashboardSmartMeterData,
     "soc": AggregatedDashboardSmartMeterDataResponseSOC,
@@ -258,6 +265,7 @@ field_to_schema_mapping = {
     "batterie": AggregatedDashboardSmartMeterDataResponseBatterie,
     "last": AggregatedDashboardSmartMeterDataResponseLast
 }
+
 
 class PVAnlageBase(BaseModel):
     modultyp: str
@@ -407,6 +415,7 @@ class AngebotResponse(BaseModel):
     angebot_id: int
     anlage_id: int
     kosten: float
+
     class Config:
         from_attributes = True
 
@@ -417,13 +426,63 @@ class InstallationsplanCreate(BaseModel):
     schattenanalyse: Schatten
     wechselrichterposition: str
     installationsdatum: date
-    
+
 
 class InstallationsplanResponse(BaseModel):
     installationsplan: str
 
 
-class PVAngebotResponse:
+class PVAngebotResponse(BaseModel):
     modultyp: str
     kapazitaet: float
     installationsflaeche: float
+
+
+
+class KalenderEintragCreate(BaseModel):
+    zeitpunkt: date
+    user_id: int
+    beschreibung: str
+
+
+class KalenderEintrag(KalenderEintragCreate):
+    kalender_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class EnergieausweisAnfrage(BaseModel):
+    pass
+
+
+class EnergieausweisAnfrageResponse(BaseModel):
+    energieausweis_id: int
+    haushalt_id: int
+    energieberater_id: int
+    ausweis_status: AusweisStatus
+
+    class Config:
+        from_attributes = True
+
+
+class AngebotAnnahmeResponse(BaseModel):
+    angebot_id: int
+    anlage_id: int
+    kosten: float
+    angebotstatus: bool
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+
+
+
+class KalenderEintrag(KalenderEintragCreate):
+    kalender_id: int
+
+    class Config:
+        from_attributes = True
+

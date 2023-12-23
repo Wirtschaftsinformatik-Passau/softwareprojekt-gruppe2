@@ -84,3 +84,9 @@ class Rechnungsart(enum.Enum):
     Netzbetreiber_Rechnung = 'Netzbetreiber_Rechnung'
     Energieberater_Rechnung = 'Energieberater_Rechnung'
     Solarteur_Rechnung = 'Solarteur_Rechnung'
+
+
+class AusweisStatus(enum.Enum):
+    AnfrageGestellt = "AnfrageGestellt"
+    Ausgestellt = "Ausgestellt"
+

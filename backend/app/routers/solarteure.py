@@ -108,3 +108,19 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
     await db.commit()
 
     return schemas.InstallationsplanResponse(installationsplan=pv_anlage.installationsplan)
+
+
+@router.post("/haushaltsdaten-anfordern/{anlage_id}", status_code=status.HTTP_202_ACCEPTED)
+async def haushaltsdaten_anfordern(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                                   db: AsyncSession = Depends(database.get_db_async)):
+    await check_solarteur_role(current_user, "POST", f"/haushaltsdaten-anfordern/{anlage_id}")
+
+    pv_anlage = await db.get(models.PVAnlage, anlage_id)
+    if not pv_anlage or pv_anlage.solarteur_id != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur.")
+
+    pv_anlage.datenanfrage_status = True
+    await db.commit()
+
+    return {"message": "Datenanforderung für die PV-Anlage wurde erfolgreich aktualisiert", "anlage_id": anlage_id}

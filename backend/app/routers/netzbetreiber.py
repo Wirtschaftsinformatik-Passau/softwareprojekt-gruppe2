@@ -55,7 +55,8 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
     is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
                                                              models.Schatten.Minimalschatten]
 
-    print(f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
+    print(
+        f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
     return all([
         is_within_kapazitaetsgrenze,
         is_within_flaechengrenze,
@@ -91,7 +92,7 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
         await check_netzbetreiber_role(current_user, "PUT", "/tarife")
         user_id = current_user.user_id
         query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
+                                           (models.Tarif.user_id == user_id))
         result = await db.execute(query)
         existing_tarif = result.scalar_one_or_none()
 
@@ -119,7 +120,7 @@ async def delete_tarif(tarif_id: int, current_user: models.Nutzer = Depends(oaut
 
     # Überprüfen, ob der Tarif existiert
     delete_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                                 (models.Tarif.user_id == user_id))
+                                             (models.Tarif.user_id == user_id))
     result = await db.execute(delete_stmt)
     db_tarif = result.scalar_one_or_none()
     if db_tarif is None:
@@ -175,7 +176,7 @@ async def get_tarife(tarif_id: int, current_user: models.Nutzer = Depends(oauth.
 
 @router.get("/laufzeit", response_model=List[schemas.TarifLaufzeitResponse])
 async def count_laufzeit(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                        db: AsyncSession = Depends(database.get_db_async)):
+                         db: AsyncSession = Depends(database.get_db_async)):
     await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
 
     try:
@@ -302,7 +303,7 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
     await check_netzbetreiber_role(current_user, "PUT", "/preisstrukturen")
     user_id = current_user.user_id
     query = select(models.Preisstrukturen).where((models.Preisstrukturen.preis_id == preis_id) &
-                                                 (models.Preisstrukturen.user_id == user_id) )
+                                                 (models.Preisstrukturen.user_id == user_id))
     result = await db.execute(query)
     preisstruktur = result.scalars().first()
 
@@ -405,9 +406,10 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
-@router.get("/haushalte", status_code=status.HTTP_200_OK,)
+
+@router.get("/haushalte", status_code=status.HTTP_200_OK, )
 async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_user),
-                  db: AsyncSession = Depends(database.get_db_async)):
+                        db: AsyncSession = Depends(database.get_db_async)):
     try:
         await check_netzbetreiber_role(current_user, "GET", "/haushalte")
         user_id = current_user.user_id
@@ -437,17 +439,17 @@ async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_
         logger.error(logging_error.dict())
         raise HTTPException(status_code=500, detail=f"Fehler beim Abrufen der Haushalte: {e}")
 
+
 @router.get("/dashboard/{haushalt_id}", status_code=status.HTTP_200_OK,
             response_model=Union[List[schemas.AggregatedDashboardSmartMeterData],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponsePV],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponseSOC],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponseBatterie],
-                                 List[schemas.AggregatedDashboardSmartMeterDataResponseLast]])
+            List[schemas.AggregatedDashboardSmartMeterDataResponsePV],
+            List[schemas.AggregatedDashboardSmartMeterDataResponseSOC],
+            List[schemas.AggregatedDashboardSmartMeterDataResponseBatterie],
+            List[schemas.AggregatedDashboardSmartMeterDataResponseLast]])
 async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str = "all", period: str = "DAY",
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
-
     # TODO: parameter validierung für sql injections
     await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
     stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
@@ -660,6 +662,16 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
     logger.info(logging_obj.dict())
 
     return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
+
+
+@router.get("/anlagen", status_code=status.HTTP_200_OK)
+async def anlage_ueberpruefung(db: AsyncSession = Depends(database.get_db_async),
+                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", "/anlagen")
+
+    stmt = select(models.PVAnlage).where(models.PVAnlage.netzbetreiber_id == None)
+    result = await db.execute(stmt)
+    pv_anlage = result.scalars().all()
 
 
 @router.put("/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,

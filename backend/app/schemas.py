@@ -481,7 +481,22 @@ class AngebotAnnahmeResponse(BaseModel):
         from_attributes = True
 
 
-
+class AngebotVorschlag(BaseModel):
+    anlage_id: int = None
+    haushalt_id: int = None
+    solarteur_id: int = None
+    modultyp: Optional[str] = None
+    kapazitaet: Optional[float] = None
+    installationsflaeche: Optional[float] = None
+    installationsdatum: Optional[date] = None
+    modulanordnung: Optional[Orientierung] = None
+    kabelwegfuehrung: Optional[str] = None
+    montagesystem: Optional[Montagesystem] = None
+    schattenanalyse: Optional[Schatten] = None
+    wechselrichterposition: Optional[str] = None
+    installationsplan: Optional[str] = None
+    prozess_status: ProzessStatus = None
+    nvpruefung_status: Optional[bool] = None
 
 
 class KalenderEintrag(KalenderEintragCreate):

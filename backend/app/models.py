@@ -4,7 +4,9 @@ from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
-from app.types import Rolle, Orientierung, ProzessStatus, Montagesystem, Schatten, AusweisStatus
+from app.types import *
+
+
 
 
 class Adresse(Base):
@@ -50,7 +52,6 @@ class Tarif(Base):
     grundgebuehr = Column(Float)
     laufzeit = Column(Integer)
     spezielle_konditionen = Column(String)
-    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
@@ -142,4 +143,47 @@ class Energieausweise(Base):
     ausweis_status = Column(Enum(AusweisStatus), ENUM(*[r.value for r in Rolle],
                                                       name='ausweisstatus' if settings.OS == 'Linux' else "AusweisStatus",
                                                       create_type=False), nullable=False)
+
+class Energieberatende(Base):
+    __tablename__ = 'energieberatende' if settings.OS == 'Linux' else "Energieberatende"
+    user_id = Column(Integer, ForeignKey('nutzer.user_id'if settings.OS == 'Linux' else "Nutzer.user_id"), primary_key=True)
+    spezialisierung = Column(String)
+
+class Solarteur(Base):
+    __tablename__ = 'solarteur' if settings.OS == 'Linux' else "Solarteur"
+    user_id = Column(Integer, ForeignKey('nutzer.user_id'if settings.OS == 'Linux' else "Nutzer.user_id"), primary_key=True)
+
+class Haushalt(Base):
+    __tablename__ = 'haushalt' if settings.OS == 'Linux' else "Haushalt"
+    user_id = Column(Integer, ForeignKey('nutzer.user_id'if settings.OS == 'Linux' else "Nutzer.user_id"), primary_key=True)
+    anzahl_bewohner = Column(Integer)
+    heizungsart = Column(String)
+    baujahr = Column(Integer)
+    wohnflaeche = Column(Float)
+    isolierungsqualitaet = Column(Enum(Isolierungsqualitaet)) 
+    ausrichtung_dach = Column(Enum(AusrichtungDach))  
+    dachflaeche = Column(Float)
+    energieeffizienzklasse = Column(String)
+
+class Rechnungen(Base):
+    __tablename__ = 'rechnungen' if settings.OS == 'Linux' else 'Rechnungen'
+    rechnung_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    rechnungsbetrag = Column(Float)
+    rechnungsdatum = Column(Date)
+    faelligkeitsdatum = Column(Date)
+    rechnungsart = Column(Enum(Rechnungsart), ENUM(*[r.value for r in Rechnungsart],
+                                    name='rechnungsart' if settings.OS == 'Linux' else "Rechnungsart",
+                                    create_type=False))
+    zeitraum = Column(Date)
+
+class Vertrag(Base):
+    __tablename__ = 'vertrag' if settings.OS == 'Linux' else "Vertrag"
+    vertrag_id = Column(Integer, Identity(), primary_key=True)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    tarif_id = Column(Integer, ForeignKey('tarif.tarif_id'if settings.OS == 'Linux' else 'Tarif.tarif_id')) 
+    beginn_datum = Column(Date)
+    end_datum = Column(Date)
+    jahresabschlag = Column(Float)
+    vertragstatus = Column(Boolean, default=True) 
 

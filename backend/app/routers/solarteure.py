@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
@@ -108,3 +109,16 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
     await db.commit()
 
     return schemas.InstallationsplanResponse(installationsplan=pv_anlage.installationsplan)
+
+@router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
+async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
+    try:
+        neue_rechnung = models.Rechnungen(**rechnung.dict())
+        db.add(neue_rechnung)
+        await db.commit()
+        await db.refresh(neue_rechnung)
+        return neue_rechnung
+    except SQLAlchemyError as e:
+        logger.error(f"Rechnung konnte nicht erstellt werden: {e}")
+        raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
+

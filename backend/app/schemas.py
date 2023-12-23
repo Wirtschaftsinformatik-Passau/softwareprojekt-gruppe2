@@ -2,6 +2,7 @@ import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
 from typing import Dict, List, Optional
+from app.types import *
 
 from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
 
@@ -200,8 +201,8 @@ class TarifResponse(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
-    class Config:
-        from_attributes = True
+    #class Config:
+        #orm_mode = True
 
 
 class PreisstrukturenCreate(BaseModel):
@@ -363,6 +364,83 @@ class PVAngebotResponse(BaseModel):
     modultyp: str
     kapazitaet: float
     installationsflaeche: float
+
+
+
+class EnergieberatendeCreate(BaseModel):
+    spezialisierung: str
+
+class EnergieberatendeResponse(BaseModel):
+    user_id: int
+    spezialisierung: str
+
+class SolarteurCreate(BaseModel):
+    pass
+
+class SolarteurResponse(BaseModel):
+    user_id: int
+
+class HaushaltCreate(BaseModel):
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: AusrichtungDach
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+class HaushaltResponse(BaseModel):
+    user_id: int
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: AusrichtungDach
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+class RechnungCreate(BaseModel):
+    user_id: int
+    rechnungsbetrag: float
+    rechnungsdatum: date
+    faelligkeitsdatum: date
+    rechnungsart: Rechnungsart
+    zeitraum: Optional[date] = None
+    
+    class Config:
+        extra = Extra.allow
+
+class RechnungResponse(BaseModel):
+    rechnung_id: int
+    user_id: int
+    rechnungsbetrag: float
+    rechnungsdatum: date
+    faelligkeitsdatum: date
+    rechnungsart: Rechnungsart
+    zeitraum: Optional[date] = None
+
+    class Config:
+        extra = Extra.allow
+
+class TarifAntragCreate(BaseModel):
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+
+class VertragResponse(BaseModel):
+    vertrag_id: int
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+
 
 
 class KalenderEintragCreate(BaseModel):

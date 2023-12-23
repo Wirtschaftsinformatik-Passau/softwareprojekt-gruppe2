@@ -18,7 +18,6 @@ from app.schemas import LoggingSchema, TarifCreate, TarifResponse
 from app import config
 import pandas as pd
 import io
-import re
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 

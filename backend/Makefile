@@ -29,3 +29,15 @@ alembic-downgrade-1:
 
 alembic-upgrade-1:
 	alembic upgrade +1
+
+fill-users:
+	python ./test/fill_with_users.py
+
+fill-adress:
+	python ./test/fill_with_adress.py
+
+fill-tarif:
+	python ./test/fill_with_tarifs.py
+
+fill-price:
+	python ./test/fill_with_prices.py

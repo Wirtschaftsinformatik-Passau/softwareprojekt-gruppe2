@@ -7,6 +7,8 @@ from app.config import settings
 from app.types import *
 
 
+
+
 class Adresse(Base):
     __tablename__ = 'adresse' if settings.OS == 'Linux' else "Adresse"
 
@@ -111,10 +113,36 @@ class Angebot(Base):
 
     angebot_id = Column(Integer, primary_key=True, index=True)
     anlage_id = Column(Integer, ForeignKey("pvanlage.anlage_id" if settings.OS == 'Linux' else "PVAnlage.anlage_id"))
-    modultyp = Column(String)
-    kapazitaet = Column(Float)
-    installationsflaeche = Column(Integer)
     kosten = Column(Float)
+    angebotsstatus = Column(Boolean)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
+class Kalendereintrag(Base):
+    __tablename__ = "kalendereintraege" if settings.OS == 'Linux' else 'Kalendereintraege'
+
+    kalender_id = Column(Integer, Identity(), primary_key=True)
+    zeitpunkt = Column(Date)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    beschreibung = Column(String)
+
+
+class Energieausweise(Base):
+    __tablename__ = 'energieausweise' if settings.OS == 'Linux' else 'Energieausweise'
+
+    energieausweis_id = Column(Integer, primary_key=True)
+    haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
+                         nullable=False)
+    massnahmen_id = Column(Integer)
+    energieberater_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
+                               nullable=True)
+    energieeffizienzklasse = Column(String, nullable=True)
+    verbrauchskennwerte = Column(Float, nullable=True)
+    ausstellungsdatum = Column(Date, nullable=True)
+    gueltigkeit = Column(Date, nullable=True)
+    ausweis_status = Column(Enum(AusweisStatus), ENUM(*[r.value for r in Rolle],
+                                                      name='ausweisstatus' if settings.OS == 'Linux' else "AusweisStatus",
+                                                      create_type=False), nullable=False)
 
 class Energieberatende(Base):
     __tablename__ = 'energieberatende' if settings.OS == 'Linux' else "Energieberatende"

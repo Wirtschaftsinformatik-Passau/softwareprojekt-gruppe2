@@ -112,7 +112,8 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
 
 # Tarif löschen
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async)):
+async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
+                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
     delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
     await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
@@ -132,8 +133,12 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
 
 # Alle Tarife abrufen
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
-async def get_tarife(db: AsyncSession = Depends(database.get_db_async)):
-    result = await db.execute(select(models.Tarif))
+async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
+                     current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    #TODO: nur tarife von netzbetreiber ausgeben
+    await check_netzbetreiber_role(current_user, "GET", "/tarife")
+    user_id = current_user.user_id
+    result = await db.execute(select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id))
     tarife = result.scalars().all()
     if not tarife:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Keine Tarife gefunden")
@@ -157,7 +162,7 @@ async def count_laufzeit(current_user: models.Nutzer = Depends(oauth.get_current
 
     try:
         user_id = current_user.user_id
-        select_stmt = select(models.Tarif).where(models.Tarif.user_id == user_id)
+        select_stmt = select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id)
         result = await db.execute(select_stmt)
         laufzeiten = result.scalars().all()
         if len(laufzeiten) == 0:
@@ -690,6 +695,7 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
                             detail="Netzverträglichkeitsprüfung nicht bestanden")
 
     pv_anlage.prozess_status = models.ProzessStatus.Genehmigt
+    pv_anlage.netzbetreiber_id = current_user.user_id
     db.add(pv_anlage)
     await db.commit()
 
@@ -704,6 +710,9 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
 
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
 
+
+
+#
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
@@ -716,6 +725,40 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
         logger.error(f"Rechnung konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
 
+
+@router.get("/pv-angenommen", response_model=List[schemas.AngebotVorschlag])
+async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db),
+                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    try:
+        if current_user.rolle != models.Rolle.Netzbetreiber:
+            raise HTTPException(status_code=403, detail="Nicht autorisiert")
+
+        stmt = select(models.PVAnlage).where(models.PVAnlage.netzbetreiber_id == current_user.user_id)
+        result = await db.execute(stmt)
+        pv_anlagen = result.scalars().all()
+
+        response = [{
+            "anlage_id": x.anlage_id,
+            "haushalt_id": x.haushalt_id,
+            "solarteur_id": x.solarteur_id,
+            "modultyp": x.modultyp,
+            "kapazitaet": x.kapazitaet,
+            "installationsflaeche": x.installationsflaeche,
+            "installationsdatum": x.installationsdatum,
+            "modulanordnung": x.modulanordnung,
+            "kabelwegfuehrung": x.kabelwegfuehrung,
+            "montagesystem": x.montagesystem,
+            "schattenanalyse": x.schattenanalyse,
+            "wechselrichterposition": x.wechselrichterposition,
+            "installationsplan": x.installationsplan,
+            "prozess_status": x.prozess_status,
+            "nvpruefung_status": x.nvpruefung_status
+        } for x in pv_anlagen]
+        return response
+
+    except exc.IntegrityError as e:
+        logger.error(f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
 
 @router.get("/einspeisezusagen", response_model=List[schemas.AngebotVorschlag])
 async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get_db_async),
@@ -759,33 +802,33 @@ async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
 
 
-@router.get("/einspeisezusagen/{anlage_id}", response_model=List[schemas.AngebotVorschlag])
-async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get_db_async),
+@router.get("/einspeisezusagen/{anlage_id}", response_model=schemas.AngebotVorschlag)
+async def get_einspeisezusagen_vorschlag(anlage_id: int,
+                                         db: AsyncSession = Depends(database.get_db_async),
                                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
-        stmt = select(models.PVAnlage).where((models.PVAnlage.netzbetreiber_id is None) or
-                                             (models.PVAnlage.prozess_status != models.ProzessStatus.Genehmigt))
+        stmt = select(models.PVAnlage).where((models.PVAnlage.anlage_id == anlage_id))
         result = await db.execute(stmt)
-        pv_anlagen = result.scalars().all()
+        pv_anlage = result.scalars().all()[0]
 
-        response = [{
-            "anlage_id": x.anlage_id,
-            "haushalt_id": x.haushalt_id,
-            "solarteur_id": x.solarteur_id,
-            "modultyp": x.modultyp,
-            "kapazitaet": x.kapazitaet,
-            "installationsflaeche": x.installationsflaeche,
-            "installationsdatum": x.installationsdatum,
-            "modulanordnung": x.modulanordnung,
-            "kabelwegfuehrung": x.kabelwegfuehrung,
-            "montagesystem": x.montagesystem,
-            "schattenanalyse": x.schattenanalyse,
-            "wechselrichterposition": x.wechselrichterposition,
-            "installationsplan": x.installationsplan,
-            "prozess_status": x.prozess_status,
-            "nvpruefung_status": x.nvpruefung_status
-        } for x in pv_anlagen]
+        response = {
+            "anlage_id": pv_anlage.anlage_id,
+            "haushalt_id": pv_anlage.haushalt_id,
+            "solarteur_id": pv_anlage.solarteur_id,
+            "modultyp": pv_anlage.modultyp,
+            "kapazitaet": pv_anlage.kapazitaet,
+            "installationsflaeche": pv_anlage.installationsflaeche,
+            "installationsdatum": pv_anlage.installationsdatum,
+            "modulanordnung": pv_anlage.modulanordnung,
+            "kabelwegfuehrung": pv_anlage.kabelwegfuehrung,
+            "montagesystem": pv_anlage.montagesystem,
+            "schattenanalyse": pv_anlage.schattenanalyse,
+            "wechselrichterposition": pv_anlage.wechselrichterposition,
+            "installationsplan": pv_anlage.installationsplan,
+            "prozess_status": pv_anlage.prozess_status,
+            "nvpruefung_status": pv_anlage.nvpruefung_status
+        }
 
         return response
 

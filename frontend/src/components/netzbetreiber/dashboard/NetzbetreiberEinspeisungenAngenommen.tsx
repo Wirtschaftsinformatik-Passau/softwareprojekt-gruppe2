@@ -24,7 +24,7 @@ const HaushalteTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    axios.get(addSuffixToBackendURL("netzbetreiber/einspeisezusagen"), {headers: { Authorization: `Bearer ${token}` }})
+    axios.get(addSuffixToBackendURL("netzbetreiber/pv-angenommen"), {headers: { Authorization: `Bearer ${token}` }})
     .then((res) => {
       let users = res.data;
       setHaushalte(users)

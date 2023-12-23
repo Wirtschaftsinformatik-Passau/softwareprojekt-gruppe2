@@ -93,41 +93,45 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
 
 
 @router.post("/tarifantrag", response_model=schemas.VertragResponse)
-async def tarifantrag_stellen(tarif_antrag: schemas.TarifAntragCreate, 
-                              db: AsyncSession = Depends(database.get_db_async),
-                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_haushalt_role(current_user, "POST", "/tarifantrag")
+async def tarifantrag(tarifantrag: schemas.TarifAntragCreate, db: AsyncSession = Depends(database.get_db_async)):
+    logger.info(f"Tarifantrag erhalten: {tarifantrag}")
 
-    # Überprüfen, ob der angeforderte Tarif existiert
-    tarif = await db.get(models.Tarif, tarif_antrag.tarif_id)
-    if not tarif:
-        raise HTTPException(status_code=404, detail="Tarif nicht gefunden")
+    # Prüfen, ob der angeforderte Tarif existiert
+    try:
+        tarif = await db.get(models.Tarif, tarifantrag.tarif_id)
+        if not tarif:
+            logger.error(f"Tarif mit ID {tarifantrag.tarif_id} nicht gefunden für Nutzer ID {tarifantrag.user_id}")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
+    except Exception as e:
+        logger.error(f"Fehler beim Abrufen des Tarifs: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
 
-    # Erstellen des Vertrags
-    neuer_vertrag = models.Vertrag(
-        vertrag_id=str(uuid4()),
-        haushalt_id=current_user.user_id,
-        tarif_id=tarif_antrag.tarif_id,
-        beginn_datum=date.today(),
-        end_datum=date(MAXYEAR, 12, 31),  # oder ein spezifisches Enddatum
-        jahresabschlag=tarif.grundgebuehr * 12  # Beispiel für Jahresabschlagberechnung
-    )
-
-    db.add(neuer_vertrag)
-    await db.commit()
-    await db.refresh(neuer_vertrag)
-
-    logging_obj = schemas.LoggingSchema(
-        user_id=current_user.user_id,
-        endpoint="/tarifantrag",
-        method="POST",
-        message="Tarifantrag erfolgreich in Vertrag umgewandelt",
-        success=True
-    )
-    logger.info(logging_obj.dict())
-
-    return schemas.VertragResponse.from_orm(neuer_vertrag)
-
+    try:
+        vertrag = models.Vertrag(
+            user_id=tarifantrag.user_id,
+            tarif_id=tarifantrag.tarif_id,
+            beginn_datum=tarifantrag.beginn_datum,
+            end_datum=tarifantrag.end_datum,
+            jahresabschlag=tarifantrag.jahresabschlag,
+            vertragstatus=tarifantrag.vertragstatus
+        )
+        db.add(vertrag)
+        await db.commit()
+        await db.refresh(vertrag)
+        logger.info(f"Vertrag {vertrag.vertrag_id} erfolgreich erstellt für Nutzer ID {tarifantrag.user_id}")
+        return schemas.VertragResponse(
+            vertrag_id=vertrag.vertrag_id,
+            user_id=vertrag.user_id,
+            tarif_id=vertrag.tarif_id,
+            beginn_datum=vertrag.beginn_datum,
+            end_datum=vertrag.end_datum,
+            jahresabschlag=vertrag.jahresabschlag,
+            vertragstatus=vertrag.vertragstatus
+        )
+    except Exception as e:
+        logger.error(f"Fehler bei der Erstellung des Vertrags für Nutzer ID {tarifantrag.user_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler bei der Vertragserstellung: {e}")
 
 
 

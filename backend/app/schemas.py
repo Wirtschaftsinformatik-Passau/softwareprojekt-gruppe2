@@ -422,16 +422,18 @@ class RechnungResponse(BaseModel):
 class TarifAntragCreate(BaseModel):
     user_id: int
     tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
 
 class VertragResponse(BaseModel):
-    vertrag_id: str
-    haushalt_id: int
+    vertrag_id: int
+    user_id: int
     tarif_id: int
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
     vertragstatus: bool
 
-    class Config:
-        orm_mode = True
 

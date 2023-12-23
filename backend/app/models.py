@@ -151,11 +151,11 @@ class Rechnungen(Base):
 
 class Vertrag(Base):
     __tablename__ = 'vertrag' if settings.OS == 'Linux' else "Vertrag"
-    vertrag_id = Column(String, primary_key=True)
-    haushalt_id = Column(Integer, ForeignKey('haushalt.user_id' if settings.OS == 'Linux' else "Haushalt.user_id"))
+    vertrag_id = Column(Integer, Identity(), primary_key=True)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     tarif_id = Column(Integer, ForeignKey('tarif.tarif_id'if settings.OS == 'Linux' else 'Tarif.tarif_id')) 
     beginn_datum = Column(Date)
     end_datum = Column(Date)
     jahresabschlag = Column(Float)
     vertragstatus = Column(Boolean, default=True) 
-    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+

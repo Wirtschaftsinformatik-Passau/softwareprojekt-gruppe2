@@ -202,8 +202,8 @@ class TarifResponse(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
-    #class Config:
-        #orm_mode = True
+    # class Config:
+    # orm_mode = True
 
 
 class PreisstrukturenCreate(BaseModel):
@@ -370,15 +370,19 @@ class PVAngebotResponse(BaseModel):
 class EnergieberatendeCreate(BaseModel):
     spezialisierung: str
 
+
 class EnergieberatendeResponse(BaseModel):
     user_id: int
     spezialisierung: str
 
+
 class SolarteurCreate(BaseModel):
     pass
 
+
 class SolarteurResponse(BaseModel):
     user_id: int
+
 
 class HaushaltCreate(BaseModel):
     anzahl_bewohner: int
@@ -386,9 +390,10 @@ class HaushaltCreate(BaseModel):
     baujahr: int
     wohnflaeche: float
     isolierungsqualitaet: Isolierungsqualitaet
-    ausrichtung_dach: AusrichtungDach
+    ausrichtung_dach: Orientierung
     dachflaeche: float
     energieeffizienzklasse: str
+
 
 class HaushaltResponse(BaseModel):
     user_id: int
@@ -397,9 +402,10 @@ class HaushaltResponse(BaseModel):
     baujahr: int
     wohnflaeche: float
     isolierungsqualitaet: Isolierungsqualitaet
-    ausrichtung_dach: AusrichtungDach
+    ausrichtung_dach: Orientierung
     dachflaeche: float
     energieeffizienzklasse: str
+
 
 class RechnungCreate(BaseModel):
     user_id: int
@@ -408,9 +414,10 @@ class RechnungCreate(BaseModel):
     faelligkeitsdatum: date
     rechnungsart: Rechnungsart
     zeitraum: Optional[date] = None
-    
+
     class Config:
         extra = Extra.allow
+
 
 class RechnungResponse(BaseModel):
     rechnung_id: int
@@ -424,6 +431,7 @@ class RechnungResponse(BaseModel):
     class Config:
         extra = Extra.allow
 
+
 class TarifAntragCreate(BaseModel):
     user_id: int
     tarif_id: int
@@ -432,6 +440,7 @@ class TarifAntragCreate(BaseModel):
     jahresabschlag: float
     netzbetreiber_id: int
     vertragstatus: bool
+
 
 class VertragResponse(BaseModel):
     vertrag_id: int
@@ -497,3 +506,38 @@ class AngebotVorschlag(BaseModel):
     installationsplan: Optional[str] = None
     prozess_status: ProzessStatus = None
     nvpruefung_status: Optional[bool] = None
+
+
+class DatenanfrageResponse(BaseModel):
+    message: str
+    haushalt_id: int
+    anfragestatus: bool
+
+
+class HaushaltsDatenFreigabe(BaseModel):
+    anzahl_bewohner: int
+    heizungsart: str
+    baujahr: int
+    wohnflaeche: float
+    isolierungsqualitaet: Isolierungsqualitaet
+    ausrichtung_dach: Orientierung
+    dachflaeche: float
+    energieeffizienzklasse: str
+
+
+class DashboardAggregatedData(BaseModel):
+    gesamt_pv_erzeugung: float
+    durchschnitt_soc: float
+    gesamt_batterie_leistung: float
+    gesamt_last: float
+
+
+class HaushaltsDatenFreigabeResponse(BaseModel):
+    message: str
+    haushaltsdaten: HaushaltsDatenFreigabe
+    dashboard_daten: DashboardAggregatedData
+
+
+class PVAnlageResponse(BaseModel):
+    anlage_id: int
+    solarteur_id: Optional[int] = None

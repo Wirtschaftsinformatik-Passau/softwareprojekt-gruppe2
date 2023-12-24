@@ -65,10 +65,11 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
         is_valid_schattenanalyse
     ])
 
+
 # Tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async),
-                       current_user: models.Nutzer = Depends(oauth.get_current_user),):
+                       current_user: models.Nutzer = Depends(oauth.get_current_user), ):
     try:
         user_id = current_user.user_id
         tarif.netzbetreiber_id = user_id
@@ -80,6 +81,7 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
     except exc.IntegrityError as e:
         logger.error(f"Tarif konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht erstellt werden: {e}")
+
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
@@ -110,12 +112,11 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
         logger.error(f"Tarif konnte nicht aktualisiert werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht aktualisiert werden: {e}")
 
+
 # Tarif löschen
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
-
-
     delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
     await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
@@ -133,6 +134,7 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
     await db.delete(db_tarif)
     await db.commit()
 
+
 # Alle Tarife abrufen
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async)):
@@ -141,6 +143,7 @@ async def get_tarife(db: AsyncSession = Depends(database.get_db_async)):
     if not tarife:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Keine Tarife gefunden")
     return tarife
+
 
 # Einzelnen Tarif abrufen
 @router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
@@ -393,8 +396,8 @@ async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_
         await check_netzbetreiber_role(current_user, "GET", "/haushalte")
         user_id = current_user.user_id
         stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
-                                                      models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
-        models.Nutzer.rolle == models.Rolle.Haushalte)
+                                                          models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
+            models.Nutzer.rolle == models.Rolle.Haushalte)
         result = await db.execute(stmt)
         haushalte = result.all()
         response = [{
@@ -717,6 +720,7 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
 
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
 
+
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
@@ -812,4 +816,3 @@ async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
-

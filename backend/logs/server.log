@@ -7509,3 +7509,4 @@
 {"timestamp": "2023-12-23 19:33:01,829", "level": "ERROR", "name": "GreenEcoHub", "message": "Fehler beim Abrufen der Rollen\u00fcbersicht: ", "user_id": 8, "endpoint": "/admin/userOverview", "method": "GET", "success": false}
 {"timestamp": "2023-12-23 19:33:08,231", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 8, "endpoint": "/auth/login", "method": "POST", "success": true}
 {"timestamp": "2023-12-23 19:40:41,268", "level": "INFO", "name": "GreenEcoHub", "message": "Einspeisezusage erteilt", "user_id": 8, "endpoint": "/netzbetreiber/einspeisezusage/4", "method": "PUT", "success": true}
+{"timestamp": "2023-12-24 10:33:04,468", "level": "INFO", "name": "GreenEcoHub", "message": "User eingeloggt", "user_id": 8, "endpoint": "/auth/login", "method": "POST", "success": true}

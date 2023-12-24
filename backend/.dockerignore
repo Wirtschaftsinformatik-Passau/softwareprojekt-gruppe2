@@ -1,8 +1,7 @@
 # Ignore the virtual environment
 backend_tose_venv/
-tose_backend/
 
-alembic.ini
+
 Makefile
 README.md
 setup.sh

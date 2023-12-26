@@ -99,7 +99,7 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
 
 # haushalt sieht alle tarife und kann sich für einen entscheiden
 @router.post("/tarifantrag", response_model=schemas.VertragResponse)
-async def tarifantrag_stellen(tarif_antrag: schemas.TarifAntragCreate, 
+async def tarifantrag_stellen(tarifantrag: schemas.TarifAntragCreate, 
                               db: AsyncSession = Depends(database.get_db_async),
                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_haushalt_role(current_user, "POST", "/tarifantrag")
@@ -285,3 +285,37 @@ async def ueberpruefung_angebote(current_user: models.Nutzer = Depends(oauth.get
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Unerwarteter Fehler bei der Abfrage von Angeboten")
+
+@router.get("/meine-vertraege", response_model=List[schemas.VertragResponse])
+async def vertraege_abrufen(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                            db: AsyncSession = Depends(database.get_db_async)):
+    # V1: Überprüfen, ob der Benutzer angemeldet und ein Haushalt ist
+    await check_haushalt_role(current_user, "GET", "/meine-vertraege")
+
+    # B4: Abrufen der Vertragsdaten aus der Datenbank
+    try:
+        vertraege = await db.execute(select(models.Vertrag).where(models.Vertrag.haushalt_id == current_user.user_id))
+        vertrags_liste = vertraege.scalars().all()
+
+        # B2 & B5: Erstellen der Antwort mit Vertragsdetails
+        if vertrags_liste:
+            return [
+                schemas.VertragResponse(
+                    vertrag_id=vertrag.vertrag_id,
+                    haushalt_id=vertrag.haushalt_id,
+                    tarif_id=vertrag.tarif_id,
+                    beginn_datum=vertrag.beginn_datum,
+                    end_datum=vertrag.end_datum,
+                    jahresabschlag=vertrag.jahresabschlag,
+                    vertragstatus=vertrag.vertragstatus
+                ) for vertrag in vertrags_liste
+            ]
+        else:
+            # EZ: Keine Verträge gefunden
+            return []
+
+    except Exception as e:
+        # E1 & Fehlerbehandlung: Protokollierung und Ausgabe einer Fehlermeldung
+        logger.error(f"Fehler beim Abrufen der Verträge für Haushalt {current_user.user_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Fehler beim Abrufen der Verträge")

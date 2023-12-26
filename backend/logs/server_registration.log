@@ -484,3 +484,5 @@
 {"timestamp": "2023-12-19 17:46:47,862", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 57, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:46:48,238", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 58, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:56:52,929", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 59, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 20:41:06,428", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 3, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-8"}
+{"timestamp": "2023-12-26 20:42:03,416", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 4, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-4"}

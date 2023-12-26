@@ -109,6 +109,14 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
+
+                # Prüfen, ob der Nutzer die Rolle Netzbetreiber hat
+        if db_user.rolle == models.Rolle.Netzbetreiber:
+            # Erstellen eines Netzbetreiber-Eintrags
+            netzbetreiber = models.Netzbetreiber(user_id=db_user.user_id)
+            db.add(netzbetreiber)
+            await db.commit()
+            
         logging_msg = schemas.RegistrationLogging(user_id=db_user.user_id, role=db_user.rolle.value,
                                                   msg="User registriert")
         logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/users/registration", method="POST",

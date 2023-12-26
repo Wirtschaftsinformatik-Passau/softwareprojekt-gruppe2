@@ -9,6 +9,8 @@ from sqlalchemy import select, func, exc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from sqlalchemy.orm import selectinload
+
 from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig

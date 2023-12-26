@@ -434,8 +434,8 @@ class TarifAntragCreate(BaseModel):
     vertragstatus: bool
 
 class VertragResponse(BaseModel):
-    vertrag_id: str
-    haushalt_id: int
+    vertrag_id: int
+    user_id: int
     tarif_id: int
     beginn_datum: date
     end_datum: date

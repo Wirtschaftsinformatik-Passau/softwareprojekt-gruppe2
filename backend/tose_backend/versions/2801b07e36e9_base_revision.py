@@ -1,8 +1,8 @@
-"""neu aufsetzen
+"""Base revision
 
-Revision ID: a1819474f4bc
+Revision ID: 2801b07e36e9
 Revises: 
-Create Date: 2023-12-23 11:19:13.899848
+Create Date: 2023-12-26 21:09:50.192074
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a1819474f4bc'
+revision: str = '2801b07e36e9'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,17 +35,6 @@ def upgrade() -> None:
     op.create_table('Netzbetreiber',
     sa.Column('user_id', sa.Integer(), sa.Identity(always=False), nullable=False),
     sa.PrimaryKeyConstraint('user_id')
-    )
-    op.create_table('Tarif',
-    sa.Column('tarif_id', sa.Integer(), sa.Identity(always=False), nullable=False),
-    sa.Column('tarifname', sa.String(), nullable=True),
-    sa.Column('preis_kwh', sa.Float(), nullable=True),
-    sa.Column('grundgebuehr', sa.Float(), nullable=True),
-    sa.Column('laufzeit', sa.Integer(), nullable=True),
-    sa.Column('spezielle_konditionen', sa.String(), nullable=True),
-    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
-    sa.PrimaryKeyConstraint('tarif_id'),
-    sa.UniqueConstraint('tarifname')
     )
     op.create_table('Nutzer',
     sa.Column('user_id', sa.Integer(), sa.Identity(always=False), nullable=False),
@@ -76,6 +65,20 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_Dashboard_smartmeter_data_id'), 'Dashboard_smartmeter_data', ['id'], unique=False)
+    op.create_table('Energieausweise',
+    sa.Column('energieausweis_id', sa.Integer(), nullable=False),
+    sa.Column('haushalt_id', sa.Integer(), nullable=False),
+    sa.Column('massnahmen_id', sa.Integer(), nullable=True),
+    sa.Column('energieberater_id', sa.Integer(), nullable=True),
+    sa.Column('energieeffizienzklasse', sa.String(), nullable=True),
+    sa.Column('verbrauchskennwerte', sa.Float(), nullable=True),
+    sa.Column('ausstellungsdatum', sa.Date(), nullable=True),
+    sa.Column('gueltigkeit', sa.Date(), nullable=True),
+    sa.Column('ausweis_status', sa.Enum('AnfrageGestellt', 'Ausgestellt', name='ausweisstatus'), nullable=False),
+    sa.ForeignKeyConstraint(['energieberater_id'], ['Nutzer.user_id'], ),
+    sa.ForeignKeyConstraint(['haushalt_id'], ['Nutzer.user_id'], ),
+    sa.PrimaryKeyConstraint('energieausweis_id')
+    )
     op.create_table('Energieberatende',
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('spezialisierung', sa.String(), nullable=True),
@@ -94,6 +97,14 @@ def upgrade() -> None:
     sa.Column('energieeffizienzklasse', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['Nutzer.user_id'], ),
     sa.PrimaryKeyConstraint('user_id')
+    )
+    op.create_table('Kalendereintraege',
+    sa.Column('kalender_id', sa.Integer(), sa.Identity(always=False), nullable=False),
+    sa.Column('zeitpunkt', sa.Date(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('beschreibung', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['Nutzer.user_id'], ),
+    sa.PrimaryKeyConstraint('kalender_id')
     )
     op.create_table('PVAnlage',
     sa.Column('anlage_id', sa.Integer(), sa.Identity(always=False), nullable=False),
@@ -143,27 +154,41 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['Nutzer.user_id'], ),
     sa.PrimaryKeyConstraint('user_id')
     )
+    op.create_table('Tarif',
+    sa.Column('tarif_id', sa.Integer(), sa.Identity(always=False), nullable=False),
+    sa.Column('tarifname', sa.String(), nullable=True),
+    sa.Column('preis_kwh', sa.Float(), nullable=True),
+    sa.Column('grundgebuehr', sa.Float(), nullable=True),
+    sa.Column('laufzeit', sa.Integer(), nullable=True),
+    sa.Column('spezielle_konditionen', sa.String(), nullable=True),
+    sa.Column('netzbetreiber_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
+    sa.ForeignKeyConstraint(['netzbetreiber_id'], ['Nutzer.user_id'], ),
+    sa.PrimaryKeyConstraint('tarif_id'),
+    sa.UniqueConstraint('tarifname')
+    )
     op.create_table('Angebote',
     sa.Column('angebot_id', sa.Integer(), nullable=False),
     sa.Column('anlage_id', sa.Integer(), nullable=True),
-    sa.Column('modultyp', sa.String(), nullable=True),
-    sa.Column('kapazitaet', sa.Float(), nullable=True),
-    sa.Column('installationsflaeche', sa.Integer(), nullable=True),
     sa.Column('kosten', sa.Float(), nullable=True),
+    sa.Column('angebotsstatus', sa.Boolean(), nullable=True),
+    sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['anlage_id'], ['PVAnlage.anlage_id'], ),
     sa.PrimaryKeyConstraint('angebot_id')
     )
     op.create_index(op.f('ix_Angebote_angebot_id'), 'Angebote', ['angebot_id'], unique=False)
     op.create_table('Vertrag',
     sa.Column('vertrag_id', sa.Integer(), sa.Identity(always=False), nullable=False),
-    sa.Column('haushalt_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('tarif_id', sa.Integer(), nullable=True),
     sa.Column('beginn_datum', sa.Date(), nullable=True),
     sa.Column('end_datum', sa.Date(), nullable=True),
+    sa.Column('netzbetreiber_id', sa.Integer(), nullable=True),
     sa.Column('jahresabschlag', sa.Float(), nullable=True),
     sa.Column('vertragstatus', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['haushalt_id'], ['Haushalt.user_id'], ),
+    sa.ForeignKeyConstraint(['netzbetreiber_id'], ['Nutzer.user_id'], ),
     sa.ForeignKeyConstraint(['tarif_id'], ['Tarif.tarif_id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['Nutzer.user_id'], ),
     sa.PrimaryKeyConstraint('vertrag_id')
     )
     # ### end Alembic commands ###
@@ -174,16 +199,18 @@ def downgrade() -> None:
     op.drop_table('Vertrag')
     op.drop_index(op.f('ix_Angebote_angebot_id'), table_name='Angebote')
     op.drop_table('Angebote')
+    op.drop_table('Tarif')
     op.drop_table('Solarteur')
     op.drop_table('Rechnungen')
     op.drop_table('Preisstrukturen')
     op.drop_table('PVAnlage')
+    op.drop_table('Kalendereintraege')
     op.drop_table('Haushalt')
     op.drop_table('Energieberatende')
+    op.drop_table('Energieausweise')
     op.drop_index(op.f('ix_Dashboard_smartmeter_data_id'), table_name='Dashboard_smartmeter_data')
     op.drop_table('Dashboard_smartmeter_data')
     op.drop_table('Nutzer')
-    op.drop_table('Tarif')
     op.drop_table('Netzbetreiber')
     op.drop_table('Adresse')
     # ### end Alembic commands ###

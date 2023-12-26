@@ -83,7 +83,8 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async),
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),):
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
@@ -133,7 +134,7 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    #TODO: nur tarife von netzbetreiber ausgeben
+    #TODO: nur tarife von netzbetreiber ausgeben  ---26.12.2023 von Simon erledigt
     await check_netzbetreiber_role(current_user, "GET", "/tarife")
     user_id = current_user.user_id
     result = await db.execute(select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id))

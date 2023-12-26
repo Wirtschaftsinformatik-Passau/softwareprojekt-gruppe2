@@ -200,9 +200,7 @@ class TarifResponse(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
-
-    #class Config:
-        #orm_mode = True
+    netzbetreiber_id: int
 
 
 class PreisstrukturenCreate(BaseModel):
@@ -439,6 +437,7 @@ class VertragResponse(BaseModel):
     tarif_id: int
     beginn_datum: date
     end_datum: date
+    netzbetreiber_id: int
     jahresabschlag: float
     vertragstatus: bool
 

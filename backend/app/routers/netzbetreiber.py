@@ -753,10 +753,6 @@ async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get
             "installationsflaeche": x.installationsflaeche,
             "installationsdatum": x.installationsdatum,
             "modulanordnung": x.modulanordnung,
-            "kabelwegfuehrung": x.kabelwegfuehrung,
-            "montagesystem": x.montagesystem,
-            "schattenanalyse": x.schattenanalyse,
-            "wechselrichterposition": x.wechselrichterposition,
             "installationsplan": x.installationsplan,
             "prozess_status": x.prozess_status,
             "nvpruefung_status": x.nvpruefung_status

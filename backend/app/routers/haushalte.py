@@ -259,7 +259,6 @@ async def ueberpruefung_angebote(current_user: models.Nutzer = Depends(oauth.get
 
         return response_list
 
-
     except sqlalchemy.exc.SQLAlchemyError as db_exc:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

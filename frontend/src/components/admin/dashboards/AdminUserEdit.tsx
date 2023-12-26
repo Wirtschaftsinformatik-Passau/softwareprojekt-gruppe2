@@ -60,7 +60,7 @@ export class EditableUser{
     }
 }
 
-const extractAdressAndUser = (user: EditableUser) => {
+export const extractAdressAndUser = (user: EditableUser) => {
     const adresse: Iadresse = new Adresse(user.strasse, user.hausnr, user.plz, user.stadt, "Deutschland")
     const userToSave: IUser = new User(user.vorname, user.nachname, user.telefonnummer, user.email, 
         user.passwort, user.rolle, user.geburtsdatum, user.adresse_id)

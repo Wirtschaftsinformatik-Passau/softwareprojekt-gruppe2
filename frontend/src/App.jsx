@@ -6,8 +6,10 @@ import axios from "axios";
 import Registration from "./container/all/Registration.tsx"
 import AdminDashboard from "./container/admin/AdminDashboard.tsx";
 import NetzbetreiberDashboard from "./container/netzbetreiber/NetzbetreiberDashboard.tsx";
+import HaushaltDashboard from "./container/haushalte/HaushaltDashboard.tsx";
 import LoginUI from "./container/all/LoginUI.tsx"
 import RegistrationUI from "./container/all/RegistrationUI.tsx";
+import Profile from "./container/all/Profile.tsx";
 import { ColorModeContext, useMode } from "./utils/theme.js";
 import { addSuffixToBackendURL } from "./utils/networking_utils.js";
 
@@ -44,6 +46,8 @@ const App = () => {
             <Route path="/login" element={<LoginUI isAlreadyLoggedIn={isLoggedIn} />}/>
             <Route path="/admin/*" element={<AdminDashboard/>}/>
             <Route path="/netzbetreiber/*" element={<NetzbetreiberDashboard/>}/>
+            <Route path="/haushalte/*" element={<HaushaltDashboard/>}/>
+            <Route path="/profile" element={<Profile/>}/>
             <Route path="*" element={<LoginUI isAlreadyLoggedIn={isLoggedIn}/>}/>
         </Routes>
         </ThemeProvider>

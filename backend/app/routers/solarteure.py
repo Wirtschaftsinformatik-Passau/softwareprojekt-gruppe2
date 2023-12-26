@@ -29,6 +29,7 @@ async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoin
         raise HTTPException(status_code=403, detail="Nur Solarteure haben Zugriff auf diese Daten")
 
 
+#  TODO:  Check funktion hier
 @router.post("/angebote", status_code=status.HTTP_201_CREATED, response_model=schemas.AngebotResponse)
 async def create_angebot(angebot_data: schemas.AngebotCreate,
                          current_user: models.Nutzer = Depends(oauth.get_current_user),

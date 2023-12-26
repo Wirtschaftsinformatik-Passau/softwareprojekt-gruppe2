@@ -12,6 +12,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import HelpModal from "../../utility/HelpModal";
 import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
+import { Link } from "react-router-dom";
 
 
 const Topbar = ({fixed}) => {
@@ -69,7 +70,7 @@ const Topbar = ({fixed}) => {
             <QuestionMarkIcon />
           </IconButton>
           <IconButton>
-            <PersonOutlinedIcon />
+            <PersonOutlinedIcon onClick={() => navigate("/profile")}/>
           </IconButton>
           <IconButton>
             <LogoutIcon onClick={() => {

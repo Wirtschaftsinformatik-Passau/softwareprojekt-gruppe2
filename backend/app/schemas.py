@@ -132,11 +132,6 @@ class UserOut(BaseModel):
         from_attributes = True
 
 
-class UsersOut(BaseModel):
-    users: list[UserOut]
-    count: int
-
-
 class ChartData(BaseModel):
     x: str
     y: int
@@ -204,6 +199,26 @@ class TarifResponse(BaseModel):
     # class Config:
     # orm_mode = True
 
+
+class TarifResponseAll(BaseModel):
+    netzbetreiber_id: int
+    tarif_id: int
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
+
+class TarifHaushaltResponse(BaseModel):
+    vorname: str
+    nachname: str
+    email: str
+    tarif_id: int
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
 
 class PreisstrukturenCreate(BaseModel):
     bezugspreis_kwh: float
@@ -449,6 +464,22 @@ class VertragResponse(BaseModel):
     end_datum: date
     jahresabschlag: float
     vertragstatus: bool
+
+class VertragTarifResponse(BaseModel):
+    vertrag_id: int
+    netzbetreiber_id: int
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
+    
 
 
 class KalenderEintragCreate(BaseModel):

@@ -18,6 +18,10 @@ import NetzbetreiberPreisEditSelect from "../../components/netzbetreiber/dashboa
 import NetzbetreiberPreisEditCustom from "../../components/netzbetreiber/dashboard/NetzbetreibePreisEditCustom";
 import NetzbetreiberPreisTable from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisTable";
 import NetzbetreiberSmartmeterOverview from "../../components/netzbetreiber/dashboard/NetzbetreiberSmartmeterOverview";
+import NetzbetreiberHaushalteTable from "../../components/netzbetreiber/dashboard/NetzbetreiberHaushalteTable";
+import NetzbetreiberEinspeisungenTable from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenTable";
+import NetzbetreiberEinspeisungenZusage from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenZusage";
+import NetzbetreiberEinspeisungenAngenommen from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenAngenommen";
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -51,6 +55,10 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/priceEdit/:priceID" element={<NetzbetreiberPreisEditCustom/>}/>
                 <Route path="/priceTable" element={<NetzbetreiberPreisTable/>}/>
                 <Route path="/smartmeterOverview" element={<NetzbetreiberSmartmeterOverview/>}/>
+                <Route path="/haushalteOverview" element={<NetzbetreiberHaushalteTable/>}/>
+                <Route path="/einspeisungenOverview" element={<NetzbetreiberEinspeisungenTable/>}/>
+                <Route path="/einspeisungenZusage/:anlageID" element={<NetzbetreiberEinspeisungenZusage/>}/>
+                <Route path="/einspeisungenAngenommen" element={<NetzbetreiberEinspeisungenAngenommen/>}/>
                 </Routes>
                 </div>
                 

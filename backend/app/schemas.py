@@ -4,6 +4,8 @@ from datetime import date
 from typing import Dict, List, Optional
 from app.types import *
 
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
+
 
 class AdresseCreate(BaseModel):
     strasse: str
@@ -17,6 +19,7 @@ class AdresseCreate(BaseModel):
 class AdresseIDResponse(BaseModel):
     adresse_id: int
 
+
 class AdresseResponse(BaseModel):
     adresse_id: int
     strasse: str
@@ -28,6 +31,7 @@ class AdresseResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AdresseResponseLongLat(BaseModel):
     id: int
     position: List[float]
@@ -35,6 +39,7 @@ class AdresseResponseLongLat(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class NutzerCreate(BaseModel):
     email: EmailStr
@@ -220,7 +225,6 @@ class PreisstrukturenResponse(BaseModel):
     einspeisung_kwh: float
 
 
-
 class AggregatedDashboardSmartMeterData(BaseModel):
     datum: str
     gesamt_pv_erzeugung: float = Field(..., description="Gesamtleistung der PV-Anlagen")
@@ -252,6 +256,7 @@ class AggregatedDashboardSmartMeterDataResponseLast(BaseModel):
 class DashboardSmartMeterDataResponse(BaseModel):
     message: str
 
+
 field_to_schema_mapping = {
     "all": AggregatedDashboardSmartMeterData,
     "soc": AggregatedDashboardSmartMeterDataResponseSOC,
@@ -259,6 +264,7 @@ field_to_schema_mapping = {
     "batterie": AggregatedDashboardSmartMeterDataResponseBatterie,
     "last": AggregatedDashboardSmartMeterDataResponseLast
 }
+
 
 class PVAnlageBase(BaseModel):
     modultyp: str
@@ -337,6 +343,7 @@ class AngebotResponse(BaseModel):
     angebot_id: int
     anlage_id: int
     kosten: float
+
     class Config:
         from_attributes = True
 
@@ -347,18 +354,16 @@ class InstallationsplanCreate(BaseModel):
     schattenanalyse: Schatten
     wechselrichterposition: str
     installationsdatum: date
-    
+
 
 class InstallationsplanResponse(BaseModel):
     installationsplan: str
 
 
-class PVAngebotResponse:
+class PVAngebotResponse(BaseModel):
     modultyp: str
     kapazitaet: float
     installationsflaeche: float
-
-
 
 
 
@@ -422,6 +427,11 @@ class RechnungResponse(BaseModel):
 class TarifAntragCreate(BaseModel):
     user_id: int
     tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    netzbetreiber_id: int
+    vertragstatus: bool
 
 class VertragResponse(BaseModel):
     vertrag_id: str
@@ -432,6 +442,61 @@ class VertragResponse(BaseModel):
     jahresabschlag: float
     vertragstatus: bool
 
+
+
+class KalenderEintragCreate(BaseModel):
+    zeitpunkt: date
+    user_id: int
+    beschreibung: str
+
+
+class KalenderEintrag(KalenderEintragCreate):
+    kalender_id: int
+
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class EnergieausweisAnfrage(BaseModel):
+    pass
+
+
+class EnergieausweisAnfrageResponse(BaseModel):
+    energieausweis_id: int
+    haushalt_id: int
+    energieberater_id: int
+    ausweis_status: AusweisStatus
+
+    class Config:
+        from_attributes = True
+
+
+class AngebotAnnahmeResponse(BaseModel):
+    angebot_id: int
+    anlage_id: int
+    kosten: float
+    angebotstatus: bool
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class AngebotVorschlag(BaseModel):
+    anlage_id: int = None
+    haushalt_id: int = None
+    solarteur_id: int = None
+    modultyp: Optional[str] = None
+    kapazitaet: Optional[float] = None
+    installationsflaeche: Optional[float] = None
+    installationsdatum: Optional[date] = None
+    modulanordnung: Optional[Orientierung] = None
+    kabelwegfuehrung: Optional[str] = None
+    montagesystem: Optional[Montagesystem] = None
+    schattenanalyse: Optional[Schatten] = None
+    wechselrichterposition: Optional[str] = None
+    installationsplan: Optional[str] = None
+    prozess_status: ProzessStatus = None
+    nvpruefung_status: Optional[bool] = None
+
 

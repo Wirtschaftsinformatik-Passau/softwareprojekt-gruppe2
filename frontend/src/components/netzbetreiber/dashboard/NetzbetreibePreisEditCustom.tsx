@@ -48,7 +48,6 @@ const NetzbetreiberTarifEdit = ({}) => {
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
-      // Fetch your data here
       axios.get(addSuffixToBackendURL("netzbetreiber/preisstrukturen/"+priceID), {headers: {Authorization: `Bearer ${token}`}})
         .then(response => {
             setInitialValues({

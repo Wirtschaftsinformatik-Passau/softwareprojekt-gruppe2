@@ -8,25 +8,6 @@ class Rolle(enum.Enum):
     Netzbetreiber = 'Netzbetreiber'
     Admin = 'Admin'
 
-class Isolierungsqualitaet(enum.Enum):
-    hoch = 'hoch'
-    mittel = 'mittel'
-    niedrig = 'niedrig'
-
-class AusrichtungDach(enum.Enum):
-    Nord = 'Nord'
-    Nordost = 'Nordost'
-    Ost = 'Ost'
-    Suedost = 'Suedost'
-    Sued = 'Sued'
-    Suedwest = 'Suedwest'
-    West = 'West'
-    Nordwest = 'Nordwest'
-
-class Rechnungsart(enum.Enum):
-    Netzbetreiber_Rechnung = 'Netzbetreiber_Rechnung'
-    Energieberater_Rechnung = 'Energieberater_Rechnung'
-    Solarteur_Rechnung = 'Solarteur_Rechnung'
 
 class ProzessStatus(enum.Enum):
     AnfrageGestellt = 'AnfrageGestellt'
@@ -65,6 +46,7 @@ class Schatten(enum.Enum):
     Ausgedehnter_Schatten = "Ausgedehnter_Schatten"
     Dauerhafter_Schatten = "Dauerhafter_Schatten"
 
+
 class Isolierungsqualitaet(enum.Enum):
     hoch = 'hoch'
     mittel = 'mittel'
@@ -84,3 +66,9 @@ class Rechnungsart(enum.Enum):
     Netzbetreiber_Rechnung = 'Netzbetreiber_Rechnung'
     Energieberater_Rechnung = 'Energieberater_Rechnung'
     Solarteur_Rechnung = 'Solarteur_Rechnung'
+
+
+class AusweisStatus(enum.Enum):
+    AnfrageGestellt = "AnfrageGestellt"
+    Ausgestellt = "Ausgestellt"
+

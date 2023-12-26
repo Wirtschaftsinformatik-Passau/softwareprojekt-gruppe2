@@ -9,11 +9,15 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TableViewIcon from '@mui/icons-material/TableView';
+import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
 import DashboardIcon from '@mui/icons-material/Dashboard';import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import InventoryIcon from '@mui/icons-material/Inventory';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
@@ -181,6 +185,13 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
+            <Item
+              title="Laufende Verträge"
+              to="/tarifEdit"
+              icon={<ReceiptIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
              <Typography
               variant="h6"
               color={colors.white[200]}
@@ -223,7 +234,34 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-
+            <Typography
+              variant="h6"
+              color={colors.white[300]}
+              sx={{ m: "15px 0 5px 20px" }}
+            >
+              Haushalt
+            </Typography>
+            <Item
+              title="Übersicht"
+              to="/haushalteOverview"
+              icon={<HolidayVillageIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Offene Anträge"
+              to="/einspeisungenOverview"
+              icon={<AccessTimeIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Angenommene Anträge"
+              to="/einspeisungenAngenommen"
+              icon={< CheckBoxIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
             <Typography
               variant="h6"
               color={colors.white[300]}

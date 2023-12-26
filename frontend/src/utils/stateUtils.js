@@ -7,12 +7,15 @@ const handleInputChange = setter => event => {
     setter(event.target.value);
 };
 
-export const setStateOtherwiseRedirect = (setter, endpoint, redirectFn, headers={}) => {
+export const setStateOtherwiseRedirect = (setter, endpoint, redirectFn, headers={}, setLoading=undefined) => {
   console.log("endpoint", endpoint)
     axios.get(addSuffixToBackendURL(endpoint), {headers: headers})
     .then(response => {
         setter(response.data);
         console.log(response.data)
+        if (setLoading !== undefined) {
+          setLoading(false);
+        }
     })
     .catch((err) => {
         if (err.response.status === 401) {

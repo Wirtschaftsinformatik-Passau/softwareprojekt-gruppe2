@@ -15,6 +15,7 @@ import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
@@ -187,7 +188,7 @@ const Sidebar1 = () => {
             <Item
               title="Laufende Verträge"
               to="/tarifEdit"
-              icon={<EditIcon/>}
+              icon={<ReceiptIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
@@ -256,7 +257,7 @@ const Sidebar1 = () => {
             />
             <Item
               title="Angenommene Anträge"
-              to="/einspeisungenOverview"
+              to="/einspeisungenAngenommen"
               icon={< CheckBoxIcon/>}
               selected={selected}
               setSelected={setSelected}

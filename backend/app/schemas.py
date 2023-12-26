@@ -188,7 +188,6 @@ class TarifCreate(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
-    netzbetreiber_id: int
 
     class Config:
         extra = Extra.allow

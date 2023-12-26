@@ -37,14 +37,71 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
 
     pv_anlage = await db.get(models.PVAnlage, angebot_data.anlage_id)
     if not pv_anlage or pv_anlage.solarteur_id != current_user.user_id:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebote",
+            method="POST",
+            message="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur.",
+            success=False
+        )
+        logger.error(logging_obj.dict())
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur."
         )
 
     if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebote",
+            method="POST",
+            message="Nicht berechtigt, ein Angebot für diese PV-Anlage zu erstellen.",
+            success=False
+        )
+        logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Nicht berechtigt, ein Angebot für diese PV-Anlage zu erstellen.")
+
+    haushalt = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == pv_anlage.haushalt_id))
+    haushalt = haushalt.scalars().first()
+    if not haushalt or any([
+        haushalt.anzahl_bewohner is None,
+        haushalt.heizungsart is None,
+        haushalt.baujahr is None,
+        haushalt.wohnflaeche is None,
+        haushalt.isolierungsqualitaet is None,
+        haushalt.ausrichtung_dach is None,
+        haushalt.dachflaeche is None,
+        haushalt.energieeffizienzklasse is None
+    ]):
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebote",
+            method="POST",
+            message="Vollständiger Haushaltsdatensatz für den angegebenen Haushalt nicht vorhanden.",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vollständiger Haushaltsdatensatz für den angegebenen Haushalt nicht vorhanden."
+        )
+
+    dashboard_daten_existieren = await db.execute(
+        select(models.DashboardSmartMeterData).where(models.DashboardSmartMeterData.haushalt_id == haushalt.user_id))
+    if not dashboard_daten_existieren.scalars().first():
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebote",
+            method="POST",
+            message="Keine Dashboard-Daten für den angegebenen Haushalt vorhanden.",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Keine Dashboard-Daten für den angegebenen Haushalt vorhanden."
+        )
 
     neues_angebot = models.Angebot(
         anlage_id=angebot_data.anlage_id,
@@ -60,6 +117,15 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
     pv_anlage.prozess_status = models.ProzessStatus.AngebotGemacht
     pv_anlage.modulanordnung = angebot_data.modulanordnung
     await db.commit()
+
+    logging_obj = schemas.LoggingSchema(
+        user_id=current_user.user_id,
+        endpoint="/angebote",
+        method="POST",
+        message="Angebot erfolgreich erstellt!",
+        success=False
+    )
+    logger.info(logging_obj.dict())
 
     return schemas.AngebotResponse(
         angebot_id=neues_angebot.angebot_id,
@@ -241,10 +307,8 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             anfragestatus=False  # False, da die Anfrage noch nicht bestätigt wurde
         )
         db.add(neue_haushaltsdaten)
-        pv_anlage.prozess_status = 'DatenAngefordert'
         await db.commit()
     except SQLAlchemyError as e:
-        await db.rollback()
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint=f"/datenanfrage/{anlage_id}",

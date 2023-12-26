@@ -1,4 +1,4 @@
-from datetime import MAXYEAR, date
+from datetime import MAXYEAR, date, timedelta
 from datetime import date, datetime
 from uuid import uuid4
 from typing import List
@@ -15,6 +15,7 @@ from logging.config import dictConfig
 from app.logger import LogConfig
 from app.schemas import LoggingSchema, TarifAntragCreate, VertragResponse
 
+KWH_VERBRAUCH_JAHR = 1500
 
 router = APIRouter(prefix="/haushalte", tags=["Haushalte"])
 
@@ -98,34 +99,66 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
 
 
 # haushalt sieht alle tarife und kann sich für einen entscheiden
-@router.post("/tarifantrag", response_model=schemas.VertragResponse)
-async def tarifantrag(tarifantrag: schemas.TarifAntragCreate, db: AsyncSession = Depends(database.get_db_async)):
-    logger.info(f"Tarifantrag erhalten: {tarifantrag}")
+@router.post("/tarifantrag/{tarif_id}", response_model=schemas.VertragResponse)
+async def tarifantrag(tarif_id: int,
+                      current_user: models.Nutzer = Depends(oauth.get_current_user),
+                      db: AsyncSession = Depends(database.get_db_async)):
 
     # Prüfen, ob der angeforderte Tarif existiert
+    await check_haushalt_role(current_user, "POST", f"/tarifantrag/{tarif_id}")
+    user_id = current_user.user_id
     try:
-        tarif = await db.get(models.Tarif, tarifantrag.tarif_id)
+        query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
+                                           (models.Tarif.active == True))
+        result = await db.execute(query)
+        tarif = result.scalar_one_or_none()
         if not tarif:
-            logger.error(f"Tarif mit ID {tarifantrag.tarif_id} nicht gefunden für Nutzer ID {tarifantrag.user_id}")
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/tarifantrag",
+                method="POST",
+                message="Tarif nicht gefunden",
+                success=False
+            )  
+            logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
+
     except Exception as e:
-        logger.error(f"Fehler beim Abrufen des Tarifs: {e}")
+        logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/tarifantrag",
+                method="POST",
+                message=f"Felher beim Abrufen des Tarifs: {e}",
+                success=False
+            )  
+        logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
+
+    beginn_datum = date.today()
+    end_datum = timedelta(days=int(365 * tarif.laufzeit)) + beginn_datum
+    jahresabschlag = tarif.grundgebuehr + tarif.preis_kwh * KWH_VERBRAUCH_JAHR
 
     try:
         vertrag = models.Vertrag(
-            user_id=tarifantrag.user_id,
-            tarif_id=tarifantrag.tarif_id,
-            beginn_datum=tarifantrag.beginn_datum,
-            end_datum=tarifantrag.end_datum,
-            jahresabschlag=tarifantrag.jahresabschlag,
-            vertragstatus=tarifantrag.vertragstatus,
+            user_id=user_id,
+            tarif_id=tarif_id,
+            beginn_datum=beginn_datum,
+            end_datum=end_datum,
+            jahresabschlag=jahresabschlag,
+            vertragstatus=True,
             netzbetreiber_id=tarif.netzbetreiber_id
         )
         db.add(vertrag)
         await db.commit()
         await db.refresh(vertrag)
-        logger.info(f"Vertrag {vertrag.vertrag_id} erfolgreich erstellt für Nutzer ID {tarifantrag.user_id}")
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebotsueberpruefung",
+            method="GET",
+            message=f"Vertrag {vertrag.vertrag_id} erfolgreich erstellt für Nutzer ID {user_id}",
+            success=True
+        )
+        logger.info(logging_obj.dict())
         return schemas.VertragResponse(
             vertrag_id=vertrag.vertrag_id,
             user_id=vertrag.user_id,
@@ -135,8 +168,29 @@ async def tarifantrag(tarifantrag: schemas.TarifAntragCreate, db: AsyncSession =
             jahresabschlag=vertrag.jahresabschlag,
             vertragstatus=vertrag.vertragstatus
         )
+
+    except sqlalchemy.exc.IntegrityError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=user_id,
+            endpoint="/tarifantrag",
+            method="POST",
+            message=f"Tarif für user bereits vorhanden: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Tarif {tarif_id} für user {user_id }existiert für user bereits")
+
+
     except Exception as e:
-        logger.error(f"Fehler bei der Erstellung des Vertrags für Nutzer ID {tarifantrag.user_id}: {e}")
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebotsueberpruefung",
+            method="GET",
+            message=f"Fehler bei der Vertragserstellung {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Fehler bei der Vertragserstellung: {e}")
 
@@ -283,3 +337,78 @@ async def ueberpruefung_angebote(current_user: models.Nutzer = Depends(oauth.get
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Unerwarteter Fehler bei der Abfrage von Angeboten")
+
+
+@router.get("/all-tarife", response_model=List[schemas.TarifResponseAll])
+async def get_all_tarife(db: AsyncSession = Depends(database.get_db_async),
+                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_haushalt_role(current_user, "GET", "/all-tarife")
+    try:
+        stmt = select(models.Tarif).where(models.Tarif.active == True)
+        result = await db.execute(stmt)
+        tarife = result.scalars().all()
+        return tarife
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+
+
+@router.get("/all-tarife/{tarif_id}", response_model=schemas.TarifHaushaltResponse)
+async def get_all_tarife(tarif_id: int,
+                        db: AsyncSession = Depends(database.get_db_async),
+                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_haushalt_role(current_user, "GET", f"/all-tarife/{tarif_id}")
+    try:
+        stmt = select(models.Tarif, models.Nutzer)\
+            .join(models.Nutzer, models.Tarif.netzbetreiber_id == models.Nutzer.user_id)\
+            .where(models.Tarif.tarif_id == tarif_id)
+        result = await db.execute(stmt)
+        tarife = result.all()
+        response = {
+            "vorname": tarife[0][1].vorname,
+            "nachname": tarife[0][1].nachname,
+            "email": tarife[0][1].email,
+            "tarif_id": tarife[0][0].tarif_id,
+            "tarifname": tarife[0][0].tarifname,
+            "preis_kwh": tarife[0][0].preis_kwh,
+            "grundgebuehr": tarife[0][0].grundgebuehr,
+            "laufzeit": tarife[0][0].laufzeit,
+            "spezielle_konditionen": tarife[0][0].spezielle_konditionen,
+        }
+        return response
+
+    except exc.SQLAlchemyError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"SQL Fehler: {e}")
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error {e}")
+
+
+@router.get("/vertraege", response_model=List[schemas.VertragTarifResponse])
+async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
+                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_haushalt_role(current_user, "GET", "/vertraege")
+    try:
+        stmt = select(models.Vertrag, models.Tarif).join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id).where(models.Vertrag.user_id == current_user.user_id)
+        result = await db.execute(stmt)
+        vertraege = result.all()
+        response = [{
+            "vertrag_id": vertrag.vertrag_id, 
+            "user_id": vertrag.user_id,
+            "tarif_id": vertrag.tarif_id, 
+            "beginn_datum": vertrag.beginn_datum, 
+            "end_datum": vertrag.end_datum,
+            "jahresabschlag": vertrag.jahresabschlag, 
+            "vertragstatus": vertrag.vertragstatus,
+            "tarifname": tarif.tarifname,
+            "preis_kwh": tarif.preis_kwh,
+            "grundgebuehr": tarif.grundgebuehr,
+            "laufzeit": tarif.laufzeit,
+            "n"
+            "spezielle_konditionen": tarif.spezielle_konditionen 
+    
+        } for vertrag, tarif in vertraege]
+
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")

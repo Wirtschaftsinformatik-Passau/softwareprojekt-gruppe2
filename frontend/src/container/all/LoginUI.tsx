@@ -57,7 +57,7 @@ const LoginUI = () => {
 
     useEffect(() => {
         if (loggedIn) { 
-            console.log(currentUser.rolle === "Netzbetreiber")
+            console.log(currentUser.rolle === "Haushalte")
             if (currentUser.rolle === "Netzbetreiber"){
                 navigate("/netzbetreiber")
 
@@ -67,9 +67,16 @@ const LoginUI = () => {
 
                 navigate("/admin")
             }
+
+            else if (currentUser.rolle === "Haushalte"){
+                navigate("/haushalte")
+            }
+
+            else if (currentUser.rolle === "Geschaeft"){
+                navigate("/geschaeft")
         }
         }
-    , [currentUser])
+     }, [currentUser])
     
     const checkLogin = (values: any, {setSubmitting}: any) => {
         const user = new LoginUser(values.email, values.password);

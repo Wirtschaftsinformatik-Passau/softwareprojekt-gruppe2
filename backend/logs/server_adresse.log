@@ -156,3 +156,51 @@
 {"timestamp": "2023-12-19 17:49:04,261", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 5 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
 {"timestamp": "2023-12-19 17:49:04,968", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 6 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
 {"timestamp": "2023-12-19 17:49:05,671", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 7 erfolgreich geocodiert", "user_id": 8, "endpoint": "/geocode", "method": "POST", "success": true}
+{"timestamp": "2023-12-25 23:45:35,948", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 1, "msg": "Adresse created"}
+{"timestamp": "2023-12-25 23:45:35,971", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 2, "msg": "Adresse created"}
+{"timestamp": "2023-12-25 23:45:35,994", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 3, "msg": "Adresse created"}
+{"timestamp": "2023-12-25 23:45:36,016", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 4, "msg": "Adresse created"}
+{"timestamp": "2023-12-25 23:45:36,040", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 5, "msg": "Adresse created"}
+{"timestamp": "2023-12-25 23:45:36,062", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 6, "msg": "Adresse created"}
+{"timestamp": "2023-12-25 23:45:36,088", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 7, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 01:53:42,950", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 8, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 01:55:24,324", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 9, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 01:56:51,582", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 10, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:01:25,835", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 11, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:03:29,587", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 12, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:09:34,335", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 13, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:11:14,943", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 14, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:13:48,031", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 15, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:15:22,358", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 16, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:16:01,217", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 17, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:16:25,708", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 18, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:18:09,218", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 19, "msg": "Adresse created"}
+{"timestamp": "2023-12-26 02:35:13,951", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 20, "msg": "Adresse created", "taskName": "Task-7"}
+{"timestamp": "2023-12-26 02:36:10,682", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 21, "msg": "Adresse created", "taskName": "Task-4"}
+{"timestamp": "2023-12-26 02:39:29,858", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 22, "msg": "Adresse created", "taskName": "Task-36"}
+{"timestamp": "2023-12-26 02:45:23,865", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 23, "msg": "Adresse created", "taskName": "Task-4"}
+{"timestamp": "2023-12-26 02:46:41,134", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "", "adresse_id": 24, "msg": "Adresse created", "taskName": "Task-4"}
+{"timestamp": "2023-12-26 14:03:37,106", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 1 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:37,903", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 2 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:38,657", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 3 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:39,406", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 4 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:40,340", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 5 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:41,099", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 6 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:41,923", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 7 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:42,691", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 8 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:43,458", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 9 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:44,201", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 10 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:44,980", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 11 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:45,775", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 12 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:46,558", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 13 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:47,295", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 14 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:48,040", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 15 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:48,897", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 16 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:49,636", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 17 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:51,216", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 18 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:52,002", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 19 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:52,850", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 20 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:53,602", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 21 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:54,288", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 22 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:54,955", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 23 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}
+{"timestamp": "2023-12-26 14:03:55,644", "level": "INFO", "name": "GreenEcoHubAdresse", "message": "Adresse 24 erfolgreich geocodiert", "user_id": 101, "endpoint": "/geocode", "method": "POST", "success": true, "taskName": "Task-110"}

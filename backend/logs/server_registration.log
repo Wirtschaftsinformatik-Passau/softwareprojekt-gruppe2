@@ -484,3 +484,124 @@
 {"timestamp": "2023-12-19 17:46:47,862", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 57, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:46:48,238", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 58, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:56:52,929", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 59, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:28,547", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 1, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:28,874", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 2, "role": "Admin", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:29,221", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 3, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:29,837", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 4, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:30,552", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 5, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:31,014", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 6, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:31,409", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 7, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:31,822", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 8, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:32,229", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 9, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:32,635", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 10, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:33,041", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 11, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:33,450", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 12, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:33,842", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 13, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:34,219", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 14, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:34,621", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 15, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:35,159", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 16, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:35,690", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 17, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:36,220", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 18, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:36,725", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 19, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:37,266", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 20, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:37,778", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 21, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:38,305", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 22, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:38,815", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 23, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:39,336", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 24, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:39,875", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 25, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:40,399", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 26, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:40,917", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 27, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:41,456", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 28, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:41,995", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 29, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:42,554", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 30, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:43,088", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 31, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:43,620", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 32, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:44,128", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 33, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:44,633", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 34, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:45,168", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 35, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:45,703", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 36, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:46,222", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 37, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:46,739", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 38, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:47,257", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 39, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:47,783", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 40, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:48,299", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 41, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:48,876", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 42, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:49,397", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 43, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:49,911", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 44, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:50,419", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 45, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:50,963", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 46, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:51,499", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 47, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:51,995", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 48, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:52,580", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 49, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:53,117", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 50, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:53,644", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 51, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:54,156", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 52, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-25 23:46:54,668", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 53, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:01:26,319", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email n@b.de bereits vergeben"}
+{"timestamp": "2023-12-26 02:03:30,173", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 54, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:54,558", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email h@h.de bereits vergeben"}
+{"timestamp": "2023-12-26 02:12:55,061", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email 1@0.de bereits vergeben"}
+{"timestamp": "2023-12-26 02:12:55,570", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 55, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:56,171", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 56, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:56,688", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 57, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:57,189", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 58, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:57,746", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 59, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:58,260", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 60, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:58,742", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 61, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:59,253", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 62, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:12:59,733", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 63, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:00,185", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 64, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:00,673", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 65, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:01,148", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 66, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:01,675", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 67, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:02,170", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 68, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:02,675", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 69, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:03,190", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 70, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:03,621", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 71, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:04,141", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 72, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:04,693", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 73, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:05,122", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 74, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:05,632", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 75, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:06,233", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 76, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:06,830", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 77, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:07,358", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 78, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:07,852", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 79, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:08,284", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 80, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:08,729", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 81, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:09,238", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 82, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:09,705", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 83, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:10,144", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 84, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:10,679", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 85, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:11,247", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 86, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:11,968", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 87, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:12,529", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 88, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:13,651", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 89, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:14,528", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 90, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:15,030", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 91, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:15,550", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 92, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:16,085", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 93, "role": "Haushalte", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:13:16,642", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 94, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:16:48,300", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email h@h.de bereits vergeben"}
+{"timestamp": "2023-12-26 02:16:48,774", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email 1@0.de bereits vergeben"}
+{"timestamp": "2023-12-26 02:16:49,272", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 95, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:16:49,794", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 96, "role": "Netzbetreiber", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:16:50,299", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 97, "role": "Energieberatende", "msg": "User registriert"}
+{"timestamp": "2023-12-26 02:39:00,498", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email h@h.de bereits vergeben", "taskName": "Task-4"}
+{"timestamp": "2023-12-26 02:39:00,860", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email 1@0.de bereits vergeben", "taskName": "Task-6"}
+{"timestamp": "2023-12-26 02:39:01,292", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 98, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-8"}
+{"timestamp": "2023-12-26 02:39:01,792", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 99, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-10"}
+{"timestamp": "2023-12-26 02:39:02,367", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 100, "role": "Energieberatende", "msg": "User registriert", "taskName": "Task-12"}
+{"timestamp": "2023-12-26 10:41:25,215", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email h@h.de bereits vergeben", "taskName": "Task-18"}
+{"timestamp": "2023-12-26 10:41:25,715", "level": "ERROR", "name": "GreenEcoHubRegistration", "message": "", "user_id": 0, "role": "unknown", "msg": "Email 1@0.de bereits vergeben", "taskName": "Task-20"}
+{"timestamp": "2023-12-26 10:41:26,264", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 101, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-22"}
+{"timestamp": "2023-12-26 10:41:26,794", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 102, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-24"}
+{"timestamp": "2023-12-26 10:41:27,274", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 103, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-26"}
+{"timestamp": "2023-12-26 10:41:27,796", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 104, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-28"}
+{"timestamp": "2023-12-26 10:41:28,289", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 105, "role": "Solarteure", "msg": "User registriert", "taskName": "Task-30"}
+{"timestamp": "2023-12-26 10:41:28,771", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 106, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-32"}
+{"timestamp": "2023-12-26 10:41:29,260", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 107, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-34"}
+{"timestamp": "2023-12-26 10:41:29,738", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 108, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-36"}
+{"timestamp": "2023-12-26 10:41:30,201", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 109, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-38"}
+{"timestamp": "2023-12-26 10:41:30,685", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 110, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-40"}
+{"timestamp": "2023-12-26 10:41:31,220", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 111, "role": "Energieberatende", "msg": "User registriert", "taskName": "Task-42"}
+{"timestamp": "2023-12-26 10:41:31,767", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 112, "role": "Energieberatende", "msg": "User registriert", "taskName": "Task-44"}

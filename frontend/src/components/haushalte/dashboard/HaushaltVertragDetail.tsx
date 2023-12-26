@@ -1,89 +1,84 @@
 import React, { useEffect } from "react";
 import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
-import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
-import { Formik } from "formik";
-import * as yup from "yup";
 import { tokens } from "../../../utils/theme";
 import { useNavigate , useParams} from "react-router-dom";
 import Header from "../../utility/Header";
-import useMediaQuery from "@mui/material/useMediaQuery";
 import SuccessModal from "../../utility/SuccessModal";
-import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../../entitities/user"
 import axios from "axios";
-import { Iadresse, Adresse } from "../../../entitities/adress";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CircularProgress from '@mui/material/CircularProgress';
-import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
-import { h } from "@fullcalendar/core/preact";
-import { s } from "@fullcalendar/core/internal-common";
+
+export interface Vertrag {
+    "vorname": string,
+    "nachname": string,
+    "email": string,
+    "vertrag_id": number,
+    "netzbetreiber_id": number,
+    "tarif_id": number,
+    "beginn_datum": string,
+    "end_datum": string,
+    "jahresabschlag": number,
+    "tarifname": string,
+    "preis_kwh": number,
+    "grundgebuehr": number,
+    "laufzeit": 0,
+    "spezielle_konditionen": string,
+}
 
 
 
-
-const NetzbetreiberEinspeisungenZusage = ({}) => {
+const VertragDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
-    const {isLoading, setIsLoading} = React.useState(true);
-    const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
-    const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
-    const {tarifID} = useParams();
-    const [tarif, setTarif] = React.useState({
+    const [isLoading, setIsLoading] = React.useState<boolean>(true);
+    const [successModalIsOpen, setSuccessModalIsOpen] = React.useState<boolean>(false);
+    const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
+    const {vertragID} = useParams();
+    const [vertrag, setVertrag] = React.useState<Vertrag>({
             "vorname": "",
             "nachname": "",
             "email": "",
-            "preis_kwh": "",
-            "tarif_id": "",
-            "laufzeit": "",
-            "netzbetreiber_id": "101",
+            "vertrag_id": 0,
+            "netzbetreiber_id": 0,
+            "tarif_id": 0,
+            "beginn_datum": "",
+            "end_datum": "",
+            "jahresabschlag": 0,
             "tarifname": "",
-            "grundgebuehr": "",
+            "preis_kwh": 0,
+            "grundgebuehr": 0,
+            "laufzeit": 0,
             "spezielle_konditionen": ""
-        
+                
     })
 
     const keyMapping = {
         "vorname": "Vorname Netzbetreiber",
         "nachname": "Nachname Netzbertreiber",
         "email": "E-Mail Netzbetreiber",
-        "preis_kwh": "Preis pro kWh",
-        "tarif_id": "Tarif ID",
-        "laufzeit": "Laufzeit in Jahren",
+        "vertrag_id": "Vertrag ID",
         "netzbetreiber_id": "Netzbetreiber ID",
+        "tarif_id": "Tarif ID",
+        "beginn_datum": "Beginn Datum",
+        "end_datum": "End Datum",
+        "jahresabschlag": "Jahresabschlag in Euro",
         "tarifname": "Tarifname",
+        "preis_kwh": "Preis pro kWh",
         "grundgebuehr": "Grundgebühr",
+        "laufzeit": "Laufzeit in Jahren",
         "spezielle_konditionen": "Spezielle Konditionen"
-
     }
 
     const navigate = useNavigate();
 
     useEffect(() => {  
         const token = localStorage.getItem("accessToken");
-        setStateOtherwiseRedirect(setTarif, "haushalte/all-tarife/"+tarifID , 
+        setStateOtherwiseRedirect(setVertrag, "haushalte/vertraege/"+vertragID , 
         navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
     }, []
     )
-
-    const handleAccept = () => { 
-        const token = localStorage.getItem("accessToken");
-        axios.post(addSuffixToBackendURL(`haushalte/tarifantrag/${tarifID}`), {}, {headers: { Authorization: `Bearer ${token}` }})
-        .then((res) => {
-            console.log("success")
-            setSuccessModalIsOpen(true)
-        })
-        .catch((err) => {
-            if (err.response.status === 403 || err.response.status === 403) {
-                console.log("Unauthorized  oder kein Haushalt", err.response.data)
-                navigate("/login")
-              }
-              else if (err.response.status === 400) {
-                console.log("Bad Request", err.response.data)
-                setFailModalIsOpen(true)
-              }
-            console.log(err)
-        })
-    }
 
     if (isLoading) {
         return (
@@ -93,9 +88,11 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
         );
       }
 
+      
     return (
         <Box m="20px">
-            <Header title={"Detailübersicht Tarif ID "+ tarifID} subtitle="Detaillierte Übersicht über Einspeisungsanfrage"/>
+            <Header title={"Detailübersicht Vertrag "+ vertragID}
+             subtitle="Detaillierte Übersicht über abgeschlossenen Vertrag"/>
             <Box display={"flex"} justifyContent={"space-evenly"}>
             <Button variant="contained" color="primary" onClick={() => {navigate(-1)}}
                  sx = {{
@@ -104,19 +101,24 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
                 }}>
                     Abbrechen    
                 </Button>
-                <Button variant="contained" color="primary" onClick={handleAccept}
+                <Button variant="contained" color="primary"
                 sx = {{
                     backgroundColor: `${colors.color1[500]} !important`,
                     color: theme.palette.background.default
                 }}>
-                    Vertrag abschließen    
+                    <DeleteForeverIcon sx={{
+                        marginRight: "6px",
+                        marginBottom: "1px"
+                    
+                    }}/>
+                    Vertrag kündigen    
                 </Button>
 
             </Box>
     <Box gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} display={"grid"}>
-    {Object.entries(tarif).map(([key, value]) => {
+    {Object.entries(vertrag).map(([key, value]) => {
         return (
-            <Box gridColumn={key === "spezielle_konditionen" ? "span 4" : "span 2"} mt={2} ml={1}>
+            <Box gridColumn={(key === "spezielle_konditionen") || (key === "tarifname") ? "span 4" : "span 2"} mt={2} ml={1}>
             <TextField
             fullWidth
             variant="outlined"
@@ -152,11 +154,11 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
     })}
    </Box>
    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Vertrag erfolgreich erstellt!" navigationGoal="/netzbetreiber"/>
+    text="Vertrag erfolgreich gekündigt!" navigationGoal="/netzbetreiber"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
         </Box>
     )
 }
 
-export default NetzbetreiberEinspeisungenZusage;
+export default VertragDetail;

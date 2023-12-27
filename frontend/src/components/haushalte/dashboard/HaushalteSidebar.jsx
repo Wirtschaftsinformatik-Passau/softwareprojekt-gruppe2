@@ -16,7 +16,7 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
@@ -182,13 +182,6 @@ const Sidebar1 = () => {
               setSelected={setSelected}
             />
             <Item
-              title="Vertrag kündigen"
-              to="/vertragDelete"
-              icon={<DeleteForeverIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
               title="Laufende Verträge"
               to="/vertragOverview"
               icon={<ReceiptIcon/>}
@@ -221,7 +214,7 @@ const Sidebar1 = () => {
               color={colors.white[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Smart
+              Daten
             </Typography>
             <Item
               title="Smart Meter Upload"

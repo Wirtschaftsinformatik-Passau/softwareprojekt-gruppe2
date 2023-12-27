@@ -479,8 +479,24 @@ class VertragTarifResponse(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
-    
 
+class VertragTarifNBResponse(BaseModel):
+    vorname: str
+    nachname: str
+    email: str
+    vertrag_id: int
+    netzbetreiber_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    tarifname: str
+    spezielle_konditionen: str
+    
 
 class KalenderEintragCreate(BaseModel):
     zeitpunkt: date

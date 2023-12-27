@@ -13,6 +13,7 @@ import HaushalteTarifTable from "../../components/haushalte/dashboard/HaushalteT
 import HaushalteVertragSelect from "../../components/haushalte/dashboard/HaushalteVertragSelect";
 import HaushalteVertragCreate from "../../components/haushalte/dashboard/HaushalteVertragCreate";
 import HaushalteVertrag from "../../components/haushalte/dashboard/HaushaltVertrag";
+import HaushalteVertragDetail from "../../components/haushalte/dashboard/HaushaltVertragDetail";
 
 const  HaushaltDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -39,6 +40,7 @@ const  HaushaltDashboard = () => {
                     <Route path="/vertragSelect" element={<HaushalteVertragSelect/>}/>
                     <Route path="/vertragSelect/:tarifID" element={<HaushalteVertragCreate/>}/>
                     <Route path="/vertragOverview" element={<HaushalteVertrag/>}/>  
+                    <Route path="/vertragOverview/:vertragID" element={<HaushalteVertragDetail/>}/>
                 </Routes>
                 </div>
                 

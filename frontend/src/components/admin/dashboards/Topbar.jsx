@@ -15,7 +15,7 @@ import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
 import { Link } from "react-router-dom";
 
 
-const Topbar = ({fixed}) => {
+const Topbar = ({fixed, search=true}) => {
   const navigate = useNavigate();
     const isNonMobile = useMediaQuery("(min-width:700px)")
     const [helpModal, setHelpModal] = useState(false);
@@ -50,10 +50,15 @@ const Topbar = ({fixed}) => {
 
           borderRadius="3px"
         >
+          {search &&(
+            <>
           <InputBase sx={{ ml: 2, flex: 1, color: theme.palette.neutral.main}} placeholder="Search" />
           <IconButton type="button" sx={{ p: 1, color: theme.palette.neutral.main}} >
             <SearchIcon />
           </IconButton>
+          </>
+          )
+}
         </Box>
         </Box>
   

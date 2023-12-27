@@ -110,11 +110,28 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
         await db.commit()
         await db.refresh(db_user)
 
-                # Prüfen, ob der Nutzer die Rolle Netzbetreiber hat
+        # Prüfen, ob der Nutzer die Rolle Netzbetreiber hat
         if db_user.rolle == models.Rolle.Netzbetreiber:
             # Erstellen eines Netzbetreiber-Eintrags
             netzbetreiber = models.Netzbetreiber(user_id=db_user.user_id)
             db.add(netzbetreiber)
+            await db.commit()
+
+        # Prüfen, ob der Nutzer die Rolle Haushalte hat
+        if db_user.rolle == models.Rolle.Haushalte:
+            # Erstellen eines Haushalt-Eintrags mit Standardwerten als null
+            haushalt = models.Haushalt(
+                user_id=db_user.user_id,
+                anzahl_bewohner=None,
+                heizungsart=None,
+                baujahr=None,
+                wohnflaeche=None,
+                isolierungsqualitaet=None,  # Angenommen, dass None ein gültiger Wert für das Enum ist
+                ausrichtung_dach=None,      # Angenommen, dass None ein gültiger Wert für das Enum ist
+                dachflaeche=None,
+                energieeffizienzklasse=None
+            )
+            db.add(haushalt)
             await db.commit()
             
         logging_msg = schemas.RegistrationLogging(user_id=db_user.user_id, role=db_user.rolle.value,

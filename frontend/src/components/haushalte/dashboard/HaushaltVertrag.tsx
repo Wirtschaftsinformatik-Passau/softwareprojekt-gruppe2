@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Header from "../../utility/Header";
 import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
+import {CircularProgress} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 export interface Vertrag {
@@ -19,12 +20,14 @@ export interface Vertrag {
   "preis_kwh": number,
   "grundgebuehr": number,
   "laufzeit": number,
+  "netzbetreiber_id": number,
   "spezielle_konditionen": string,
 }
 
 const VertragTable = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [data, setData] = useState<Vertrag[]>([{
     "vertrag_id": 0,
     "user_id": 0,
@@ -37,27 +40,24 @@ const VertragTable = () => {
     "preis_kwh": 0,
     "grundgebuehr": 0,
     "laufzeit": 0,
-    "spezielle_konditionen": ""
+    "spezielle_konditionen": "",
+    "netzbetreiber_id": 0,
   }]);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "haushalte/vertraege", navigate,  {Authorization: `Bearer ${token}`})
+    setStateOtherwiseRedirect(setData, "haushalte/vertraege", navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
   }, [])
+
+  const handleRowClick = (params: any) => {
+    navigate("/haushalte/vertragOverview/"+params.row.vertrag_id)
+  }
 
 
 
 const columns = [
-    {
-        field: "vertrag_id",
-        headerName: "ID",
-        flex: 1,
-        align: "left",
-        headerAlign: "left",
-        cellClassName: "name-column--cell",
-      },
       {
         field: "netzbetreiber_id",
         headerAlign: "left",
@@ -88,15 +88,6 @@ const columns = [
         flex: 1,
         cellClassName: "name-column--cell",
       },
-      {
-        field: "vertragstatus",
-        headerAlign: "left",
-        align: "left",
-        headerName: "Vertragstatus",
-        flex: 1,
-        cellClassName: "name-column--cell",
-      },
-
     {
         field: "tarifname",
         headerAlign: "left",
@@ -133,6 +124,15 @@ const columns = [
     },
     
   ];
+
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
 return (
     
     <Box
@@ -141,7 +141,7 @@ return (
     gridAutoRows="140px"
     gap="0px">
         <Box gridColumn={"span 2"} m="20px">
-         <Header title="Tarifübersicht" subtitle="Für Details auf Vertrag klicken"/>
+         <Header title="Übersicht über alle abgeschlossenen Verträge" subtitle="Für Details auf Vertrag klicken"/>
          </Box>
 
         
@@ -184,11 +184,11 @@ return (
     }}
   >
     <DataGrid checkboxSelection getRowId={(row) => row.vertrag_id} rows={data} 
-    columns={columns} hideFooter={false} sx={{cursor: "pointer"}}/>
+    columns={columns} hideFooter={false} sx={{cursor: "pointer"}}
+    onRowClick={handleRowClick}/>
   </Box>
 </Box>
     </Grow>
-
     </Box>
 )
 

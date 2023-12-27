@@ -447,6 +447,7 @@ async def get_vertrag(vertrag_id: int,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
     
+    
 @router.post("/vertrag_kuendigen/{vertrag_id}", status_code=status.HTTP_200_OK)
 async def vertrag_kuendigen(vertrag_id: int, db: AsyncSession = Depends(database.get_db_async),
                             current_user: models.Nutzer = Depends(oauth.get_current_user)):

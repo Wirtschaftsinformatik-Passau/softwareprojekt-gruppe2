@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, \
-    Identity, TIMESTAMP, func
+    Identity, TIMESTAMP, func, UniqueConstraint
 from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -53,6 +53,7 @@ class Tarif(Base):
     laufzeit = Column(Integer)
     spezielle_konditionen = Column(String)
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    active = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
@@ -191,3 +192,6 @@ class Vertrag(Base):
     jahresabschlag = Column(Float)
     vertragstatus = Column(Boolean, default=True) 
 
+    __table_args__ = (
+        UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc'),
+    )

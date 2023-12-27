@@ -450,6 +450,25 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+        Abrufen von aggregierten Dashboard-Smart-Meter-Daten für einen bestimmten Haushalt.
+
+        Parameters:
+        - haushalt_id (int): Die ID des Haushalts, für den Daten abgerufen werden sollen.
+        - field (str): Das spezifische Feld der abzurufenden Daten (z. B. "all", "pv", "soc"). Der Standardwert ist "all".
+        - period (str): Der Zeitabschnitt für die Aggregation (z. B. "TAG", "WOCHE", "MONAT"). Der Standardwert ist "TAG".
+        - start (str): Das Startdatum für den Datenabruf im Format "YYYY-MM-DD".Der Standardwert ist "2023-01-01".
+        - end (str): Das Enddatum für den Datenabruf im Format "YYYY-MM-DD".Der Standardwert ist "2023-01-30".
+        - db (AsyncSession): Dependency Injection der Datenbanksitzung zur Ausführung von Abfragen.
+        - current_user (models.Nutzer): Der aktuell authentifizierte Benutzer, der versucht, auf die Daten zuzugreifen.
+
+        Returns:
+        Union[List[schemas.*]]: Eine Liste von Datensätzen in dem durch den Parameter "field" angegebenen Format.
+
+        Raises:
+        - HTTPException: Wenn die Eingabeüberprüfung fehlschlägt oder der Benutzer nicht autorisiert ist.
+        - ValueError: Wenn die angegebenen Daten oder der Zeitraum ein ungültiges Format haben.
+        """
     try:
         await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
 

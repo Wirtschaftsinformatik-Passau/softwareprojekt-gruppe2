@@ -1,8 +1,8 @@
-"""Base revision
+"""neu aufsetzen
 
-Revision ID: 2801b07e36e9
+Revision ID: 8be3881ae88c
 Revises: 
-Create Date: 2023-12-26 21:09:50.192074
+Create Date: 2023-12-27 12:36:09.986929
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2801b07e36e9'
+revision: str = '8be3881ae88c'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -162,6 +162,7 @@ def upgrade() -> None:
     sa.Column('laufzeit', sa.Integer(), nullable=True),
     sa.Column('spezielle_konditionen', sa.String(), nullable=True),
     sa.Column('netzbetreiber_id', sa.Integer(), nullable=True),
+    sa.Column('active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.TIMESTAMP(), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['netzbetreiber_id'], ['Nutzer.user_id'], ),
     sa.PrimaryKeyConstraint('tarif_id'),
@@ -189,7 +190,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['netzbetreiber_id'], ['Nutzer.user_id'], ),
     sa.ForeignKeyConstraint(['tarif_id'], ['Tarif.tarif_id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['Nutzer.user_id'], ),
-    sa.PrimaryKeyConstraint('vertrag_id')
+    sa.PrimaryKeyConstraint('vertrag_id'),
+    sa.UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc')
     )
     # ### end Alembic commands ###
 

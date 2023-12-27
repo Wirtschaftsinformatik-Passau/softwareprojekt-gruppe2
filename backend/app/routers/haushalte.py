@@ -5,7 +5,7 @@ from typing import List
 
 import sqlalchemy
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
-from sqlalchemy import select, func, exc
+from sqlalchemy import select, func, exc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -446,3 +446,53 @@ async def get_vertrag(vertrag_id: int,
         return response
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+    
+@router.post("/vertrag_kuendigen/{vertrag_id}", status_code=status.HTTP_200_OK)
+async def vertrag_kuendigen(vertrag_id: int, db: AsyncSession = Depends(database.get_db_async),
+                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_haushalt_role(current_user, "POST", f"/vertrag_kuendigen/{vertrag_id}")
+    
+    try:
+        # Überprüfe, ob der Vertrag existiert und dem aktuellen Nutzer gehört
+        stmt = select(models.Vertrag).where(models.Vertrag.vertrag_id == vertrag_id,
+                                            models.Vertrag.user_id == current_user.user_id)
+        result = await db.execute(stmt)
+        vertrag = result.scalar_one_or_none()
+
+        if vertrag is None:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/vertrag_kuendigen",
+                method="POST",
+                message="Vertrag nicht gefunden oder gehört nicht zum Nutzer",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vertrag nicht gefunden oder gehört nicht zum Nutzer")
+
+        # Aktualisiere den Vertragsstatus auf False
+        update_stmt = update(models.Vertrag).where(models.Vertrag.vertrag_id == vertrag_id).values(vertragstatus=False)
+        await db.execute(update_stmt)
+        await db.commit()
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/vertrag_kuendigen",
+            method="POST",
+            message=f"Vertrag {vertrag_id} erfolgreich gekündigt, läuft aber bis zum Enddatum weiter.",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return {"message": f"Vertrag {vertrag_id} erfolgreich gekündigt, läuft aber bis zum Enddatum weiter."}
+
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/vertrag_kuendigen",
+            method="POST",
+            message=f"Fehler beim Kündigen des Vertrags: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Fehler: {e}")

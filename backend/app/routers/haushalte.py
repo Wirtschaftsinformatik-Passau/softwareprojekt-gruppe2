@@ -5,7 +5,8 @@ from typing import List
 
 import sqlalchemy
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
-from sqlalchemy import select, func, exc
+from sqlalchemy import select, func, exc, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -119,7 +120,7 @@ async def tarifantrag(tarif_id: int,
                 method="POST",
                 message="Tarif nicht gefunden",
                 success=False
-            )  
+            )
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
 
@@ -130,7 +131,7 @@ async def tarifantrag(tarif_id: int,
                 method="POST",
                 message=f"Felher beim Abrufen des Tarifs: {e}",
                 success=False
-            )  
+            )
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
 
@@ -193,7 +194,6 @@ async def tarifantrag(tarif_id: int,
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Fehler bei der Vertragserstellung: {e}")
-
 
 
 @router.post("/kontaktaufnahme-energieberatenden", status_code=status.HTTP_201_CREATED,
@@ -314,7 +314,6 @@ async def ueberpruefung_angebote(current_user: models.Nutzer = Depends(oauth.get
 
         return response_list
 
-
     except sqlalchemy.exc.SQLAlchemyError as db_exc:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -394,12 +393,12 @@ async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
         result = await db.execute(stmt)
         vertraege = result.all()
         response = [{
-            "vertrag_id": vertrag.vertrag_id, 
+            "vertrag_id": vertrag.vertrag_id,
             "user_id": vertrag.user_id,
-            "tarif_id": vertrag.tarif_id, 
-            "beginn_datum": vertrag.beginn_datum, 
+            "tarif_id": vertrag.tarif_id,
+            "beginn_datum": vertrag.beginn_datum,
             "end_datum": vertrag.end_datum,
-            "jahresabschlag": vertrag.jahresabschlag, 
+            "jahresabschlag": vertrag.jahresabschlag,
             "vertragstatus": vertrag.vertragstatus,
             "tarifname": tarif.tarifname,
             "preis_kwh": tarif.preis_kwh,
@@ -407,12 +406,86 @@ async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
             "laufzeit": tarif.laufzeit,
             "netzbetreiber_id": tarif.netzbetreiber_id,
             "spezielle_konditionen": tarif.spezielle_konditionen 
-    
+
         } for vertrag, tarif in vertraege]
 
         return response
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+
+
+@router.post("/datenfreigabe", status_code=status.HTTP_200_OK,
+             response_model=schemas.HaushaltsDatenFreigabeResponse)
+async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
+                         current_user: models.Nutzer = Depends(oauth.get_current_user),
+                         db: AsyncSession = Depends(database.get_db_async)):
+    await check_haushalt_role(current_user, "POST", "/datenfreigabe")
+
+    haushaltsdaten = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == current_user.user_id))
+    haushalt = haushaltsdaten.scalars().first()
+    if not haushalt:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/datenfreigabe",
+            method="POST",
+            message="Kein Haushaltsdatensatz gefunden",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Kein Haushaltsdatensatz gefunden")
+
+    dashboard_agg_result = await db.execute(
+        select(
+            func.sum(models.DashboardSmartMeterData.pv_erzeugung).label("gesamt_pv_erzeugung"),
+            func.avg(models.DashboardSmartMeterData.soc).label("durchschnitt_soc"),
+            func.sum(models.DashboardSmartMeterData.batterie_leistung).label("gesamt_batterie_leistung"),
+            func.sum(models.DashboardSmartMeterData.last).label("gesamt_last")
+        ).where(models.DashboardSmartMeterData.haushalt_id == current_user.user_id)
+    )
+    dashboard_agg_data = dashboard_agg_result.first()
+
+    aggregated_data = schemas.DashboardAggregatedData(
+        gesamt_pv_erzeugung=dashboard_agg_data.gesamt_pv_erzeugung,
+        durchschnitt_soc=dashboard_agg_data.durchschnitt_soc,
+        gesamt_batterie_leistung=dashboard_agg_data.gesamt_batterie_leistung,
+        gesamt_last=dashboard_agg_data.gesamt_last
+    )
+
+    try:
+        update_query = (
+            update(models.Haushalte)
+            .where(models.Haushalte.user_id == current_user.user_id)
+            .values(**freigabe_daten.dict(), anfragestatus=True)
+        )
+        await db.execute(update_query)
+        await db.commit()
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/datenfreigabe",
+            method="POST",
+            message=f"Fehler beim Aktualisieren der Haushaltsdaten: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Aktualisieren der Haushaltsdaten: {e}")
+
+    logging_obj = schemas.LoggingSchema(
+        user_id=current_user.user_id,
+        endpoint="/datenfreigabe",
+        method="POST",
+        message="Haushaltsdaten und Dashboard-Daten erfolgreich freigegeben",
+        success=True
+    )
+    logger.info(logging_obj.dict())
+
+    return schemas.HaushaltsDatenFreigabeResponse(
+        message="Haushaltsdaten und Dashboard-Daten erfolgreich freigegeben",
+        haushaltsdaten=freigabe_daten,
+        dashboard_daten=aggregated_data
+    )
     
 
 @router.get("/vertraege/{vertrag_id}", response_model=schemas.VertragTarifNBResponse)
@@ -449,7 +522,6 @@ async def get_vertrag(vertrag_id: int,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
-
 @router.put("/vertrag-deaktivieren/{vertrag_id}", status_code=status.HTTP_200_OK)
 async def deactivate_vertrag(vertrag_id: int,
                       db: AsyncSession = Depends(database.get_db_async),
@@ -477,3 +549,4 @@ async def deactivate_vertrag(vertrag_id: int,
     except Exception as e:
         raise e
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+

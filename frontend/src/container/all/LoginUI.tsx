@@ -110,7 +110,7 @@ const LoginUI = () => {
 
     return (
         <div>
-        <Topbar fixed={true}/>
+        <Topbar fixed={true} search={false}/>
         <div className="flex justify-start items-center flex-col h-screen" >
         <div className=" relative w-full h-full bg-white">
         <img src={panelImg} alt="solar panel"

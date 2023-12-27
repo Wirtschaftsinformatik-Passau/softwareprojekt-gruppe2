@@ -490,6 +490,7 @@ class VertragTarifNBResponse(BaseModel):
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
+    vertragstatus: bool
     preis_kwh: float
     grundgebuehr: float
     laufzeit: int

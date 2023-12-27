@@ -388,7 +388,8 @@ async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_haushalt_role(current_user, "GET", "/vertraege")
     try:
-        stmt = select(models.Vertrag, models.Tarif).join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id).where(models.Vertrag.user_id == current_user.user_id)
+        stmt = select(models.Vertrag, models.Tarif).join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id)\
+            .where(models.Vertrag.user_id == current_user.user_id)
         result = await db.execute(stmt)
         vertraege = result.all()
         response = [{
@@ -506,6 +507,7 @@ async def get_vertrag(vertrag_id: int,
             "end_datum": vertrag[0].end_datum,
             "jahresabschlag": vertrag[0].jahresabschlag, 
             "tarifname": vertrag[1].tarifname,
+            "vertragstatus": vertrag[0].vertragstatus,
             "preis_kwh": vertrag[1].preis_kwh,
             "grundgebuehr": vertrag[1].grundgebuehr,
             "laufzeit": vertrag[1].laufzeit,
@@ -519,3 +521,32 @@ async def get_vertrag(vertrag_id: int,
         return response
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+
+@router.put("/vertrag-deaktivieren/{vertrag_id}", status_code=status.HTTP_200_OK)
+async def deactivate_vertrag(vertrag_id: int,
+                      db: AsyncSession = Depends(database.get_db_async),
+                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    endpoint = f"/vertrag-deaktivieren/{vertrag_id}"
+    await check_haushalt_role(current_user, "GET", endpoint)
+    try:
+        stmt = select(models.Vertrag).where(models.Vertrag.vertrag_id == vertrag_id)
+        result = await db.execute(stmt)
+        vertrag = result.first()[0]
+        if not vertrag.vertragstatus:
+            logging_error = LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=endpoint,
+                method="PUT",
+                message=f"Vertrag {vertrag_id} is bereits deaktiviert",
+                success=False
+            )
+            logger.error(logging_error.dict())
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Vertrag {vertrag_id} is bereits deaktiviert")
+        vertrag.vertragstatus = False
+        await db.commit()
+        await db.refresh(vertrag)
+        return {"message": f"Vertrag {vertrag_id} wurde erfolgreich deaktiviert"}
+    except Exception as e:
+        raise e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+

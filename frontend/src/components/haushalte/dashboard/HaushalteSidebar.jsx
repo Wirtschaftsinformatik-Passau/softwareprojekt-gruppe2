@@ -214,7 +214,7 @@ const Sidebar1 = () => {
               color={colors.white[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Smart
+              Daten
             </Typography>
             <Item
               title="Smart Meter Upload"

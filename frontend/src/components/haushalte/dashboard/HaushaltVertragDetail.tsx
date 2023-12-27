@@ -21,6 +21,7 @@ export interface Vertrag {
     "jahresabschlag": number,
     "tarifname": string,
     "preis_kwh": number,
+    "vertragstatus": boolean,
     "grundgebuehr": number,
     "laufzeit": 0,
     "spezielle_konditionen": string,
@@ -50,7 +51,8 @@ const VertragDetail = ({}) => {
             "preis_kwh": 0,
             "grundgebuehr": 0,
             "laufzeit": 0,
-            "spezielle_konditionen": ""
+            "spezielle_konditionen": "",
+            "vertragstatus": false,
                 
     })
 
@@ -68,7 +70,13 @@ const VertragDetail = ({}) => {
         "preis_kwh": "Preis pro kWh",
         "grundgebuehr": "Grundgebühr",
         "laufzeit": "Laufzeit in Jahren",
-        "spezielle_konditionen": "Spezielle Konditionen"
+        "spezielle_konditionen": "Spezielle Konditionen",
+        "vertragstatus": "Gekündigt"
+    }
+
+    const kuendigungsMapping = {
+        true: "Nein",
+        false: "Ja"
     }
 
     const navigate = useNavigate();
@@ -79,6 +87,7 @@ const VertragDetail = ({}) => {
         navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
     }, []
     )
+
 
     if (isLoading) {
         return (
@@ -118,14 +127,14 @@ const VertragDetail = ({}) => {
     <Box gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} display={"grid"}>
     {Object.entries(vertrag).map(([key, value]) => {
         return (
-            <Box gridColumn={(key === "spezielle_konditionen") || (key === "tarifname") ? "span 4" : "span 2"} mt={2} ml={1}>
+            <Box gridColumn={(key === "spezielle_konditionen") ? "span 4" : "span 2"} mt={2} ml={1}>
             <TextField
             fullWidth
             variant="outlined"
             type="text"
             label={keyMapping[key]}
             name={key}
-            value={value}
+            value={key == "vertragstatus"? kuendigungsMapping[value] : value}
             disabled
             
             InputLabelProps={{

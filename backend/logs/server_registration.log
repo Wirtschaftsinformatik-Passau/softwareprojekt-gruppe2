@@ -484,3 +484,13 @@
 {"timestamp": "2023-12-19 17:46:47,862", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 57, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:46:48,238", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 58, "role": "Solarteure", "msg": "User registriert"}
 {"timestamp": "2023-12-19 17:56:52,929", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 59, "role": "Solarteure", "msg": "User registriert"}
+{"timestamp": "2023-12-26 20:41:06,428", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 3, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-8"}
+{"timestamp": "2023-12-26 20:42:03,416", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 4, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-4"}
+{"timestamp": "2023-12-26 21:10:47,317", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 1, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-6"}
+{"timestamp": "2023-12-26 21:27:07,383", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 2, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-6"}
+{"timestamp": "2023-12-26 21:42:27,885", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 3, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-6"}
+{"timestamp": "2023-12-27 12:37:32,967", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 1, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-10"}
+{"timestamp": "2023-12-27 12:37:52,537", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 2, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-12"}
+{"timestamp": "2023-12-27 12:45:44,318", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 3, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-4"}
+{"timestamp": "2023-12-27 13:09:16,328", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 4, "role": "Netzbetreiber", "msg": "User registriert", "taskName": "Task-8"}
+{"timestamp": "2023-12-27 13:10:24,808", "level": "INFO", "name": "GreenEcoHubRegistration", "message": "", "user_id": 5, "role": "Haushalte", "msg": "User registriert", "taskName": "Task-11"}

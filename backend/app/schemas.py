@@ -498,7 +498,6 @@ class VertragTarifNBResponse(BaseModel):
     spezielle_konditionen: str
     
 
-
 class KalenderEintragCreate(BaseModel):
     zeitpunkt: date
     user_id: int

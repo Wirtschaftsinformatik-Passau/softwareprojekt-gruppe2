@@ -238,8 +238,40 @@ async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSessi
 
 
 @router.get("/current/single", status_code=status.HTTP_200_OK)
-async def read_current_user(current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    return current_user
+async def read_current_user(include_adresse: str = "yes",
+                            current_user: models.Nutzer = Depends(oauth.get_current_user),
+                            db: AsyncSession = Depends(database.get_db_async)):
+    if include_adresse:
+        user_id = current_user.user_id
+        stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
+                                                          models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
+            models.Nutzer.user_id == user_id)
+        result = await db.execute(stmt)
+        user_adresse_pair = result.first()
+        try:
+            user = user_adresse_pair[0]
+        except TypeError:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
+        adresse = user_adresse_pair[1]
+        user_out = {
+            "nachname": user.nachname,
+            "email": user.email,
+            "user_id": user.user_id,
+            "vorname": user.vorname,
+            "rolle": user.rolle,
+            "adresse_id": user.adresse_id,
+            "geburtsdatum": user.geburtsdatum,
+            "telefonnummer": user.telefonnummer,
+            "strasse": adresse.strasse,
+            "stadt": adresse.stadt,
+            "hausnr": adresse.hausnummer,
+            "plz": adresse.plz,
+
+        }
+        return user_out
+
+    else:
+        return current_user
 
 
 @router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -261,15 +293,13 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
             new_value = getattr(updated_user, field)
             old_value = getattr(db_user, field)
             if new_value != old_value:
+                if field == "passwort":
+                    new_value = hashing.Hashing.hash_password(new_value)
+                if field == "geburtsdatum":
+                    new_value = datetime.strptime(updated_user.geburtsdatum, "%Y-%m-%d").date()
                 changes[field] = {"old": old_value, "new": new_value}
                 setattr(db_user, field, new_value)
 
-        if updated_user.passwort:
-            db_user.passwort = hashing.Hashing.hash_password(updated_user.passwort)
-        else:
-            db_user.passwort = db_user.passwort
-        if updated_user.geburtsdatum:
-            db_user.geburtsdatum = datetime.strptime(updated_user.geburtsdatum, "%Y-%m-%d").date()
 
         try:
             db_user.rolle = models.Rolle(updated_user.rolle)

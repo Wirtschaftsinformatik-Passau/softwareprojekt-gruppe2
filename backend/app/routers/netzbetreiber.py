@@ -65,6 +65,7 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
         is_valid_schattenanalyse
     ])
 
+
 # Tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async),
@@ -73,6 +74,7 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
         user_id = current_user.user_id
         tarif.netzbetreiber_id = user_id
         new_tarif = models.Tarif(**tarif.dict())
+        new_tarif.active = True
         db.add(new_tarif)
         await db.commit()
         await db.refresh(new_tarif)
@@ -80,6 +82,7 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
     except exc.IntegrityError as e:
         logger.error(f"Tarif konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht erstellt werden: {e}")
+
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
@@ -108,6 +111,7 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSessi
         logger.error(f"Tarif konnte nicht aktualisiert werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht aktualisiert werden: {e}")
 
+
 # Tarif löschen
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
@@ -129,6 +133,7 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
     await db.delete(db_tarif)
     await db.commit()
 
+
 # Alle Tarife abrufen
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
@@ -141,6 +146,7 @@ async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
     if not tarife:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Keine Tarife gefunden")
     return tarife
+
 
 # Einzelnen Tarif abrufen
 @router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
@@ -603,6 +609,7 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
         raise
 
 
+# vor einspeisezusagen
 @router.put("/nvpruefung/{anlage_id}", status_code=status.HTTP_200_OK,
             response_model=schemas.NetzvertraeglichkeitspruefungResponse)
 async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
@@ -659,6 +666,16 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
     return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
 
 
+@router.get("/anlagen", status_code=status.HTTP_200_OK)
+async def anlage_ueberpruefung(db: AsyncSession = Depends(database.get_db_async),
+                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", "/anlagen")
+
+    stmt = select(models.PVAnlage).where(models.PVAnlage.netzbetreiber_id == None)
+    result = await db.execute(stmt)
+    pv_anlage = result.scalars().all()
+
+
 @router.put("/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
             response_model=schemas.EinspeisezusageResponse)
 async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
@@ -709,8 +726,6 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
 
 
-
-#
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
@@ -841,3 +856,29 @@ async def get_einspeisezusagen_vorschlag(anlage_id: int,
         logger.error(logging_error.dict())
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
 
+
+@router.put("/tarife/deactivate/{tarif_id}", status_code=status.HTTP_200_OK)
+async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
+                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/tarif/deactivate/{tarif_id}")
+    try:
+        stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+        result = await db.execute(stmt)
+        tarifs = result.scalars().all()
+        if len(tarifs) == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
+        tarif = tarifs[0]
+        tarif.active = False
+        db.add(tarif)
+        await db.commit()
+        return {"message": "Tarif erfolgreich deaktiviert"}
+    except exc.IntegrityError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/tarif/deactivate/{id}",
+            method="PUT",
+            message=f"SQLAlchemy Fehler beim Deaktivieren des Tarifs: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Deaktivieren des Tarifs: {e}")

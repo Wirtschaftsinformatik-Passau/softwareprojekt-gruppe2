@@ -323,8 +323,6 @@ const Form = () => {
                 label="Nutzerrole"
                 name="nutzerrole"
               >
-                <MenuItem value={Nutzerrolle.Admin}>Admin</MenuItem>
-                <MenuItem value={Nutzerrolle.Netzbetreiber}>Netzbetreiber</MenuItem>
                 <MenuItem value={Nutzerrolle.Energieberatende}>Energieberatende</MenuItem>
                 <MenuItem value={Nutzerrolle.Haushalte}>Haushalte</MenuItem>
                 <MenuItem value={Nutzerrolle.Solarteure}>Solateure</MenuItem>
@@ -432,8 +430,8 @@ const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
     stadt: yup.string().required('Stadt ist erforderlich'),
     geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
     telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
-    nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Energieberatende, 
-      Nutzerrolle.Solarteure, Nutzerrolle.Netzbetreiber, Nutzerrolle.Haushalte], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
+    nutzerrole: yup.string().oneOf([Nutzerrolle.Energieberatende, 
+      Nutzerrolle.Solarteure, Nutzerrolle.Haushalte], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
     email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
     passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein').required('Passwort ist erforderlich'),
     passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen').required('Passwortbestätigung ist erforderlich'),

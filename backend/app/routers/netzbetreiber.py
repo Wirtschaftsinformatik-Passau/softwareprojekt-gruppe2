@@ -16,6 +16,7 @@ import pandas as pd
 import io
 from datetime import datetime
 
+
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
 dictConfig(LogConfig().dict())

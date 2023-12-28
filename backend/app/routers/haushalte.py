@@ -4,8 +4,8 @@ from uuid import uuid4
 from typing import List
 
 import sqlalchemy
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
-from sqlalchemy import select, func, exc, update
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Query
+from sqlalchemy import select, func, exc, update, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -549,6 +549,72 @@ async def deactivate_vertrag(vertrag_id: int,
         await db.refresh(vertrag)
         return {"message": f"Vertrag {vertrag_id} wurde erfolgreich deaktiviert"}
     except Exception as e:
-        raise e
+        #raise e
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
+@router.post("/vertragswechsel/{neuer_tarif_id}")
+async def vertragswechsel(
+    neuer_tarif_id: int,
+    alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
+                          current_user: models.Nutzer = Depends(oauth.get_current_user),
+                          db: AsyncSession = Depends(database.get_db_async)):
+    
+    user_id = current_user.user_id
+    query = select(models.Vertrag).where(
+        and_(
+            models.Vertrag.vertrag_id == alter_vertrag_id,
+            models.Vertrag.user_id == user_id,
+            models.Vertrag.vertragstatus == True
+        )
+    )
+    alter_vertrag = await db.execute(query)
+    alter_vertrag = alter_vertrag.scalar_one_or_none()
+    if not alter_vertrag:
+        raise HTTPException(status_code=404, detail="Alter Vertrag nicht gefunden oder bereits deaktiviert")
+
+    # Überprüfen, ob der neue Tarif verfügbar ist
+    query = select(models.Tarif).where(
+        and_(
+            models.Tarif.tarif_id == neuer_tarif_id,
+            models.Tarif.active == True
+        )
+    )
+    neuer_tarif = await db.execute(query)
+    neuer_tarif = neuer_tarif.scalar_one_or_none()
+    if not neuer_tarif:
+        raise HTTPException(status_code=404, detail="Neuer Tarif nicht gefunden")
+
+    # Deaktiviere den alten Vertrag
+    alter_vertrag.vertragstatus = False
+    await db.commit()
+
+    # Erstelle den neuen Vertrag
+    beginn_datum = alter_vertrag.end_datum
+    end_datum = beginn_datum + timedelta(days=365 * neuer_tarif.laufzeit)
+    jahresabschlag = neuer_tarif.grundgebuehr + neuer_tarif.preis_kwh * KWH_VERBRAUCH_JAHR
+
+    try:
+        neuer_vertrag = models.Vertrag(
+            user_id=user_id,
+            tarif_id=neuer_tarif_id,
+            beginn_datum=beginn_datum,
+            end_datum=end_datum,
+            jahresabschlag=jahresabschlag,
+            vertragstatus=True,
+            netzbetreiber_id=neuer_tarif.netzbetreiber_id
+        )
+        db.add(neuer_vertrag)
+        await db.commit()
+        await db.refresh(neuer_vertrag)
+        return schemas.VertragResponse(
+            vertrag_id=neuer_vertrag.vertrag_id,
+            user_id=neuer_vertrag.user_id,
+            tarif_id=neuer_vertrag.tarif_id,
+            beginn_datum=neuer_vertrag.beginn_datum,
+            end_datum=neuer_vertrag.end_datum,
+            jahresabschlag=neuer_vertrag.jahresabschlag,
+            vertragstatus=neuer_vertrag.vertragstatus
+        )
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Fehler bei der Vertragserstellung: {e}")

@@ -405,8 +405,7 @@ async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
             "grundgebuehr": tarif.grundgebuehr,
             "laufzeit": tarif.laufzeit,
             "netzbetreiber_id": tarif.netzbetreiber_id,
-            "spezielle_konditionen": tarif.spezielle_konditionen 
-
+            "spezielle_konditionen": tarif.spezielle_konditionen
         } for vertrag, tarif in vertraege]
 
         return response
@@ -486,7 +485,7 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         haushaltsdaten=freigabe_daten,
         dashboard_daten=aggregated_data
     )
-    
+
 
 @router.get("/vertraege/{vertrag_id}", response_model=schemas.VertragTarifNBResponse)
 async def get_vertrag(vertrag_id: int,
@@ -549,4 +548,3 @@ async def deactivate_vertrag(vertrag_id: int,
     except Exception as e:
         raise e
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
-

@@ -84,7 +84,7 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
         )
         logger.error(logging_obj.dict())
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="Vollständiger Haushaltsdatensatz für den angegebenen Haushalt nicht vorhanden."
         )
 
@@ -100,7 +100,7 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
         )
         logger.error(logging_obj.dict())
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail="Keine Dashboard-Daten für den angegebenen Haushalt vorhanden."
         )
 

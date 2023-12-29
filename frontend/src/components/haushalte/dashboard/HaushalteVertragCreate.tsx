@@ -1,21 +1,14 @@
 import React, { useEffect } from "react";
 import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
-import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
-import { Formik } from "formik";
-import * as yup from "yup";
 import { tokens } from "../../../utils/theme";
 import { useNavigate , useParams} from "react-router-dom";
 import Header from "../../utility/Header";
-import useMediaQuery from "@mui/material/useMediaQuery";
 import SuccessModal from "../../utility/SuccessModal";
-import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../../entitities/user"
 import axios from "axios";
-import { Iadresse, Adresse } from "../../../entitities/adress";
 import CircularProgress from '@mui/material/CircularProgress';
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
-import { h } from "@fullcalendar/core/preact";
-import { s } from "@fullcalendar/core/internal-common";
+
 
 
 
@@ -27,6 +20,7 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
     const {isLoading, setIsLoading} = React.useState(true);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const [conflictModalIsOpen, setConflictModalIsOpen] = React.useState(false);
     const {tarifID} = useParams();
     const [tarif, setTarif] = React.useState({
             "vorname": "",
@@ -77,6 +71,11 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
                 console.log("Unauthorized  oder kein Haushalt", err.response.data)
                 navigate("/login")
               }
+              else if (err.response.status === 409) {
+                console.log("Conflict", err.response.data)
+                setConflictModalIsOpen(true)
+            }
+              
               else if (err.response.status === 400) {
                 console.log("Bad Request", err.response.data)
                 setFailModalIsOpen(true)
@@ -155,6 +154,8 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
     text="Vertrag erfolgreich erstellt!" navigationGoal="/netzbetreiber"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
+    <SuccessModal open={conflictModalIsOpen} handleClose={() => setConflictModalIsOpen(false)}
+    text="Es exisitiert bereits ein Vertrag für diesen Tarif"/>
         </Box>
     )
 }

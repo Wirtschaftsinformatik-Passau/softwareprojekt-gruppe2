@@ -35,6 +35,18 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
 
+async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, method: str, endpoint: str):
+    if current_user.rolle not in [models.Rolle.Netzbetreiber, models.Rolle.Haushalte]:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=endpoint,
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Netzbetreiber oder Haushalt",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail="Nur Netzbetreiber und Haushalte haben Zugriff auf diese Daten")
+
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
 
@@ -43,24 +55,26 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
     # Annahmen für die Netzverträglichkeitsprüfung
     max_kapazitaet_kw = 100.0  # Maximale Kapazität in Kilowatt
     max_installationsflaeche_m2 = 1000.0  # Maximale Installationsfläche in Quadratmetern
+    try:
+        is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
+        is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
+        is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost,
+                                                               models.Orientierung.Suedwest]
+        is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
+        is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
+                                                                 models.Schatten.Minimalschatten]
 
-    is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
-    is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
-    is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost,
-                                                           models.Orientierung.Suedwest]
-    is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
-    is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
-                                                             models.Schatten.Minimalschatten]
-
-    print(
-        f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
-    return all([
-        is_within_kapazitaetsgrenze,
-        is_within_flaechengrenze,
-        is_valid_modulanordnung,
-        is_valid_montagesystem,
-        is_valid_schattenanalyse
-    ])
+        print(
+            f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
+        return all([
+            is_within_kapazitaetsgrenze,
+            is_within_flaechengrenze,
+            is_valid_modulanordnung,
+            is_valid_montagesystem,
+            is_valid_schattenanalyse
+        ])
+    except TypeError as e:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
 
 
 # Tarif erstellen
@@ -330,13 +344,14 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
 
+# haben wir einen datencheck drin, das nichts falsches hochgeladen wird??
 @router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
 async def add_dashboard_smartmeter_data(haushalt_id: int,
                                         db: AsyncSession = Depends(database.get_db_async),
                                         file: UploadFile = File(...),
                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "POST", "/dashboard")
+    await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard")
     try:
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
         user_id = current_user.user_id
@@ -395,7 +410,7 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
 async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_user),
                         db: AsyncSession = Depends(database.get_db_async)):
     try:
-        await check_netzbetreiber_role(current_user, "GET", "/haushalte")
+        await check_netzbetreiber_role_or_haushalt(current_user, "GET", "/haushalte")
         user_id = current_user.user_id
         stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
                                                           models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
@@ -451,9 +466,9 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
-        await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
+        await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard/{haushalt_id}")
 
-        if period not in ["DAY", "WEEK", "MONTH"]:
+        if period not in ["MINUTE", "HOUR", "DAY", "WEEK", "MONTH"]:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint=f"dashboard/{haushalt_id}",
@@ -649,7 +664,7 @@ def process_aggregated_data(field, aggregated_data):
 
 
 # vor einspeisezusagen
-@router.put("/nvpruefung/{anlage_id}", status_code=status.HTTP_200_OK,
+@router.put("/nvpruefung/{anlage_id}", status_code=status.HTTP_202_ACCEPTED,
             response_model=schemas.NetzvertraeglichkeitspruefungResponse)
 async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
@@ -744,6 +759,7 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
             message="Netzverträglichkeitsprüfung nicht bestanden",
             success=True
         )
+        # wenn nv pruedung false kommt 400 zurück
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Netzverträglichkeitsprüfung nicht bestanden")

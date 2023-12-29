@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
 from app.types import (Rolle, Orientierung, ProzessStatus, Montagesystem, Schatten, AusweisStatus,
-                       Isolierungsqualitaet, Rechnungsart)
+                       Isolierungsqualitaet, Rechnungsart, Zahlungsstatus)
 
 
 class Adresse(Base):
@@ -205,3 +205,10 @@ class Vertrag(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc'),
     )
+
+class Zahlungen(Base):
+    __tablename__ = 'zahlungen' if settings.OS == 'Linux' else 'Zahlungen'
+    zahlung_id = Column(Integer, primary_key=True)
+    rechnung_id = Column(Integer, ForeignKey('rechnungen.rechnung_id' if settings.OS == 'Linux' else 'Rechnungen.rechnung_id'))
+    zahlungsdatum = Column(Date)
+    zahlungsstatus = Column(Enum(Zahlungsstatus))

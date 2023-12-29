@@ -407,8 +407,7 @@ async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
             "grundgebuehr": tarif.grundgebuehr,
             "laufzeit": tarif.laufzeit,
             "netzbetreiber_id": tarif.netzbetreiber_id,
-            "spezielle_konditionen": tarif.spezielle_konditionen 
-
+            "spezielle_konditionen": tarif.spezielle_konditionen
         } for vertrag, tarif in vertraege]
 
         return response
@@ -488,7 +487,7 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         haushaltsdaten=freigabe_daten,
         dashboard_daten=aggregated_data
     )
-    
+
 
 @router.get("/vertraege/{vertrag_id}", response_model=schemas.VertragTarifNBResponse)
 async def get_vertrag(vertrag_id: int,
@@ -618,3 +617,40 @@ async def vertragswechsel(
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Fehler bei der Vertragserstellung: {e}")
+    
+
+@router.post("/rechnung-bezahlen", response_model=schemas.ZahlungResponse)
+async def rechnung_bezahlen(zahlung: schemas.ZahlungCreate, 
+                            db: AsyncSession = Depends(database.get_db_async), 
+                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_haushalt_role(current_user, "POST", "/rechnung-bezahlen")
+
+    # Überprüfen, ob die Rechnung existiert
+    rechnung = await db.get(models.Rechnungen, zahlung.rechnung_id)
+    if not rechnung:
+        logger.error(f"Rechnung mit ID {zahlung.rechnung_id} nicht gefunden")
+        raise HTTPException(status_code=404, detail="Rechnung nicht gefunden")
+
+    try:
+        neue_zahlung = models.Zahlungen(
+            rechnung_id=zahlung.rechnung_id,
+            zahlungsdatum=date.today(),
+            zahlungsstatus=models.Zahlungsstatus.Bezahlt
+        )
+
+        db.add(neue_zahlung)
+        await db.commit()
+        await db.refresh(neue_zahlung)
+
+        logger.info(f"Zahlung erfolgreich durchgeführt: {neue_zahlung.zahlung_id}")
+
+        return schemas.ZahlungResponse(
+            zahlung_id=neue_zahlung.zahlung_id,
+            rechnung_id=neue_zahlung.rechnung_id,
+            zahlungsdatum=neue_zahlung.zahlungsdatum,
+            zahlungsstatus=neue_zahlung.zahlungsstatus
+        )
+    except Exception as e:
+        logger.error(f"Fehler bei der Zahlung: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Fehler bei der Verarbeitung der Zahlung: {str(e)}")
+

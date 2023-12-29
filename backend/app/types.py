@@ -64,3 +64,8 @@ class Schatten(enum.Enum):
 class AusweisStatus(enum.Enum):
     AnfrageGestellt = "AnfrageGestellt"
     Ausgestellt = "Ausgestellt"
+
+class Zahlungsstatus(enum.Enum):
+    Bezahlt = "Bezahlt"
+    Offen = "Offen"
+    Ueberfaellig = "Ueberfaellig"

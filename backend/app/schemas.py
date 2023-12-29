@@ -4,9 +4,6 @@ from datetime import date
 from typing import Dict, List, Optional
 from app.types import *
 
-from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
-
-
 class AdresseCreate(BaseModel):
     strasse: str
     hausnummer: int
@@ -498,7 +495,6 @@ class VertragTarifNBResponse(BaseModel):
     spezielle_konditionen: str
     
 
-
 class KalenderEintragCreate(BaseModel):
     zeitpunkt: date
     user_id: int
@@ -588,3 +584,12 @@ class HaushaltsDatenFreigabeResponse(BaseModel):
 class PVAnlageResponse(BaseModel):
     anlage_id: int
     solarteur_id: Optional[int] = None
+
+class ZahlungCreate(BaseModel):
+    rechnung_id: int
+
+class ZahlungResponse(BaseModel):
+    zahlung_id: int
+    rechnung_id: int
+    zahlungsdatum: date
+    zahlungsstatus: Zahlungsstatus

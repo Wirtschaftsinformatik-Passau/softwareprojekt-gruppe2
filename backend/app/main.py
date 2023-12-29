@@ -2,8 +2,9 @@ from fastapi import FastAPI, Depends
 from logging.config import dictConfig
 import logging
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import users, auth, admin, netzbetreiber, haushalte, solarteure, energieberatende
-from .database import Base, engine
+
+from app.routers import users, auth, admin, netzbetreiber, haushalte, solarteure, energieberatende
+from app.database import Base, engine
 from app.oauth import get_current_user
 from app.logger import LogConfig
 

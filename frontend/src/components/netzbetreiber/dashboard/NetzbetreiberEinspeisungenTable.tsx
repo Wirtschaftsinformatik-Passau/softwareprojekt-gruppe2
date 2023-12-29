@@ -44,12 +44,6 @@ const HaushalteTable = () => {
     { field: "anlage_id", headerName: "Anlage ID" },
 
     {
-      field: "haushalt_id",
-      headerName: "Haushalt ID",
-      flex: 1,
-      cellClassName: "name-column--cell",
-    },
-    {
       field: "solarteur_id",
       headerName: "Solarteur ID",
       flex: 1,
@@ -69,36 +63,6 @@ const HaushalteTable = () => {
       field: "installationsflaeche",
       headerName: "Installationsfläche",
       flex: 1,
-    },
-    {
-        field: "modulanordnung",
-        headerName: "Modulanordnung",
-        flex: 1,
-    },
-    {
-        field: "kabelwegfuehrung",
-        headerName: "Kabelwegführung",
-        flex: 1,
-    },
-    {
-        field: "montagesystem",
-        headerName: "Montagesystem",
-        flex: 1,
-    },
-    {
-        field: "schattenanalyse",
-        headerName: "Schattenanalyse",
-        flex: 1,
-    },
-    {
-        field: "wechselrichterposition",
-        headerName: "Wechselrichterposition",
-        flex: 1,
-    },
-    {
-        field: "installationsplan",
-        headerName: "Installationsplan",
-        flex: 1,
     },
     {
         field: "prozess_status",

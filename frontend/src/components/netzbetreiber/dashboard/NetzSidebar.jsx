@@ -16,7 +16,7 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import InventoryIcon from '@mui/icons-material/Inventory';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
@@ -228,6 +228,13 @@ const Sidebar1 = () => {
               Board
             </Typography>
             <Item
+              title="Smart Meter Upload"
+              to="/smartmeterUpload"
+              icon={<FileUploadIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
               title="Smart Meter Übersicht"
               to="/smartmeterOverview"
               icon={<DashboardIcon />}
@@ -239,10 +246,10 @@ const Sidebar1 = () => {
               color={colors.white[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Haushalt
+              PV
             </Typography>
             <Item
-              title="Übersicht"
+              title="Übersicht Haushalte"
               to="/haushalteOverview"
               icon={<HolidayVillageIcon />}
               selected={selected}

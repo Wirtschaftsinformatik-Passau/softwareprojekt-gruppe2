@@ -433,6 +433,11 @@ class RechnungCreate(BaseModel):
         extra = Extra.allow
 
 
+class VertragPreview(BaseModel):
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+
 class RechnungResponse(BaseModel):
     rechnung_id: int
     user_id: int
@@ -479,6 +484,22 @@ class VertragTarifResponse(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
+
+class VertragTarifResponseStatus(BaseModel):
+    vertrag_id: int
+    netzbetreiber_id: int
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
+    vertragstatus: bool
 
 class VertragTarifNBResponse(BaseModel):
     vorname: str

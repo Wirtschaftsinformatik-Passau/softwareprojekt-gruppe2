@@ -99,6 +99,63 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
                             detail="Internet Serverfehler")
 
 
+@router.get("/vertrag-preview/{tarif_id}", response_model=schemas.VertragPreview)
+async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
+                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    # Prüfen, ob der angeforderte Tarif existiert
+    await check_haushalt_role(current_user, "GET", f"/tarifantrag/{tarif_id}")
+    try:
+        query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
+                                           (models.Tarif.active == True))
+        result = await db.execute(query)
+        tarif = result.scalar_one_or_none()
+        if not tarif:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/vertrag-preview",
+                method="GET",
+                message="Tarif nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
+
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/vertrag-preview",
+            method="GET",
+            message=f"Felher beim Abrufen des Tarifs: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
+
+    try:
+        beginn_datum = date.today()
+        end_datum = timedelta(days=int(365 * tarif.laufzeit)) + beginn_datum
+        jahresabschlag = tarif.grundgebuehr + tarif.preis_kwh * KWH_VERBRAUCH_JAHR
+
+        response = {"beginn_datum": beginn_datum,
+                    "end_datum": end_datum,
+                    "jahresabschlag": jahresabschlag
+                    }
+
+        return response
+
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebotsueberpruefung",
+            method="GET",
+            message=f"Fehler bei der Vertragserstellung {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler bei der Vertragserstellung: {e}")
+
+
 # haushalt sieht alle tarife und kann sich für einen entscheiden
 @router.post("/tarifantrag/{tarif_id}", response_model=schemas.VertragResponse)
 async def tarifantrag(tarif_id: int,
@@ -523,8 +580,8 @@ async def get_vertrag(vertrag_id: int,
 
 @router.put("/vertrag-deaktivieren/{vertrag_id}", status_code=status.HTTP_200_OK)
 async def deactivate_vertrag(vertrag_id: int,
-                      db: AsyncSession = Depends(database.get_db_async),
-                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                            db: AsyncSession = Depends(database.get_db_async),
+                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
     endpoint = f"/vertrag-deaktivieren/{vertrag_id}"
     await check_haushalt_role(current_user, "GET", endpoint)
     try:

@@ -8,6 +8,7 @@ import axios from "axios";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CircularProgress from '@mui/material/CircularProgress';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
+import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 export interface Vertrag {
     "vorname": string,
@@ -88,6 +89,19 @@ const VertragDetail = ({}) => {
     }, []
     )
 
+    const handleKuendigung = () => {
+        const token = localStorage.getItem("accessToken");
+        axios.put(addSuffixToBackendURL(`haushalte/vertrag-deaktivieren/${vertragID}`), {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then((response) => {
+            setSuccessModalIsOpen(true);
+        }).catch((error) => {
+            setFailModalIsOpen(true);
+        })
+    }
+
 
     if (isLoading) {
         return (
@@ -110,7 +124,7 @@ const VertragDetail = ({}) => {
                 }}>
                     Abbrechen    
                 </Button>
-                <Button variant="contained" color="primary"
+                <Button variant="contained" color="primary" onClick={handleKuendigung}
                 sx = {{
                     backgroundColor: `${colors.color1[500]} !important`,
                     color: theme.palette.background.default
@@ -163,7 +177,7 @@ const VertragDetail = ({}) => {
     })}
    </Box>
    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Vertrag erfolgreich gekündigt!" navigationGoal="/netzbetreiber"/>
+    text="Vertrag erfolgreich gekündigt!" navigationGoal="/haushalte"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
         </Box>

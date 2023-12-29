@@ -6,8 +6,6 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import {Routes, Route, Navigate} from "react-router-dom";
 import { ColorModeContext, useMode } from "../../utils/theme";
 import Topbar from "../../components/admin/dashboards/Topbar";
-import Sidebar from "../../components/netzbetreiber/dashboard/NetzSidebar";
-import FAQ from "../../components/admin/dashboards/FAQs";
 import HaushalteSidebar from "../../components/haushalte/dashboard/HaushalteSidebar";
 import HaushalteTarifTable from "../../components/haushalte/dashboard/HaushalteTarifTable";
 import HaushalteVertragCreate from "../../components/haushalte/dashboard/HaushalteVertragCreate";

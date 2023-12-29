@@ -5,7 +5,6 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TableViewIcon from '@mui/icons-material/TableView';
@@ -13,18 +12,15 @@ import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import AddBoxIcon from '@mui/icons-material/AddBox';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
-import EditIcon from '@mui/icons-material/Edit';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 import user from "../../../assets/admin_icon.png"
-import Inventory from "@mui/icons-material/Inventory";
 
 
 

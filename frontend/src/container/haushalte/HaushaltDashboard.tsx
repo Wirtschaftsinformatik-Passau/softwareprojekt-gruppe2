@@ -14,6 +14,9 @@ import HaushalteVertragDetail from "../../components/haushalte/dashboard/Haushal
 import HaushalteEinpeisungsAnfrage from "../../components/haushalte/dashboard/HaushalteEinpeisungsAnfrage";
 import HaushaltSmartMeterUpload from "../../components/haushalte/dashboard/HaushaltSmartMeterUpload";
 import HaushaltSmartMeterOverview from "../../components/haushalte/dashboard/HaushalteSmartMeterOverview";
+import HaushhaltAntragOverview from "../../components/haushalte/dashboard/HaushalteAntragOverview";
+import HaushalteEinspeisungsAnfrage from "../../components/haushalte/dashboard/HaushalteEinpeisungsAnfrage";
+import HaushalteDataOverview from "../../components/haushalte/dashboard/HaushalteDataOverview";
 
 const  HaushaltDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -44,6 +47,9 @@ const  HaushaltDashboard = () => {
                     <Route path="/einspeisungsanfrage" element={<HaushalteEinpeisungsAnfrage/>}/>
                     <Route path="/pvuploadOverview" element={<HaushaltSmartMeterUpload/>}/>
                     <Route path="/smartMeterOverview" element={<HaushaltSmartMeterOverview/>}/>
+                    <Route path="/eispesungsantragOverview" element={<HaushhaltAntragOverview/>}/>    
+                    <Route path="/einspeisungsanfrage" element={<HaushalteEinspeisungsAnfrage/>}/>
+                    <Route path="/dataOverview" element={<HaushalteDataOverview/>}/>
                 </Routes>
                 </div>
                 

@@ -592,6 +592,7 @@ class HaushaltsDatenFreigabe(BaseModel):
     energieeffizienzklasse: str
 
 
+
 class DashboardAggregatedData(BaseModel):
     gesamt_pv_erzeugung: float
     durchschnitt_soc: float
@@ -608,3 +609,12 @@ class HaushaltsDatenFreigabeResponse(BaseModel):
 class PVAnlageResponse(BaseModel):
     anlage_id: int
     solarteur_id: Optional[int] = None
+
+class PVAnlageHaushaltResponse(BaseModel):
+    anlage_id: int
+    haushalt_id: int
+    solarteur_id: int
+    prozess_status: ProzessStatus
+    nvpruefung_status: Optional[bool] | str = "Noch nicht geprüft"
+
+

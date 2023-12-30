@@ -11,11 +11,11 @@ interface HeaderProps {
     
 }
 
-const Header: React.FC<HeaderProps> = ({title, subtitle, textAlign="center", variant="h2"}) => {
+const Header: React.FC<HeaderProps> = ({title, subtitle, textAlign="center", variant="h2", mb="30px"}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   return (
-    <Box mb="30px" textAlign={textAlign}>
+    <Box mb={mb} textAlign={textAlign}>
       <Typography
         variant={variant}
         color={colors.color1[500]}

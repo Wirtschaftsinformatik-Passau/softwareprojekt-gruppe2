@@ -14,6 +14,7 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import HouseIcon from '@mui/icons-material/House';
 
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -186,6 +187,13 @@ const Sidebar1 = () => {
               PV
             </Typography>
             <Item
+              title="Haushaltsdaten"
+              to="/dataOverview"
+              icon={<HouseIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
               title="Einspeisungsanfrage"
               to="/einspeisungsanfrage"
               icon={<SolarPowerIcon/>}
@@ -194,7 +202,7 @@ const Sidebar1 = () => {
             />
             <Item
               title="Antragsübersicht"
-              to="/priceCreate"
+              to="/eispesungsantragOverview"
               icon={<TrackChangesIcon/>}
               selected={selected}
               setSelected={setSelected}

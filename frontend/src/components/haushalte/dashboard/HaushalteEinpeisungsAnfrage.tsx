@@ -9,30 +9,27 @@ import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 
 
-
-
 const Anfrage = () => {
-  const navigate = useNavigate();
   
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
-  const [tarifId, setTarifId] = React.useState(0)
-
+  const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
 
   
     const handleEditButton = () => {
         const token = localStorage.getItem("accessToken");
-        axios.get(addSuffixToBackendURL("netzbetreiber/tarife/"+tarifId), {headers: { Authorization: `Bearer ${token}` }})
+
+        axios.post(addSuffixToBackendURL("haushalte/angebot-anfordern"), {}, {headers: { Authorization: `Bearer ${token}` }})
       .then((response) => {
-        if(response.status === 200){
-          console.log(tarifId)
-          navigate("/netzbetreiber/tarifEdit/"+Number(tarifId))
+        if(response.status === 201){
+          setSuccessModalIsOpen(true)
         }
       })
       .catch((error) => {
         if (error.response && error.response.status === 401 || error.response.status === 403) {
-          navigate("/login")
+          console.log("Server Response on Error 401/403:", error.response.data);
+          //navigate("/login")
         }
         else if (error.response && error.response.status === 422) {
           console.log("Server Response on Error 422:", error.response.data);
@@ -40,7 +37,7 @@ const Anfrage = () => {
           setFailModalIsOpen(true)
       }
       else {
-          console.log(error);
+          setFailModalIsOpen(true)
       }
     }
     )
@@ -66,7 +63,9 @@ const Anfrage = () => {
         </Box>
       
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="Tarif ID existiert nicht" />
+    text="Anfrage konnte nicht gestellt werden" />
+    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)}
+    text="Anfrage erfolgreich gestellt" />
     </>
   )
       };

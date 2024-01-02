@@ -808,3 +808,79 @@ async def angebot_annehmen(anlage_id: int = Path(..., description="Die ID der PV
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
     return {"message": f"Angebot für PV-Anlage {anlage_id} erfolgreich angenommen."}
+
+
+@router.put("/angebot-ablehnen/{anlage_id}", status_code=status.HTTP_200_OK)
+async def angebot_ablehnen(anlage_id: int = Path(..., description="Die ID der PV-Anlage", gt=0),
+                           current_user: models.Nutzer = Depends(oauth.get_current_user),
+                           db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Lehnt ein Angebot für eine PV-Anlage ab, indem der Prozessstatus auf 'AngebotAbgelehnt' geändert wird.
+
+    Parameters:
+    - anlage_id: int - Pfadparameter, der die ID der PV-Anlage darstellt.
+    - current_user: Nutzer - Der aktuelle authentifizierte Benutzer, der über Dependency Injection ermittelt wird.
+    - db: AsyncSession - Die Datenbanksitzung, die über Dependency Injection erhalten wird.
+
+    Returns:
+    - dict: Eine Meldung, die das Ergebnis des Vorgangs angibt.
+
+    Raises:
+    - HTTPException: Mit Statuscode 404, wenn die PV-Anlage nicht gefunden wird oder dem Benutzer nicht gehört.
+    - HTTPException: Mit Statuscode 400, wenn das Angebot bereits abgelehnt oder angenommen wurde.
+    - HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
+    await check_haushalt_role(current_user, "PUT", f"/angebot-ablehnen/{anlage_id}")
+
+    pv_anlage = await db.get(models.PVAnlage, anlage_id)
+    if not pv_anlage or pv_anlage.haushalt_id != current_user.user_id:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-ablehnen/{anlage_id}",
+            method="PUT",
+            message=f"PV-Anlage {anlage_id} nicht gefunden oder gehört nicht zu Benutzer {current_user.user_id}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"PV-Anlage mit der ID {anlage_id} nicht gefunden "
+                                   f"oder gehört nicht zum aktuellen Haushalt.")
+
+    if pv_anlage.prozess_status in [models.ProzessStatus.AngebotAngenommen, models.ProzessStatus.AngebotAbgelehnt]:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-ablehnen/{anlage_id}",
+            method="PUT",
+            message=f"Angebot für PV-Anlage {anlage_id} kann nicht geändert werden, da es bereits angenommen "
+                    f"oder abgelehnt wurde.",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        return {"message": f"Angebot kann nicht geändert werden, da es bereits angenommen oder abgelehnt wurde."}
+
+    try:
+        pv_anlage.prozess_status = models.ProzessStatus.AngebotAbgelehnt
+        await db.commit()
+        await db.refresh(pv_anlage)
+
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-ablehnen/{anlage_id}",
+            method="PUT",
+            message=f"Benutzer {current_user.user_id} hat Angebot für PV-Anlage {anlage_id} abgelehnt",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+    except Exception as e:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-ablehnen/{anlage_id}",
+            method="PUT",
+            message=f"Fehler bei der Angebotsannahme für PV-Anlage {anlage_id}: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
+
+    return {"message": f"Angebot für PV-Anlage {anlage_id} erfolgreich abgelehnt."}

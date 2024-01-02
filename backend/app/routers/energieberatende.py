@@ -1,24 +1,12 @@
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
-from sqlalchemy import exc
-from datetime import datetime
 from app import models, schemas, database, oauth, types
-import json
-from pathlib import Path
-from collections import defaultdict, Counter
-from typing import Dict, Union, List, Any
-from pydantic import ValidationError
 import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
-from app.config import Settings
 from app.schemas import LoggingSchema
-import pandas as pd
-import io
-import re
 
 
 router = APIRouter(prefix="/energieberatende", tags=["Energieberatende"])
@@ -39,6 +27,7 @@ async def check_energieberatende_role(current_user: models.Nutzer, method: str, 
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Energieberatende haben Zugriff auf diese Daten")
 
+
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
@@ -50,3 +39,117 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
     except SQLAlchemyError as e:
         logger.error(f"Rechnung konnte nicht erstellt werden: {e}")
         raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
+
+
+@router.post("/datenanfrage/{energieausweis_id}", status_code=status.HTTP_201_CREATED)
+async def datenanfrage_stellen(energieausweis_id: int = Path(..., description="Die ID des Energieausweises", gt=0),
+                               current_user: models.Nutzer = Depends(oauth.get_current_user),
+                               db: AsyncSession = Depends(database.get_db_async)):
+    await check_energieberatende_role(current_user, "POST", f"/datenanfrage/{energieausweis_id}")
+
+    if energieausweis_id <= 0:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/datenanfrage/{energieausweis_id}",
+            method="POST",
+            message="Ungültige Energieausweis-ID",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Ungültige Energieausweis-ID")
+
+    try:
+        energieausweis_result = await db.execute(select(models.Energieausweise)
+                                                 .where(models.Energieausweise.energieausweis_id == energieausweis_id))
+        energieausweis = energieausweis_result.scalars().first()
+        if not energieausweis:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/datenanfrage/{energieausweis_id}",
+                method="POST",
+                message="Energieausweis nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Energieausweis nicht gefunden")
+        if energieausweis.energieberater_id != current_user.user_id:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/datenanfrage/{energieausweis_id}",
+                method="POST",
+                message="Nicht autorisiert für diesen Energieausweis",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Nicht autorisiert für diesen Energieausweis")
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/datenanfrage/{energieausweis_id}",
+            method="POST",
+            message=f"Fehler beim Abrufen der Energieausweise: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Abrufen der Energieausweise: {e}")
+
+    try:
+        haushaltsdaten_existieren = await db.execute(
+            select(models.Haushalte).where(models.Haushalte.user_id == energieausweis.haushalt_id))
+        if haushaltsdaten_existieren.scalars().first():
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/datenanfrage/{energieausweis_id}",
+                method="POST",
+                message="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                detail="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt")
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/datenanfrage/{energieausweis_id}",
+            method="POST",
+            message=f"Fehler beim Überprüfen der Haushaltsdaten: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Überprüfen der Haushaltsdaten: {e}")
+
+    try:
+        neue_haushaltsdaten = models.Haushalte(
+            user_id=energieausweis.haushalt_id,
+            anfragestatus=False  # False, da die Anfrage noch nicht bestätigt wurde
+        )
+        db.add(neue_haushaltsdaten)
+        await db.commit()
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/datenanfrage/{energieausweis_id}",
+            method="POST",
+            message=f"Fehler beim Erstellen der Haushaltsdatenanfrage: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Erstellen der Haushaltsdatenanfrage: {e}")
+
+    logging_obj = schemas.LoggingSchema(
+        user_id=current_user.user_id,
+        endpoint=f"/datenanfrage/{energieausweis_id}",
+        method="POST",
+        message=f"Datenanfrage erfolgreich gestellt",
+        success=True
+    )
+    logger.info(logging_obj.dict())
+
+    return schemas.DatenanfrageResponse(
+        message="Datenanfrage erfolgreich gestellt",
+        haushalt_id=energieausweis.haushalt_id,
+        anfragestatus=neue_haushaltsdaten.anfragestatus)

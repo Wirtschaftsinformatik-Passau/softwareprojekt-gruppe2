@@ -25,7 +25,7 @@ class LogConfig(BaseModel):
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
     JSON_LOG_FORMAT: str = "%(timestamp)s %(level)s %(name)s %(message)s"
     LOG_LEVEL: str = "DEBUG"
-    LOG_FILE: str = "logs/server.log"
+    LOG_FILE: str = "./logs/server.log"
 
     # Logging config
     version: int = 1
@@ -68,7 +68,7 @@ class LogConfigRegistration(BaseModel):
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
     JSON_LOG_FORMAT: str = "%(timestamp)s %(level)s %(name)s %(message)s"
     LOG_LEVEL: str = "DEBUG"
-    LOG_FILE: str = "logs/server_registration.log"
+    LOG_FILE: str = "./logs/server_registration.log"
 
     # Logging config
     version: int = 1
@@ -112,7 +112,7 @@ class LogConfigAdresse(BaseModel):
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
     JSON_LOG_FORMAT: str = "%(timestamp)s %(level)s %(name)s %(message)s"
     LOG_LEVEL: str = "DEBUG"
-    LOG_FILE: str = "logs/server_adresse.log"
+    LOG_FILE: str = "./logs/server_adresse.log"
 
     # Logging config
     version: int = 1
@@ -154,7 +154,7 @@ class LogConfigBase(BaseModel):
     LOGGER_NAME: str = "GreenEcoHubBase"
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
     LOG_LEVEL: str = "DEBUG"
-    LOG_FILE: str = "logs/server_all.log"
+    LOG_FILE: str = "./logs/server_all.log"
 
     # Logging config
     version: int = 1

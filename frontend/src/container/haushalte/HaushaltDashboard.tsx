@@ -6,14 +6,17 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import {Routes, Route, Navigate} from "react-router-dom";
 import { ColorModeContext, useMode } from "../../utils/theme";
 import Topbar from "../../components/admin/dashboards/Topbar";
-import Sidebar from "../../components/netzbetreiber/dashboard/NetzSidebar";
-import FAQ from "../../components/admin/dashboards/FAQs";
 import HaushalteSidebar from "../../components/haushalte/dashboard/HaushalteSidebar";
 import HaushalteTarifTable from "../../components/haushalte/dashboard/HaushalteTarifTable";
-import HaushalteVertragSelect from "../../components/haushalte/dashboard/HaushalteVertragSelect";
 import HaushalteVertragCreate from "../../components/haushalte/dashboard/HaushalteVertragCreate";
 import HaushalteVertrag from "../../components/haushalte/dashboard/HaushaltVertrag";
 import HaushalteVertragDetail from "../../components/haushalte/dashboard/HaushaltVertragDetail";
+import HaushalteEinpeisungsAnfrage from "../../components/haushalte/dashboard/HaushalteEinpeisungsAnfrage";
+import HaushaltSmartMeterUpload from "../../components/haushalte/dashboard/HaushaltSmartMeterUpload";
+import HaushaltSmartMeterOverview from "../../components/haushalte/dashboard/HaushalteSmartMeterOverview";
+import HaushhaltAntragOverview from "../../components/haushalte/dashboard/HaushalteAntragOverview";
+import HaushalteEinspeisungsAnfrage from "../../components/haushalte/dashboard/HaushalteEinpeisungsAnfrage";
+import HaushalteDataOverview from "../../components/haushalte/dashboard/HaushalteDataOverview";
 
 const  HaushaltDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -37,10 +40,16 @@ const  HaushaltDashboard = () => {
                 <Topbar fixed={true}/>
                 <Routes>
                     <Route path="/tarifTable" element={<HaushalteTarifTable/>}/>
-                    <Route path="/vertragSelect" element={<HaushalteVertragSelect/>}/>
+
                     <Route path="/vertragSelect/:tarifID" element={<HaushalteVertragCreate/>}/>
                     <Route path="/vertragOverview" element={<HaushalteVertrag/>}/>  
                     <Route path="/vertragOverview/:vertragID" element={<HaushalteVertragDetail/>}/>
+                    <Route path="/einspeisungsanfrage" element={<HaushalteEinpeisungsAnfrage/>}/>
+                    <Route path="/pvuploadOverview" element={<HaushaltSmartMeterUpload/>}/>
+                    <Route path="/smartMeterOverview" element={<HaushaltSmartMeterOverview/>}/>
+                    <Route path="/eispesungsantragOverview" element={<HaushhaltAntragOverview/>}/>    
+                    <Route path="/einspeisungsanfrage" element={<HaushalteEinspeisungsAnfrage/>}/>
+                    <Route path="/dataOverview" element={<HaushalteDataOverview/>}/>
                 </Routes>
                 </div>
                 

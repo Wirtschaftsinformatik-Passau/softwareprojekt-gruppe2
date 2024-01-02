@@ -433,6 +433,11 @@ class RechnungCreate(BaseModel):
         extra = Extra.allow
 
 
+class VertragPreview(BaseModel):
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+
 class RechnungResponse(BaseModel):
     rechnung_id: int
     user_id: int
@@ -480,6 +485,22 @@ class VertragTarifResponse(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
+class VertragTarifResponseStatus(BaseModel):
+    vertrag_id: int
+    netzbetreiber_id: int
+    user_id: int
+    tarif_id: int
+    beginn_datum: date
+    end_datum: date
+    jahresabschlag: float
+    vertragstatus: bool
+    tarifname: str
+    preis_kwh: float
+    grundgebuehr: float
+    laufzeit: int
+    spezielle_konditionen: str
+    vertragstatus: bool
+
 class VertragTarifNBResponse(BaseModel):
     vorname: str
     nachname: str
@@ -497,7 +518,6 @@ class VertragTarifNBResponse(BaseModel):
     tarifname: str
     spezielle_konditionen: str
     
-
 
 class KalenderEintragCreate(BaseModel):
     zeitpunkt: date
@@ -572,6 +592,7 @@ class HaushaltsDatenFreigabe(BaseModel):
     energieeffizienzklasse: str
 
 
+
 class DashboardAggregatedData(BaseModel):
     gesamt_pv_erzeugung: float
     durchschnitt_soc: float
@@ -588,3 +609,12 @@ class HaushaltsDatenFreigabeResponse(BaseModel):
 class PVAnlageResponse(BaseModel):
     anlage_id: int
     solarteur_id: Optional[int] = None
+
+class PVAnlageHaushaltResponse(BaseModel):
+    anlage_id: int
+    haushalt_id: int
+    solarteur_id: int
+    prozess_status: ProzessStatus
+    nvpruefung_status: Optional[bool] | str = "Noch nicht geprüft"
+
+

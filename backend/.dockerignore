@@ -1,7 +1,6 @@
 # Ignore the virtual environment
 backend_tose_venv/
 
-
 Makefile
 README.md
 setup.sh

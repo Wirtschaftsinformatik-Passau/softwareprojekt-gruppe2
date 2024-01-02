@@ -2,13 +2,10 @@ from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func, exc, update, text
-from datetime import datetime
-from app import models, schemas, database, oauth, types
-import json
-from pathlib import Path
-from collections import defaultdict, Counter, OrderedDict
-from typing import Dict, Union, List, Any
+from sqlalchemy import exc, update, text
+from app import models, schemas, database, oauth
+from collections import Counter
+from typing import Union, List
 from pydantic import ValidationError
 import logging
 from logging.config import dictConfig
@@ -18,6 +15,7 @@ from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, 
 from app import config
 import pandas as pd
 import io
+from datetime import datetime
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -38,6 +36,18 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber haben Zugriff auf diese Daten")
 
 
+async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, method: str, endpoint: str):
+    if current_user.rolle not in [models.Rolle.Netzbetreiber, models.Rolle.Haushalte]:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=endpoint,
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Netzbetreiber oder Haushalt",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail="Nur Netzbetreiber und Haushalte haben Zugriff auf diese Daten")
+
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
 
@@ -46,30 +56,32 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
     # Annahmen für die Netzverträglichkeitsprüfung
     max_kapazitaet_kw = 100.0  # Maximale Kapazität in Kilowatt
     max_installationsflaeche_m2 = 1000.0  # Maximale Installationsfläche in Quadratmetern
+    try:
+        is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
+        is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
+        is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost,
+                                                               models.Orientierung.Suedwest]
+        is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
+        is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
+                                                                 models.Schatten.Minimalschatten]
 
-    is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
-    is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
-    is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost,
-                                                           models.Orientierung.Suedwest]
-    is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
-    is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
-                                                             models.Schatten.Minimalschatten]
-
-    print(
-        f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
-    return all([
-        is_within_kapazitaetsgrenze,
-        is_within_flaechengrenze,
-        is_valid_modulanordnung,
-        is_valid_montagesystem,
-        is_valid_schattenanalyse
-    ])
+        print(
+            f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
+        return all([
+            is_within_kapazitaetsgrenze,
+            is_within_flaechengrenze,
+            is_valid_modulanordnung,
+            is_valid_montagesystem,
+            is_valid_schattenanalyse
+        ])
+    except TypeError as e:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
 
 
 # Tarif erstellen
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async),
-                       current_user: models.Nutzer = Depends(oauth.get_current_user),):
+                       current_user: models.Nutzer = Depends(oauth.get_current_user), ):
     try:
         user_id = current_user.user_id
         tarif.netzbetreiber_id = user_id
@@ -331,13 +343,14 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
 
+# haben wir einen datencheck drin, das nichts falsches hochgeladen wird??
 @router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
 async def add_dashboard_smartmeter_data(haushalt_id: int,
                                         db: AsyncSession = Depends(database.get_db_async),
                                         file: UploadFile = File(...),
                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "POST", "/dashboard")
+    await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard")
     try:
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
         user_id = current_user.user_id
@@ -396,11 +409,11 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
 async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_user),
                         db: AsyncSession = Depends(database.get_db_async)):
     try:
-        await check_netzbetreiber_role(current_user, "GET", "/haushalte")
+        await check_netzbetreiber_role_or_haushalt(current_user, "GET", "/haushalte")
         user_id = current_user.user_id
         stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
-                                                      models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
-        models.Nutzer.rolle == models.Rolle.Haushalte)
+                                                          models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
+            models.Nutzer.rolle == models.Rolle.Haushalte)
         result = await db.execute(stmt)
         haushalte = result.all()
         response = [{
@@ -451,108 +464,88 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    # TODO: parameter validierung für sql injections
-    await check_netzbetreiber_role(current_user, "POST", "/dashboard/{haushalt_id}")
-    stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
-    user_id = current_user.user_id
-    result = await db.execute(stmt)
-    nutzer_rolle = result.scalar_one_or_none()
-    if nutzer_rolle is None or nutzer_rolle != models.Rolle.Haushalte:
-        logging_error = schemas.LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="dashboard/{haushalt_id}",
-            method="POST",
-            message="Haushalt nicht gefunden oder Rolle unpassend",
-            success=False
-        )
-        logger.error(logging_error.dict())
-        raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
     try:
+        await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard/{haushalt_id}")
+
+        if period not in ["MINUTE", "HOUR", "DAY", "WEEK", "MONTH"]:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"dashboard/{haushalt_id}",
+                method="GET",
+                message="Ungültiger Zeitraum angegeben",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise ValueError("Ungültiger Zeitraum angegeben")
+
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+        except ValueError:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"dashboard/{haushalt_id}",
+                method="GET",
+                message="Ungültiges Datumsformat",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise ValueError("Ungültiges Datumsformat. Bitte verwenden Sie YYYY-MM-DD.")
+
+        stmt = select(models.Nutzer.rolle).where(models.Nutzer.user_id == haushalt_id)
+        user_id = current_user.user_id
+        result = await db.execute(stmt)
+        nutzer_rolle = result.scalar_one_or_none()
+        if nutzer_rolle is None or nutzer_rolle != models.Rolle.Haushalte:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"dashboard/{haushalt_id}",
+                method="GET",
+                message="Haushalt nicht gefunden oder Rolle unpassend",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=404, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
+
         table_name = "dashboard_smartmeter_data" if config.settings.OS == 'Linux' else '"Dashboard_smartmeter_data"'
-        if field == "all":
-            raw_sql = text(
-                f"""
-                SELECT 
-                DATE_TRUNC('{period}', datum), 
-                sum(pv_erzeugung) as gesamt_pv_erzeugung,
-                avg(soc) as gesamt_soc,
-                sum(batterie_leistung) as gesamt_batterie_leistung,
-                sum(last) as gesamt_last
-                from {table_name}
-                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
-                and datum >= '{start}' and  datum < '{end}'
-                group by 
-                DATE_TRUNC('{period}', datum) 
-                ORDER BY DATE_TRUNC('{period}', datum) 
+
+        # Determine the fields and GROUP BY clause based on the 'field' parameter
+        fields, group_by = determine_query_parts(field)
+
+        params = {
+            "user_id": user_id,
+            "haushalt_id": haushalt_id,
+            "start": start_date,
+            "end": end_date,
+            "period": period
+        }
+
+        query_base = f"""
+                    SELECT 
+                    DATE_TRUNC(:period, datum) as period, 
+                    {', '.join(fields)}
+                    from {table_name}
+                    WHERE user_id = :user_id and haushalt_id = :haushalt_id  
+                    and datum >= :start and datum < :end
+                    {group_by}
+                    ORDER BY DATE_TRUNC(:period, datum) 
                 """
-            )
-        elif field == "pv":
-            raw_sql = text(
-                f"""
-                SELECT 
-                DATE_TRUNC('{period}', datum), 
-                sum(pv_erzeugung) as gesamt_pv_erzeugung
-                from {table_name} 
-                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
-                and datum >= '{start}' and  datum < '{end}'
-                group by 
-                DATE_TRUNC('{period}', datum) 
-                ORDER BY DATE_TRUNC('{period}', datum) 
-                            """
-            )
 
-        elif field == "soc":
-            raw_sql = text(
-                f"""
-                SELECT 
-                DATE_TRUNC('{period}', datum), 
-                avg(soc) as gesamt_soc
-                from {table_name}
-                WHERE user_id = {user_id} and haushalt_id = {haushalt_id}  
-                and datum >= '{start}' and  datum < '{end}'
-                group by 
-                DATE_TRUNC('{period}', datum) 
-                ORDER BY DATE_TRUNC('{period}', datum) 
-                            """
-            )
+        # Generate the final query
+        raw_sql = text(query_base.format(fields=','.join(fields), group_by=group_by))
 
-        elif field == "batterie":
-            raw_sql = text(
-                f"""
-                SELECT 
-                DATE_TRUNC('{period}', datum),
-                sum(batterie_leistung) as gesamt_batterie_leistung
-                from {table_name}
-                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
-                and datum >= '{start}' and  datum < '{end}'
-                group by 
-                DATE_TRUNC('{period}', datum) 
-                ORDER BY DATE_TRUNC('{period}', datum) 
-                """
-            )
-
-        elif field == "last":
-            raw_sql = text(
-                f"""
-                SELECT 
-                DATE_TRUNC('{period}', datum), 
-                sum(last) as gesamt_last
-                from {table_name}
-                WHERE user_id = {user_id} and haushalt_id = {haushalt_id} 
-                and datum >= '{start}' and  datum < '{end}'
-                group by 
-                DATE_TRUNC('{period}', datum) 
-                ORDER BY DATE_TRUNC('{period}', datum) 
-                """
-            )
-
-        else:
-            raise HTTPException(status_code=400, detail="Ungültiges Feld")
-
-        result = await db.execute(raw_sql)
+        result = await db.execute(raw_sql, params)
         aggregated_data = result.fetchall()
 
         if not aggregated_data:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="dashboard/{haushalt_id}",
+                method="GET",
+                message="Keine Dashboard-Daten für diesen Haushalt gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
             raise HTTPException(status_code=404, detail="Keine Dashboard-Daten für diesen Haushalt gefunden")
 
         logging_info = schemas.LoggingSchema(
@@ -564,53 +557,113 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
         )
         logger.info(logging_info.dict())
 
-        if field == "all":
-            return [schemas.AggregatedDashboardSmartMeterData(
-                datum=row[0].isoformat() if row[0] else None,
-                gesamt_pv_erzeugung=row[1],
-                gesamt_soc=row[2],
-                gesamt_batterie_leistung=row[3],
-                gesamt_last=row[4]
-            ) for row in aggregated_data]
+        return process_aggregated_data(field, aggregated_data)
 
-        elif field == "pv":
-            return [schemas.AggregatedDashboardSmartMeterDataResponsePV(
-                x=row[0].isoformat() if row[0] else None,
-                y=row[1]
-            ) for row in aggregated_data[:1000]]
-
-        elif field == "soc":
-            return [schemas.AggregatedDashboardSmartMeterDataResponseSOC(
-                x=row[0].isoformat() if row[0] else None,
-                y=row[1]
-            ) for row in aggregated_data]
-
-        elif field == "batterie":
-            return [schemas.AggregatedDashboardSmartMeterDataResponseBatterie(
-                x=row[0].isoformat() if row[0] else None,
-                y=row[1]
-            ) for row in aggregated_data]
-
-        elif field == "last":
-            return [schemas.AggregatedDashboardSmartMeterDataResponseLast(
-                x=row[0].isoformat(),
-                y=row[1]
-            ) for row in aggregated_data]
-
-    except HTTPException as e:
-        logging_error = schemas.LoggingSchema(
+    except ValueError as ve:
+        logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/dashboard",
             method="GET",
-            message=f"Ausnahme aufgetreten: {e.detail}",
+            message=f"Fehler bei der Eingabeüberprüfung: {ve}",
             success=False
         )
-        logger.error(logging_error.dict())
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    except HTTPException as he:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/dashboard",
+            method="GET",
+            message=f"HTTP Fehler: {he.detail}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
         raise
+
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/dashboard",
+            method="GET",
+            message=f"Unerwarteter Fehler: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail="Ein unerwarteter Fehler ist aufgetreten")
+
+
+def determine_query_parts(field):
+    # Initialize variables for fields to select and the GROUP BY clause
+    fields = []
+    group_by = "GROUP BY DATE_TRUNC(:period, datum)"
+
+    # Define the fields and GROUP BY clause based on the 'field' parameter
+    if field == "all":
+        fields = [
+            "sum(pv_erzeugung) as gesamt_pv_erzeugung",
+            "avg(soc) as gesamt_soc",
+            "sum(batterie_leistung) as gesamt_batterie_leistung",
+            "sum(last) as gesamt_last"
+        ]
+    elif field == "pv":
+        fields = ["sum(pv_erzeugung) as gesamt_pv_erzeugung"]
+    elif field == "soc":
+        fields = ["avg(soc) as gesamt_soc"]
+    elif field == "batterie":
+        fields = ["sum(batterie_leistung) as gesamt_batterie_leistung"]
+    elif field == "last":
+        fields = ["sum(last) as gesamt_last"]
+    else:
+        # If an invalid field is provided, raise an error
+        raise ValueError("Ungültiges Feld: {}".format(field))
+
+    # Return the fields and the GROUP BY clause
+    return fields, group_by
+
+
+def process_aggregated_data(field, aggregated_data):
+    # Process and return the data based on the 'field' parameter
+    if field == "all":
+        return [schemas.AggregatedDashboardSmartMeterData(
+            datum=row[0].isoformat() if row[0] else None,
+            gesamt_pv_erzeugung=row[1],
+            gesamt_soc=row[2],
+            gesamt_batterie_leistung=row[3],
+            gesamt_last=row[4]
+        ) for row in aggregated_data]
+
+    elif field == "pv":
+        return [schemas.AggregatedDashboardSmartMeterDataResponsePV(
+            x=row[0].isoformat() if row[0] else None,
+            y=row[1]
+        ) for row in aggregated_data]
+
+    elif field == "soc":
+        return [schemas.AggregatedDashboardSmartMeterDataResponseSOC(
+            x=row[0].isoformat() if row[0] else None,
+            y=row[1]
+        ) for row in aggregated_data]
+
+    elif field == "batterie":
+        return [schemas.AggregatedDashboardSmartMeterDataResponseBatterie(
+            x=row[0].isoformat() if row[0] else None,
+            y=row[1]
+        ) for row in aggregated_data]
+
+    elif field == "last":
+        return [schemas.AggregatedDashboardSmartMeterDataResponseLast(
+            x=row[0].isoformat() if row[0] else None,
+            y=row[1]
+        ) for row in aggregated_data]
+
+    else:
+        # Handle unexpected field values
+        raise ValueError("Unbekanntes Feld: {}".format(field))
 
 
 # vor einspeisezusagen
-@router.put("/nvpruefung/{anlage_id}", status_code=status.HTTP_200_OK,
+@router.put("/nvpruefung/{anlage_id}", status_code=status.HTTP_202_ACCEPTED,
             response_model=schemas.NetzvertraeglichkeitspruefungResponse)
 async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
@@ -705,6 +758,7 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
             message="Netzverträglichkeitsprüfung nicht bestanden",
             success=True
         )
+        # wenn nv pruedung false kommt 400 zurück
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Netzverträglichkeitsprüfung nicht bestanden")
@@ -741,7 +795,7 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
 
 @router.get("/pv-angenommen", response_model=List[schemas.AngebotVorschlag])
 async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db),
-                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                                     current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
         if current_user.rolle != models.Rolle.Netzbetreiber:
             raise HTTPException(status_code=403, detail="Nicht autorisiert")
@@ -772,6 +826,7 @@ async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db)
     except exc.IntegrityError as e:
         logger.error(f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
+
 
 @router.get("/einspeisezusagen", response_model=List[schemas.AngebotVorschlag])
 async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get_db_async),

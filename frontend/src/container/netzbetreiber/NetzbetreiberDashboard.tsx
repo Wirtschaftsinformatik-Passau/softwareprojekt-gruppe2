@@ -22,6 +22,10 @@ import NetzbetreiberHaushalteTable from "../../components/netzbetreiber/dashboar
 import NetzbetreiberEinspeisungenTable from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenTable";
 import NetzbetreiberEinspeisungenZusage from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenZusage";
 import NetzbetreiberEinspeisungenAngenommen from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenAngenommen";
+import NetzbetreiberSmartmeterUpload from "../../components/netzbetreiber/dashboard/NetzbetreiberSmartMeterUpload"
+
+
+
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -59,6 +63,7 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/einspeisungenOverview" element={<NetzbetreiberEinspeisungenTable/>}/>
                 <Route path="/einspeisungenZusage/:anlageID" element={<NetzbetreiberEinspeisungenZusage/>}/>
                 <Route path="/einspeisungenAngenommen" element={<NetzbetreiberEinspeisungenAngenommen/>}/>
+                <Route path="/smartmeterUpload" element={<NetzbetreiberSmartmeterUpload/>}/>
                 </Routes>
                 </div>
                 

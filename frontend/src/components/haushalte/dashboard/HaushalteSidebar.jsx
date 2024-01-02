@@ -5,26 +5,23 @@ import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TableViewIcon from '@mui/icons-material/TableView';
 import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
-import DashboardIcon from '@mui/icons-material/Dashboard'
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import AddBoxIcon from '@mui/icons-material/AddBox';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import HouseIcon from '@mui/icons-material/House';
 
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
-import EditIcon from '@mui/icons-material/Edit';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 import user from "../../../assets/admin_icon.png"
-import Inventory from "@mui/icons-material/Inventory";
 
 
 
@@ -174,13 +171,7 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
-              title="Vertrag abschließen"
-              to="/vertragSelect"
-              icon={<AddBoxIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+          
             <Item
               title="Laufende Verträge"
               to="/vertragOverview"
@@ -196,15 +187,22 @@ const Sidebar1 = () => {
               PV
             </Typography>
             <Item
+              title="Haushaltsdaten"
+              to="/dataOverview"
+              icon={<HouseIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
               title="Einspeisungsanfrage"
-              to="/einpeisungsanfrage"
+              to="/einspeisungsanfrage"
               icon={<SolarPowerIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
               title="Antragsübersicht"
-              to="/priceCreate"
+              to="/eispesungsantragOverview"
               icon={<TrackChangesIcon/>}
               selected={selected}
               setSelected={setSelected}
@@ -219,6 +217,13 @@ const Sidebar1 = () => {
             <Item
               title="Smart Meter Upload"
               to="/pvuploadOverview"
+              icon={<FileUploadIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+             <Item
+              title="Smart Meter Overview"
+              to="/smartMeterOverview"
               icon={<DataSaverOnIcon />}
               selected={selected}
               setSelected={setSelected}
@@ -231,7 +236,7 @@ const Sidebar1 = () => {
               Haushalt
             </Typography>
             <Item
-              title="Übersicht"
+              title="Übersicht über Haushalte"
               to="/haushalteOverview"
               icon={<HolidayVillageIcon />}
               selected={selected}

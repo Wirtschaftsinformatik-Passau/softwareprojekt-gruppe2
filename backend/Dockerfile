@@ -3,6 +3,7 @@ FROM python:3.10
 COPY app ./app
 COPY logs ./logs
 COPY alembic.ini .
+COPY tose_backend ./tose_backend
 COPY vars/.env.prod ./vars/.env
 COPY reqs.txt .
 

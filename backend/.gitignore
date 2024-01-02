@@ -43,3 +43,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+/tose_backend/
+/test/
+/logs/

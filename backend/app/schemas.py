@@ -633,3 +633,13 @@ class EnergieeffizienzmassnahmenCreate(BaseModel):
     massnahmetyp: MassnahmeTyp
     einsparpotenzial: float
     kosten: float
+
+
+class EnergieausweisCreate(BaseModel):
+    ausstellungsdatum: date
+    gueltigkeit: date
+
+
+class EnergieausweisCreateResponse(BaseModel):
+    message: str
+    ausweis_status: str

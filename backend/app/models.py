@@ -134,7 +134,8 @@ class Energieausweise(Base):
     energieausweis_id = Column(Integer, primary_key=True)
     haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                          nullable=False)
-    massnahmen_id = Column(Integer)
+    massnahmen_id = Column(Integer, ForeignKey('energieeffizienzmassnahmen.massnahmen_id' if settings.OS == 'Linux'
+                                               else "Energieeffizienzmassnahmen.massnahmen_id"), nullable=True)
     energieberater_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                                nullable=True)
     energieeffizienzklasse = Column(String, nullable=True)
@@ -142,8 +143,8 @@ class Energieausweise(Base):
     ausstellungsdatum = Column(Date, nullable=True)
     gueltigkeit = Column(Date, nullable=True)
     ausweis_status = Column(Enum(AusweisStatus), ENUM(*[r.value for r in Rolle],
-                                                      name='ausweisstatus' if settings.OS == 'Linux' else "AusweisStatus",
-                                                      create_type=False), nullable=False)
+                                                      name='ausweisstatus' if settings.OS == 'Linux'
+                                                      else "AusweisStatus", create_type=False), nullable=False)
 
 
 class Energieberatende(Base):

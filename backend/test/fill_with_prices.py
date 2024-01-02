@@ -4,8 +4,8 @@ import uuid
 import numpy as np
 
 # The endpoint URL
-url = "http://132.231.36.102:8000/netzbetreiber/preisstrukturen"
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJleHAiOjE3MDM5NzkxNDl9.HsWqlU0BG_m9mRZTBQn9Tz9u9I6-V7mqC11ieHvcD20"
+url = "http://localhost:8000/netzbetreiber/preisstrukturen"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozLCJleHAiOjE3MDQzOTcyNTl9.41KoxEgSB2Zii5lv1cAWjMDkLyk5LXzFSojE7HRatUQ"
 headers = {"Authorization": f"Bearer {token}"}
 
 def send_post_request(request_number):

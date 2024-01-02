@@ -6,6 +6,13 @@ export interface PVAntrag {
     nvpruefung_status: boolean | "Noch nicht geprüft",
 }
 
+export interface Angebot {
+    angebot_id: number | "",
+    kosten: number | "",
+    angebotsstatus: boolean | "",
+    created_at: Date | "",
+}
+
 enum ProzessStatus {
     AnfrageGestellt = 'AnfrageGestellt',
     DatenAngefordert = 'DatenAngefordert',

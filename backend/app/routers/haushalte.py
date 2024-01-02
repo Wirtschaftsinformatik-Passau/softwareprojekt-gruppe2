@@ -517,8 +517,8 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
                          current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
     await check_haushalt_role(current_user, "POST", "/datenfreigabe")
-
-    haushaltsdaten = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == current_user.user_id))
+    user_id = current_user.user_id
+    haushaltsdaten = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == user_id))
     haushalt = haushaltsdaten.scalars().first()
     if not haushalt:
         logging_obj = schemas.LoggingSchema(
@@ -548,7 +548,7 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         gesamt_last=dashboard_agg_data.gesamt_last
     )
 
-    try:
+    try:        
         update_query = (
             update(models.Haushalte)
             .where(models.Haushalte.user_id == current_user.user_id)
@@ -556,6 +556,14 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         )
         await db.execute(update_query)
         await db.commit()
+        
+        pv_anlagen = await db.execute(select(models.PVAnlage).where(models.PVAnlage.haushalt_id == current_user.user_id))
+        pv_anlagen = pv_anlagen.all()
+        if pv_anlagen:
+            for pv in pv_anlagen:
+                pv[0].prozess_status = models.ProzessStatus.DatenFreigegeben
+                await db.commit()
+                await db.refresh(pv[0])
     except SQLAlchemyError as e:
         await db.rollback()
         logging_obj = schemas.LoggingSchema(
@@ -705,6 +713,7 @@ async def update_haushalt_daten(haushalt_id: int,
                                 db: AsyncSession = Depends(database.get_db_async),
                                 haushalt_daten: schemas.HaushaltsDatenFreigabe = Depends(get_haushalt_daten)):
     await check_haushalt_role(current_user, "PUT", f"/haushalt-daten/{haushalt_id}")
+    
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
         result = await db.execute(stmt)
@@ -808,3 +817,34 @@ async def angebot_annehmen(anlage_id: int = Path(..., description="Die ID der PV
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
     return {"message": f"Angebot für PV-Anlage {anlage_id} erfolgreich angenommen."}
+
+
+@router.get("/angebote/{anlage_id}")
+async def get_angebot(anlage_id: int,
+                      current_user: models.Nutzer = Depends(oauth.get_current_user),
+                      db: AsyncSession = Depends(database.get_db_async)):
+    await check_haushalt_role(current_user, "GET", f"/angebote/{anlage_id}")
+    try:
+        stmt = select(models.Angebot).where(models.Angebot.angebot_id == anlage_id)
+        result = await db.execute(stmt)
+        angebote = result.scalars().all()
+        if not angebote:
+            logging_obj = LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/angebote/{anlage_id}",
+                method="GET",
+                message=f"Angebot {anlage_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Angebot {anlage_id} nicht gefunden")
+
+        return [{
+            "angebot_id": angebot.angebot_id,
+            "kosten": angebot.kosten,
+            "angebotsstatus": angebot.angebotsstatus,
+            "created_at": angebot.created_at,
+        } for angebot in angebote]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")

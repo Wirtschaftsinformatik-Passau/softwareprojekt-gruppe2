@@ -51,7 +51,8 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
             detail="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur."
         )
 
-    if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt:
+    if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt and  pv_anlage.prozess_status\
+            != models.ProzessStatus.DatenFreigegeben:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/angebote",
@@ -279,17 +280,39 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
     try:
         haushaltsdaten_existieren = await db.execute(
             select(models.Haushalte).where(models.Haushalte.user_id == pv_anlage.haushalt_id))
-        if haushaltsdaten_existieren.scalars().first():
+        haushaltsdaten_existieren = haushaltsdaten_existieren.scalars().first()
+        if haushaltsdaten_existieren and haushaltsdaten_existieren.baujahr is not None:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint=f"/datenanfrage/{anlage_id}",
                 method="POST",
-                message="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt",
+                message="Haushaltsdaten existieren bereits",
                 success=False
             )
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt")
+
+        elif haushaltsdaten_existieren and haushaltsdaten_existieren.baujahr is None:
+            pv_anlage.prozess_status = models.ProzessStatus.DatenAngefordert
+            haushaltsdaten_existieren.anfragestatus = True
+            await db.commit()
+            await db.refresh(haushaltsdaten_existieren)
+            await db.refresh(pv_anlage)
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/datenanfrage/{anlage_id}",
+                method="POST",
+                message="Anfragestatus wurde bearbeitet",
+                success=True
+            )
+            logger.info(logging_obj.dict())
+            return schemas.DatenanfrageResponse(
+                message="Anfragestatus wurde bearbeitet",
+                haushalt_id=pv_anlage.haushalt_id,
+                anfragestatus=haushaltsdaten_existieren.anfragestatus)
+
+
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -308,6 +331,7 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             anfragestatus=False  # False, da die Anfrage noch nicht bestätigt wurde
         )
         db.add(neue_haushaltsdaten)
+        pv_anlage.prozess_status = models.ProzessStatus.DatenAngefordert
         await db.commit()
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(

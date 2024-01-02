@@ -2,9 +2,8 @@ from datetime import MAXYEAR, date, timedelta
 from datetime import date, datetime
 from uuid import uuid4
 from typing import List
-
 import sqlalchemy
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path
 from sqlalchemy import select, func, exc, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -98,6 +97,7 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Internet Serverfehler")
 
+
 @router.get("/angebot-anfordern", response_model=List[schemas.PVAnlageHaushaltResponse])
 async def get_pv_anlage(db: AsyncSession = Depends(database.get_db_async),
                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
@@ -139,6 +139,7 @@ async def get_pv_anlage(db: AsyncSession = Depends(database.get_db_async),
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Internet Serverfehler")
+
 
 @router.get("/vertrag-preview/{tarif_id}", response_model=schemas.VertragPreview)
 async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
@@ -202,7 +203,6 @@ async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get
 async def tarifantrag(tarif_id: int,
                       current_user: models.Nutzer = Depends(oauth.get_current_user),
                       db: AsyncSession = Depends(database.get_db_async)):
-
     # Prüfen, ob der angeforderte Tarif existiert
     await check_haushalt_role(current_user, "POST", f"/tarifantrag/{tarif_id}")
     user_id = current_user.user_id
@@ -224,12 +224,12 @@ async def tarifantrag(tarif_id: int,
 
     except Exception as e:
         logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint="/tarifantrag",
-                method="POST",
-                message=f"Felher beim Abrufen des Tarifs: {e}",
-                success=False
-            )
+            user_id=current_user.user_id,
+            endpoint="/tarifantrag",
+            method="POST",
+            message=f"Felher beim Abrufen des Tarifs: {e}",
+            success=False
+        )
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
 
@@ -278,7 +278,7 @@ async def tarifantrag(tarif_id: int,
         )
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail=f"Tarif {tarif_id} für user {user_id }existiert für user bereits")
+                            detail=f"Tarif {tarif_id} für user {user_id}existiert für user bereits")
 
 
     except Exception as e:
@@ -451,12 +451,12 @@ async def get_all_tarife(db: AsyncSession = Depends(database.get_db_async),
 
 @router.get("/all-tarife/{tarif_id}", response_model=schemas.TarifHaushaltResponse)
 async def get_all_tarife(tarif_id: int,
-                        db: AsyncSession = Depends(database.get_db_async),
+                         db: AsyncSession = Depends(database.get_db_async),
                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_haushalt_role(current_user, "GET", f"/all-tarife/{tarif_id}")
     try:
-        stmt = select(models.Tarif, models.Nutzer)\
-            .join(models.Nutzer, models.Tarif.netzbetreiber_id == models.Nutzer.user_id)\
+        stmt = select(models.Tarif, models.Nutzer) \
+            .join(models.Nutzer, models.Tarif.netzbetreiber_id == models.Nutzer.user_id) \
             .where(models.Tarif.tarif_id == tarif_id)
         result = await db.execute(stmt)
         tarife = result.all()
@@ -483,10 +483,10 @@ async def get_all_tarife(tarif_id: int,
 
 @router.get("/vertraege", response_model=List[schemas.VertragTarifResponse])
 async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
-                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_haushalt_role(current_user, "GET", "/vertraege")
     try:
-        stmt = select(models.Vertrag, models.Tarif).join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id)\
+        stmt = select(models.Vertrag, models.Tarif).join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id) \
             .where(models.Vertrag.user_id == current_user.user_id)
         result = await db.execute(stmt)
         vertraege = result.all()
@@ -591,18 +591,18 @@ async def get_vertrag(vertrag_id: int,
                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_haushalt_role(current_user, "GET", f"/vertraege/{vertrag_id}")
     try:
-        stmt = select(models.Vertrag, models.Tarif, models.Nutzer)\
-            .join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id)\
-            .join(models.Nutzer, models.Vertrag.netzbetreiber_id == models.Nutzer.user_id)\
+        stmt = select(models.Vertrag, models.Tarif, models.Nutzer) \
+            .join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id) \
+            .join(models.Nutzer, models.Vertrag.netzbetreiber_id == models.Nutzer.user_id) \
             .where(models.Vertrag.vertrag_id == vertrag_id)
         result = await db.execute(stmt)
         vertrag = result.first()
         response = {
-            "vertrag_id": vertrag[0].vertrag_id, 
-            "tarif_id": vertrag[0].tarif_id, 
-            "beginn_datum": vertrag[0].beginn_datum, 
+            "vertrag_id": vertrag[0].vertrag_id,
+            "tarif_id": vertrag[0].tarif_id,
+            "beginn_datum": vertrag[0].beginn_datum,
             "end_datum": vertrag[0].end_datum,
-            "jahresabschlag": vertrag[0].jahresabschlag, 
+            "jahresabschlag": vertrag[0].jahresabschlag,
             "tarifname": vertrag[1].tarifname,
             "vertragstatus": vertrag[0].vertragstatus,
             "preis_kwh": vertrag[1].preis_kwh,
@@ -619,10 +619,11 @@ async def get_vertrag(vertrag_id: int,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
+
 @router.put("/vertrag-deaktivieren/{vertrag_id}", status_code=status.HTTP_200_OK)
 async def deactivate_vertrag(vertrag_id: int,
-                            db: AsyncSession = Depends(database.get_db_async),
-                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                             db: AsyncSession = Depends(database.get_db_async),
+                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
     endpoint = f"/vertrag-deaktivieren/{vertrag_id}"
     await check_haushalt_role(current_user, "GET", endpoint)
     try:
@@ -638,7 +639,8 @@ async def deactivate_vertrag(vertrag_id: int,
                 success=False
             )
             logger.error(logging_error.dict())
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Vertrag {vertrag_id} is bereits deaktiviert")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                detail=f"Vertrag {vertrag_id} is bereits deaktiviert")
         vertrag.vertragstatus = False
         await db.commit()
         await db.refresh(vertrag)
@@ -652,7 +654,6 @@ async def deactivate_vertrag(vertrag_id: int,
 async def get_haushalt_daten(haushalt_id: int,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
-
     await check_haushalt_role(current_user, "GET", f"/haushalt-daten/{haushalt_id}")
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
@@ -667,7 +668,8 @@ async def get_haushalt_daten(haushalt_id: int,
                 success=False
             )
             logger.error(logging_error.dict())
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Keine Haushaltsdaten für Haushalt {haushalt_id} gefunden")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Keine Haushaltsdaten für Haushalt {haushalt_id} gefunden")
         haushalt = haushalt[0]
         if haushalt.anzahl_bewohner is None:
             logging_error = LoggingSchema(
@@ -697,28 +699,27 @@ async def get_haushalt_daten(haushalt_id: int,
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
 
-
 @router.put("/haushalt-daten/{haushalt_id}", status_code=status.HTTP_200_OK)
 async def update_haushalt_daten(haushalt_id: int,
                                 current_user: models.Nutzer = Depends(oauth.get_current_user),
                                 db: AsyncSession = Depends(database.get_db_async),
                                 haushalt_daten: schemas.HaushaltsDatenFreigabe = Depends(get_haushalt_daten)):
-
     await check_haushalt_role(current_user, "PUT", f"/haushalt-daten/{haushalt_id}")
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
         result = await db.execute(stmt)
         haushalt = result.first()[0]
         if not haushalt:
-            logging_error = LoggingSchema(
+            logging_obj = LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint=f"/haushalt-daten/{haushalt_id}",
                 method="PUT",
                 message=f"Keine Haushaltsdaten für Haushalt {haushalt_id} gefunden",
                 success=False
             )
-            logger.error(logging_error.dict())
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Keine Haushaltsdaten für Haushalt {haushalt_id} gefunden")
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Keine Haushaltsdaten für Haushalt {haushalt_id} gefunden")
         haushalt.anzahl_bewohner = haushalt_daten.anzahl_bewohner
         haushalt.heizungsart = haushalt_daten.heizungsart
         haushalt.baujahr = haushalt_daten.baujahr
@@ -732,3 +733,78 @@ async def update_haushalt_daten(haushalt_id: int,
         return {"message": f"Haushaltsdaten für Haushalt {haushalt_id} erfolgreich aktualisiert"}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+
+
+@router.put("/angebot-akzeptieren/{anlage_id}", status_code=status.HTTP_200_OK)
+async def angebot_annehmen(anlage_id: int = Path(..., description="Die ID der PV-Anlage", gt=0),
+                           current_user: models.Nutzer = Depends(oauth.get_current_user),
+                           db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Nimmt ein Angebot für eine PV-Anlage an, indem der Prozessstatus auf 'AngebotAngenommen' geändert wird.
+
+    Parameters:
+    - anlage_id: int - Pfadparameter, der die ID der PV-Anlage darstellt.
+    - current_user: Nutzer - Der aktuelle authentifizierte Benutzer, der über Dependency Injection ermittelt wird.
+    - db: AsyncSession - Die Datenbanksitzung, die über Dependency Injection erhalten wird.
+
+    Returns:
+    - dict: Eine Meldung, die das Ergebnis des Vorgangs angibt.
+
+    Raises:
+    - HTTPException: Mit Statuscode 404, wenn die PV-Anlage nicht gefunden wird oder dem Benutzer nicht gehört.
+    - HTTPException: Mit Statuscode 400, wenn das Angebot bereits angenommen wurde.
+    - HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
+    await check_haushalt_role(current_user, "PUT", f"/angebot-annehmen/{anlage_id}")
+
+    pv_anlage = await db.get(models.PVAnlage, anlage_id)
+    if not pv_anlage or pv_anlage.haushalt_id != current_user.user_id:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-akzeptieren/{anlage_id}",
+            method="PUT",
+            message=f"PV-Anlage {anlage_id} nicht gefunden oder gehört nicht zu Benutzer {current_user.user_id}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"PV-Anlage mit der ID {anlage_id} nicht gefunden "
+                                   f"oder gehört nicht zum aktuellen Haushalt.")
+
+    if pv_anlage.prozess_status == models.ProzessStatus.AngebotAngenommen:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-akzeptieren/{anlage_id}",
+            method="PUT",
+            message=f"Angebot für PV-Anlage {anlage_id} bereits angenommen",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        return {"message": f"Angebot für PV-Anlage {anlage_id} wurde bereits angenommen."}
+
+    try:
+        pv_anlage.prozess_status = models.ProzessStatus.AngebotAngenommen
+        await db.commit()
+        await db.refresh(pv_anlage)
+
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-akzeptieren/{anlage_id}",
+            method="PUT",
+            message=f"Benutzer {current_user.user_id} hat Angebot für PV-Anlage {anlage_id} angenommen",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+    except Exception as e:
+        logging_obj = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebot-akzeptieren/{anlage_id}",
+            method="PUT",
+            message=f"Fehler bei der Angebotsannahme für PV-Anlage {anlage_id}: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
+
+    return {"message": f"Angebot für PV-Anlage {anlage_id} erfolgreich angenommen."}

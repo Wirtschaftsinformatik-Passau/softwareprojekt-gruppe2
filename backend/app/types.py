@@ -63,4 +63,11 @@ class Schatten(enum.Enum):
 
 class AusweisStatus(enum.Enum):
     AnfrageGestellt = "AnfrageGestellt"
+    ZusatzdatenEingegeben = "ZusatzdatenEingegeben"
     Ausgestellt = "Ausgestellt"
+
+
+class MassnahmeTyp(enum.Enum):
+    Isolierung = "Isolierung"
+    Heizungssystem = "Heizungssystem"
+    Fenstererneuerung = "Fenstererneuerung"

@@ -101,7 +101,6 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
                        current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
     try:
-        query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
         await check_netzbetreiber_role(current_user, "PUT", "/tarife")
         user_id = current_user.user_id

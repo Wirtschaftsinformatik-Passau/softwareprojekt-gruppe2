@@ -153,3 +153,45 @@ async def datenanfrage_stellen(energieausweis_id: int = Path(..., description="D
         message="Datenanfrage erfolgreich gestellt",
         haushalt_id=energieausweis.haushalt_id,
         anfragestatus=neue_haushaltsdaten.anfragestatus)
+
+
+@router.post("/daten-erfassung/{energieausweis_id}", status_code=status.HTTP_200_OK)
+async def daten_erfassung(energieausweis_id: int, energieausweis_data: schemas.EnergieausweiseUpdate,
+                          massnahmen_data: schemas.EnergieeffizienzmassnahmenCreate,
+                          current_user: models.Nutzer = Depends(oauth.get_current_user),
+                          db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erfasst und gibt zusätzliche Daten für einen Energieausweis und Energieeffizienzmassnahmen ein.
+
+    - `energieausweis_id`: ID des zu aktualisierenden Energieausweises.
+    - `energieausweis_data`: Daten, die im Energieausweis aktualisiert werden sollen.
+    - `massnahmen_data`: Daten für die zu erstellenden Energieeffizienzmassnahmen.
+    """
+    await check_energieberatende_role(current_user, "POST", "/daten-erfassung/{energieausweis_id}")
+
+    haus_data = await db.get(models.Haushalte, current_user.user_id)
+    if not haus_data or any(attribute is None for attribute in vars(haus_data).values()):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Haushaltsdaten sind unvollständig.")
+
+    energieausweis = await db.get(models.Energieausweise, energieausweis_id)
+    if not energieausweis:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Energieausweis nicht gefunden.")
+    energieausweis.energieeffizienzklasse = energieausweis_data.energieeffizienzklasse
+    energieausweis.verbrauchskennwerte = energieausweis_data.verbrauchskennwerte
+
+    neue_massnahme = models.Energieeffizienzmassnahmen(
+        haushalt_id=energieausweis.haushalt_id,
+        massnahmetyp=massnahmen_data.massnahmetyp,
+        einsparpotenzial=massnahmen_data.einsparpotenzial,
+        kosten=massnahmen_data.kosten
+    )
+    db.add(neue_massnahme)
+
+    try:
+        await db.commit()
+        await db.refresh(neue_massnahme)
+        return {"message": f"Daten für Energieausweis {energieausweis_id} und zugehörige Massnahmen erfolgreich erfasst."}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Datenaktualisierung fehlgeschlagen.")

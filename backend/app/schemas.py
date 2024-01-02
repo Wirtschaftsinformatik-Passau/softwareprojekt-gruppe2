@@ -4,7 +4,7 @@ from datetime import date
 from typing import Dict, List, Optional
 from app.types import *
 
-from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus, MassnahmeTyp
 
 
 class AdresseCreate(BaseModel):
@@ -209,6 +209,7 @@ class TarifResponseAll(BaseModel):
     laufzeit: int
     spezielle_konditionen: str
 
+
 class TarifHaushaltResponse(BaseModel):
     vorname: str
     nachname: str
@@ -219,6 +220,7 @@ class TarifHaushaltResponse(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
+
 
 class PreisstrukturenCreate(BaseModel):
     bezugspreis_kwh: float
@@ -438,6 +440,7 @@ class VertragPreview(BaseModel):
     end_datum: date
     jahresabschlag: float
 
+
 class RechnungResponse(BaseModel):
     rechnung_id: int
     user_id: int
@@ -470,6 +473,7 @@ class VertragResponse(BaseModel):
     jahresabschlag: float
     vertragstatus: bool
 
+
 class VertragTarifResponse(BaseModel):
     vertrag_id: int
     netzbetreiber_id: int
@@ -484,6 +488,7 @@ class VertragTarifResponse(BaseModel):
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
+
 
 class VertragTarifResponseStatus(BaseModel):
     vertrag_id: int
@@ -501,6 +506,7 @@ class VertragTarifResponseStatus(BaseModel):
     spezielle_konditionen: str
     vertragstatus: bool
 
+
 class VertragTarifNBResponse(BaseModel):
     vorname: str
     nachname: str
@@ -517,7 +523,7 @@ class VertragTarifNBResponse(BaseModel):
     laufzeit: int
     tarifname: str
     spezielle_konditionen: str
-    
+
 
 class KalenderEintragCreate(BaseModel):
     zeitpunkt: date
@@ -592,7 +598,6 @@ class HaushaltsDatenFreigabe(BaseModel):
     energieeffizienzklasse: str
 
 
-
 class DashboardAggregatedData(BaseModel):
     gesamt_pv_erzeugung: float
     durchschnitt_soc: float
@@ -610,6 +615,7 @@ class PVAnlageResponse(BaseModel):
     anlage_id: int
     solarteur_id: Optional[int] = None
 
+
 class PVAnlageHaushaltResponse(BaseModel):
     anlage_id: int
     haushalt_id: int
@@ -618,3 +624,12 @@ class PVAnlageHaushaltResponse(BaseModel):
     nvpruefung_status: Optional[bool] | str = "Noch nicht geprüft"
 
 
+class EnergieausweiseUpdate(BaseModel):
+    energieeffizienzklasse: str
+    verbrauchskennwerte: float
+
+
+class EnergieeffizienzmassnahmenCreate(BaseModel):
+    massnahmetyp: MassnahmeTyp
+    einsparpotenzial: float
+    kosten: float

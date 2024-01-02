@@ -308,6 +308,7 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             anfragestatus=False  # False, da die Anfrage noch nicht bestätigt wurde
         )
         db.add(neue_haushaltsdaten)
+        pv_anlage.prozess_status = models.ProzessStatus.DatenAngefordert
         await db.commit()
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
@@ -334,4 +335,3 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
         message="Datenanfrage erfolgreich gestellt",
         haushalt_id=pv_anlage.haushalt_id,
         anfragestatus=neue_haushaltsdaten.anfragestatus)
-

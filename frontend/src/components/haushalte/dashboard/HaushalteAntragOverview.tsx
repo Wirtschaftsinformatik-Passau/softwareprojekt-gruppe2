@@ -12,6 +12,10 @@ import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import CheckIcon from '@mui/icons-material/Check';
 import { PVAntrag } from "../../../entitities/pv";
 
+
+
+// todo: conditional rendering of navigation of table based on prozesstatus
+
 const AntragTable = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
@@ -33,7 +37,7 @@ const AntragTable = () => {
    ["AnfrageGestellt", "Anfrage wurde gestellt", ""],
     ["DatenAngefordert", "Daten wurden angefordert", <CheckIcon/>],
     ["DatenFreigegeben", "Daten wurden freigegeben", ""],
-    ["AngebotGemacht", "Angebot wurde gemacht", ""],
+    ["AngebotGemacht", "Angebot wurde gemacht", <CheckIcon/>],
     ["AngebotAngenommen", "Angebot wurde angenommen", ""],
     ["PlanErstellt", "Plan wurde erstellt", ""],
     ["Genehmigt", "Plan wurde genehmigt", ""],

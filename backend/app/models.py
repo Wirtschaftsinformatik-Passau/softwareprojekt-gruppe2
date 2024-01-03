@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
 from app.types import (Rolle, Orientierung, ProzessStatus, Montagesystem, Schatten, AusweisStatus,
-                       Isolierungsqualitaet, Rechnungsart)
+                       Isolierungsqualitaet, Rechnungsart, MassnahmeTyp)
 
 
 class Adresse(Base):
@@ -134,7 +134,8 @@ class Energieausweise(Base):
     energieausweis_id = Column(Integer, primary_key=True)
     haushalt_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                          nullable=False)
-    massnahmen_id = Column(Integer)
+    massnahmen_id = Column(Integer, ForeignKey('energieeffizienzmassnahmen.massnahmen_id' if settings.OS == 'Linux'
+                                               else "Energieeffizienzmassnahmen.massnahmen_id"), nullable=True)
     energieberater_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                                nullable=True)
     energieeffizienzklasse = Column(String, nullable=True)
@@ -205,3 +206,15 @@ class Vertrag(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc'),
     )
+
+
+class Energieeffizienzmassnahmen(Base):
+    __tablename__ = 'energieeffizienzmassnahmen' if settings.OS == 'Linux' else "Energieeffizienzmassnahmen"
+    massnahmen_id = Column(Integer, primary_key=True)
+    haushalt_id = Column(Integer, ForeignKey('nutzer.user_id'
+                                             if settings.OS == 'Linux' else "Nutzer.user_id"))
+    massnahmetyp = Column(Enum(MassnahmeTyp), ENUM(*[r.value for r in MassnahmeTyp],
+                                                   name='massnahmetyp' if settings.OS == 'Linux' else "Massnahmetyp",
+                                                   create_type=False))
+    einsparpotenzial = Column(Float)
+    kosten = Column(Float)

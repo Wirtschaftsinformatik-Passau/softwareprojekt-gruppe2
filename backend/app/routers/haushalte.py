@@ -860,7 +860,7 @@ async def get_angebot(anlage_id: int,
 @router.post("/vertragswechsel/{neuer_tarif_id}")
 async def vertragswechsel(
     neuer_tarif_id: int,
-        alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
+    alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
                           current_user: models.Nutzer = Depends(oauth.get_current_user),
                           db: AsyncSession = Depends(database.get_db_async)):
     

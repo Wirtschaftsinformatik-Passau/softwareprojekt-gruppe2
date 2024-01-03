@@ -12,20 +12,59 @@ import {CircularProgress} from "@mui/material";
 import Header from "../../utility/Header";
 import StatBox from "../../utility/visualization/StatBox";
 import HomeIcon from '@mui/icons-material/Home';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
+import { Vertrag } from "./HaushaltVertrag";
+import { PVAntrag } from "../../../entitities/pv";
 
 
 const NetzHome = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const colors = tokens(theme.palette.mode);
-    const [isLoading1, setIsLoading1] = React.useState(true);
-    const [tarifData, setTarifData] = React.useState([]);
+    const [isLoading1, setIsLoading1] = React.useState<boolean>(true);
+    const [isLoading2, setIsLoading2] = React.useState<boolean>(true);
+    const [vertraege, setVetraege] = React.useState<Vertrag[]>([
+        {
+            "vertrag_id": 0,
+            "user_id": 0,
+            "tarif_id":  0,
+            "beginn_datum": "",
+            "end_datum": "",
+            "jahresabschlag": 0,
+            "vertragstatus": false,
+            "tarifname": "",
+            "preis_kwh": 0,
+            "grundgebuehr": 0,
+            "laufzeit": 0,
+            "spezielle_konditionen": "",
+            "netzbetreiber_id": 0,
+        }
+        ]);
+    const [antraege, setAntraege] = React.useState<PVAntrag[]>([
+        {
+            anlage_id: 0,
+            haushalt_id: 0,
+            solarteur_id: 0,
+            prozess_status: "",
+            nvpruefung_status: false            
+        }
+    ]);
+
+    useEffect(() => {
+        setStateOtherwiseRedirect(setVetraege, "haushalte/vertraege", navigate, {}, setIsLoading1)
+    }, []) ;
+
+    useEffect(() => {
+        setStateOtherwiseRedirect(setAntraege, "haushalte/angebot-anfordern", navigate, {}, setIsLoading2);
+    }, []);
+
+    
 
 
 
-    if (isLoading1) {
+    if (isLoading1 || isLoading2) {
       return (
         <Box display="flex" justifyContent="center" alignItems="center" height="300px">
           <CircularProgress />
@@ -68,7 +107,7 @@ const NetzHome = () => {
         onClick={() => navigate("/admin/roleOverview")}>
         
             <StatBox
-            title={Number(tarifData.length)}
+            title={Number(vertraege.length)}
             subtitle="Anzahl Tarife gesamt"
             progress="1"
             increase=""
@@ -89,12 +128,12 @@ const NetzHome = () => {
         onClick={() => navigate("/admin/roleOverview")}>
         
             <StatBox
-            title={Number(preisData.length)}
-            subtitle="Anzahl Preisstrukturen gesamt"
+            title={Number(vertraege.length)}
+            subtitle="Laufende Vertraege"
             progress="1"
             increase=""
             icon={
-              <AttachMoneyIcon
+              <TableViewIcon
                 sx={{ color: theme.palette.background.default, fontSize: "26px"}}
               />
             }
@@ -111,7 +150,7 @@ const NetzHome = () => {
         onClick={() => navigate("/admin/roleOverview")}>
         
             <StatBox
-            title={Number(haushalte.length)}
+            title={Number(vertraege.length)}
             subtitle="Anzahl Haushalte gesamt"
             progress="1"
             increase=""
@@ -140,48 +179,6 @@ const NetzHome = () => {
              <Header title="Geographische Verteilung der Haushalte" variant="h3"/>
              </Box>
             
-        <Grow in={true} timeout={1000}>
-            <Box 
-          
-            gridColumn={"span 3"} 
-            gridRow={"span 3"}
-            border={"1px solid grey"}
-            display="flex"
-            alignItems="center"
-            sx={{
-              cursor: "pointer",
-              ":hover":{
-                backgroundColor: colors.grey[800],
-              }
-            }}
-          
-            borderRadius={"15px"}
-            boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
-            justifyContent="center">
-                <BarChart isDashboard={false} data={laufzeitData} legend="Laufzeit" indexBy="laufzeit" ylabel="Anzahl"/>
-                 </Box>
-        </Grow>
-        <Grow in={true} timeout={1000}>
-            <Box 
-          
-            gridColumn={"span 3"} 
-            gridRow={"span 3"}
-            display="flex"
-            alignItems="center"
-            sx={{
-              cursor: "pointer",
-              ":hover":{
-                backgroundColor: colors.grey[800],
-              }
-            }}
-          
-            borderRadius={"15px"}
-            border={"1px solid grey"}
-            boxShadow="0px 6px 6px rgba(0, 0, 0, 0.4)"
-            justifyContent="center">
-                <LeafletGeo locations={geoData}/>
-                 </Box>
-        </Grow>
 
         </Box>
         </Box>

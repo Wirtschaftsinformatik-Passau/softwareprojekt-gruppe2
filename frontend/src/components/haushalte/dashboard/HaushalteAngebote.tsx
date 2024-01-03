@@ -10,7 +10,7 @@ import axios from "axios";
 import CircularProgress from '@mui/material/CircularProgress';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
-import { Angebot } from "../../../entitities/pv";
+import { Angexbot } from "../../../entitities/pv";
 import { dateFormater } from "../../../utils/dateUtils";
 
 
@@ -23,7 +23,7 @@ const AngebotDetail = ({}) => {
     const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
     const {anlageID} = useParams();
     const [angebote , setAngebote] = React.useState<Angebot[]>([{
-        angebot_id: "",
+        angebot_id: 0,
         kosten: "",
         angebotsstatus:  "",
         created_at: "",
@@ -93,7 +93,7 @@ const AngebotDetail = ({}) => {
                     }}/>
                     Angebot ablehnen    
                 </Button>
-                <Button variant="contained" color="primary" onClick={handleAnnehmen}
+                <Button variant="contained" color="primary" onClick={() => handleAnnehmen(angebot.angebot_id)}
                 sx = {{
                     backgroundColor: `${colors.color1[400]} !important`,
                     color: theme.palette.background.default

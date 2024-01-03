@@ -7,7 +7,7 @@ export interface PVAntrag {
 }
 
 export interface Angebot {
-    angebot_id: number | "",
+    angebot_id: number ,
     kosten: number | "",
     angebotsstatus: boolean | "",
     created_at: Date | "",

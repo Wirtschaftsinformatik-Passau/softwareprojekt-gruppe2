@@ -178,7 +178,7 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
     await db.commit()
 
     return schemas.InstallationsplanResponse(installationsplan=pv_anlage.installationsplan)
-
+ 
 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):

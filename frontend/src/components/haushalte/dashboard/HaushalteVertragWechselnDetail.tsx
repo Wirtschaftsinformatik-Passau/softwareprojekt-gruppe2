@@ -27,8 +27,8 @@ const HaushalteVertragWechselnDetail = ({}) => {
     const oldTarifID = searchParams.get("oldTarifID");
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [vertragPreview, setVertragPreview] = React.useState<IVertragPreview | null>(null)
+    const [conflictModalIsOpen, setConflictModalIsOpen] = React.useState<boolean>(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
-    const [conflictModalIsOpen, setConflictModalIsOpen] = React.useState(false);
     const [tarif, setTarif] = React.useState({
             "vorname": "",
             "nachname": "",
@@ -110,9 +110,9 @@ const HaushalteVertragWechselnDetail = ({}) => {
                 setConflictModalIsOpen(true)
             }
               
-              else if (err.response.status === 400) {
+              else if (err.response.status === 404) {
                 console.log("Bad Request", err.response.data)
-                setFailModalIsOpen(true)
+                setConflictModalIsOpen(true)
               }
             console.log(err)
         })
@@ -307,6 +307,8 @@ const HaushalteVertragWechselnDetail = ({}) => {
     text="Vertrag erfolgreich gewechselt!" navigationGoal="/haushalte"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
+    <SuccessModal open={conflictModalIsOpen} handleClose={() => setConflictModalIsOpen(false)}
+    text="Vertrag wurde bereits gewechselt oder gekündigt!" navigationGoal="/haushalte"/>
         </Box>
     )
 }

@@ -31,7 +31,21 @@ async def check_energieberatende_role(current_user: models.Nutzer, method: str, 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
-        neue_rechnung = models.Rechnungen(**rechnung.dict())
+        # Hier holen wir die Energieeffizienzmaßnahmen des Nutzers, um die Kosten zu erhalten.
+        massnahmen_query = select(models.Energieeffizienzmassnahmen).where(
+            models.Energieeffizienzmassnahmen.haushalt_id == rechnung.user_id
+        )
+        massnahmen_result = await db.execute(massnahmen_query)
+        massnahme = massnahmen_result.scalar_one_or_none()
+
+        if massnahme is None:
+            raise HTTPException(status_code=404, detail="Energieeffizienzmaßnahme nicht gefunden")
+
+        # Setzen der Kosten als Rechnungsbetrag
+        rechnung_dict = rechnung.dict()
+        rechnung_dict["rechnungsbetrag"] = massnahme.kosten
+
+        neue_rechnung = models.Rechnungen(**rechnung_dict)
         db.add(neue_rechnung)
         await db.commit()
         await db.refresh(neue_rechnung)
@@ -153,3 +167,244 @@ async def datenanfrage_stellen(energieausweis_id: int = Path(..., description="D
         message="Datenanfrage erfolgreich gestellt",
         haushalt_id=energieausweis.haushalt_id,
         anfragestatus=neue_haushaltsdaten.anfragestatus)
+
+
+
+@router.post("/zusatzdaten-eingeben/{energieausweis_id}", status_code=status.HTTP_200_OK)
+async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: schemas.EnergieausweiseUpdate,
+                               massnahmen_data: schemas.EnergieeffizienzmassnahmenCreate,
+                               current_user: models.Nutzer = Depends(oauth.get_current_user),
+                               db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erfasst und gibt zusätzliche Daten für einen Energieausweis und Energieeffizienzmassnahmen ein.
+    Dieser Endpunkt ermöglicht es Energieberatenden, zusätzliche Daten zu einem Energieausweis hinzuzufügen
+    und neue Maßnahmen für die Energieeffizienz zu erfassen.
+    - `energieausweis_id`: Eindeutige ID des Energieausweises.
+    - `energieausweis_data`: Aktualisierte Daten für den Energieausweis.
+    - `massnahmen_data`: Daten für die zu erstellenden Energieeffizienzmassnahmen.
+    ## Responses
+    - '200 OK': Daten erfolgreich erfasst.
+    - '400 Bad Request': Ungültige Anfrage, z.B. unvollständige Haushaltsdaten.
+    - '404 Not Found': Energieausweis nicht gefunden.
+    - '500 Internal Server Error': Unerwarteter Fehler.
+    """
+    await check_energieberatende_role(current_user, "POST", "/daten-erfassung/{energieausweis_id}")
+    try:
+        if not energieausweis_id:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/daten-erfassung/{energieausweis_id}",
+                method="POST",
+                message="Ungültige Energieausweis-ID angegeben",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Energieausweis-ID angegeben")
+
+        energieausweis = await db.get(models.Energieausweise, energieausweis_id)
+        if not energieausweis:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/daten-erfassung/{energieausweis_id}",
+                method="POST",
+                message=f"Energieausweis nicht gefunden für: {energieausweis_id}",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Energieausweis nicht gefunden.")
+
+        if energieausweis.ausweis_status != models.AusweisStatus.AnfrageGestellt:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/daten-erfassung/{energieausweis_id}",
+                method="POST",
+                message=f"Ausweis status is not 'AnfrageGestellt' for id: {energieausweis_id}",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Ausweis Status ist nicht 'AnfrageGestellt'.")
+
+        haus_data = await db.get(models.Haushalte, energieausweis.haushalt_id)
+        if not haus_data or any(attribute is None for attribute in vars(haus_data).values()):
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/daten-erfassung/{energieausweis_id}",
+                method="POST",
+                message=f"Unvollständige Haushaltsdaten für haushalt_id: {energieausweis.haushalt_id}",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Haushaltsdaten sind unvollständig.")
+
+        energieausweis.energieeffizienzklasse = energieausweis_data.energieeffizienzklasse
+        energieausweis.verbrauchskennwerte = energieausweis_data.verbrauchskennwerte
+        energieausweis.ausweis_status = models.AusweisStatus.ZusatzdatenEingegeben
+
+        neue_massnahme = models.Energieeffizienzmassnahmen(
+            haushalt_id=energieausweis.haushalt_id,
+            massnahmetyp=massnahmen_data.massnahmetyp,
+            einsparpotenzial=massnahmen_data.einsparpotenzial,
+            kosten=massnahmen_data.kosten
+        )
+        db.add(neue_massnahme)
+        await db.commit()
+        await db.refresh(neue_massnahme)
+
+        energieausweis.massnahmen_id = neue_massnahme.massnahmen_id
+        await db.commit()
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/daten-erfassung/{energieausweis_id}",
+            method="POST",
+            message=f"Die Daten für energieausweis_id wurden erfolgreich erfasst: {energieausweis_id}",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return {
+            "message": f"Daten für Energieausweis {energieausweis_id} und zugehörige Massnahmen erfolgreich erfasst."}
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/daten-erfassung/{energieausweis_id}",
+            method="POST",
+            message=f"Es ist ein Datenbankfehler aufgetreten: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler") from e
+    except HTTPException as http_ex:
+        await db.rollback()
+        raise http_ex
+    except Exception as e:
+        await db.rollback()
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/daten-erfassung/{energieausweis_id}",
+            method="POST",
+            message=f"Unerwarteter Fehler: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Unerwarteter Fehler aufgetreten") from e
+
+
+@router.post("/energieausweis-erstellen/{energieausweis_id}", status_code=status.HTTP_200_OK,
+             response_model=schemas.EnergieausweisCreateResponse)
+async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schemas.EnergieausweisCreate,
+                                   current_user: models.Nutzer = Depends(oauth.get_current_user),
+                                   db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt einen Energieausweis und setzt den AusweisStatus auf 'Ausgestellt'.
+    Dieser Endpunkt ermöglicht es Energieberatenden, einen Energieausweis final zu erstellen,
+    indem das Ausstellungsdatum und die Gültigkeit festgelegt werden und der Status auf 'Ausgestellt' gesetzt wird.
+    Voraussetzung ist, dass der AusweisStatus vorher 'ZusatzdatenEingegeben' war.
+    Parameters:
+    - energieausweis_id (int): Die ID des betreffenden Energieausweises.
+    - erstellen_data (EnergieausweisErstellen): Ein Objekt mit den Feldern `ausstellungsdatum` und `gueltigkeit`.
+    Responses:
+    - 200 OK: Energieausweis erfolgreich erstellt und Status aktualisiert.
+    - 400 Bad Request: Ungültige Anfrage, z.B. wenn der AusweisStatus nicht 'ZusatzdatenEingegeben' ist oder die Daten ungültig sind.
+    - 404 Not Found: Energieausweis mit der angegebenen ID nicht gefunden.
+    - 500 Internal Server Error: Unerwarteter Fehler, z.B. bei Datenbankproblemen.
+    """
+    await check_energieberatende_role(current_user, "POST", f"/energieausweis-erstellen/{energieausweis_id}")
+
+    try:
+        if not energieausweis_id:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+                method="POST",
+                message="Ungültige Energieausweis-ID angegeben",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Energieausweis-ID angegeben")
+
+        energieausweis = await db.get(models.Energieausweise, energieausweis_id)
+        if not energieausweis:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+                method="POST",
+                message=f"Energieausweis nicht gefunden für: {energieausweis_id}",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Energieausweis nicht gefunden.")
+
+        if energieausweis.ausweis_status != models.AusweisStatus.ZusatzdatenEingegeben:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+                method="POST",
+                message=f"Ausweis status is not 'ZusatzdatenEingegeben' for id: {energieausweis_id}",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Ausweis Status ist nicht 'ZusatzdatenEingegeben'.")
+
+        if erstellen_data.gueltigkeit <= erstellen_data.ausstellungsdatum:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+                method="POST",
+                message=f"Gültigkeit muss später als das Ausstellungsdatum sein.",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Gültigkeit muss später als das Ausstellungsdatum sein.")
+
+        energieausweis.ausstellungsdatum = erstellen_data.ausstellungsdatum
+        energieausweis.gueltigkeit = erstellen_data.gueltigkeit
+        energieausweis.ausweis_status = models.AusweisStatus.Ausgestellt
+
+        await db.commit()
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+            method="POST",
+            message=f"Energieausweis erfolgreich aktualisiert für id: {energieausweis_id}",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+        return schemas.EnergieausweisCreateResponse(message="Energieausweis erfolgreich erstellt "
+                                                            "und AusweisStatus aktualisiert",
+                                                    ausweis_status='Ausgestellt')
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+            method="POST",
+            message=f"Datenbankfehler aufgetreten: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler") from e
+    except HTTPException as http_ex:
+        await db.rollback()
+        raise http_ex
+    except Exception as e:
+        await db.rollback()
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+            method="POST",
+            message=f"Unerwarteter Fehler: {str(e)}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Unexpected error occurred") from e

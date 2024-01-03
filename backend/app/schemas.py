@@ -2,9 +2,8 @@ import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
 from typing import Dict, List, Optional
-from app.types import *
 
-from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus, MassnahmeTyp
 
 
 class AdresseCreate(BaseModel):
@@ -618,3 +617,22 @@ class PVAnlageHaushaltResponse(BaseModel):
     nvpruefung_status: Optional[bool] | str = "Noch nicht geprüft"
 
 
+class EnergieausweiseUpdate(BaseModel):
+    energieeffizienzklasse: str
+    verbrauchskennwerte: float
+
+
+class EnergieeffizienzmassnahmenCreate(BaseModel):
+    massnahmetyp: MassnahmeTyp
+    einsparpotenzial: float
+    kosten: float
+
+
+class EnergieausweisCreate(BaseModel):
+    ausstellungsdatum: date
+    gueltigkeit: date
+
+
+class EnergieausweisCreateResponse(BaseModel):
+    message: str
+    ausweis_status: str

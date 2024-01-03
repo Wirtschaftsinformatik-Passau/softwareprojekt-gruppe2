@@ -25,7 +25,8 @@ async def check_energieberatende_role(current_user: models.Nutzer, method: str, 
             success=False
         )
         logger.error(logging_error.dict())
-        raise HTTPException(status_code=403, detail="Nur Energieberatende haben Zugriff auf diese Daten")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="Nur Energieberatende haben Zugriff auf diese Daten")
 
 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
@@ -393,3 +394,101 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Unexpected error occurred") from e
+
+
+@router.put("/abnahme-pvanlage/{anlage_id}", status_code=status.HTTP_200_OK,
+            response_model=schemas.PVAnlageAbnahmeResponse)
+async def abnahmebestaetigung_fuer_pvanlagen(anlage_id: int,
+                                             current_user: models.Nutzer = Depends(oauth.get_current_user),
+                                             db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Bestätigt die Abnahme einer PV-Anlage und aktualisiert den Prozessstatus.
+
+    Diese Route ermöglicht es autorisierten Energieberatenden, die Abnahme einer PV-Anlage zu bestätigen,
+    indem der Prozessstatus der Anlage auf 'Abgenommen' gesetzt wird.
+
+    Parameters:
+    - anlage_id (int): Die ID der PV-Anlage, deren Abnahme bestätigt wird.
+    - current_user (models.Nutzer): Der aktuell authentifizierte Nutzer (automatisch aus dem Token geladen).
+    - db (AsyncSession): Die Datenbank-Session für asynchrone DB-Operationen.
+
+    Returns:
+    - Ein Objekt vom Typ PVAnlageResponse mit einer Nachricht und dem aktualisierten Status.
+
+    Raises:
+    - HTTPException: Verschiedene Fehlercodes und Nachrichten, abhängig von der Art des aufgetretenen Fehlers.
+    """
+
+    await check_energieberatende_role(current_user, "PUT", "/abnahme-pvanlage/{anlage_id}")
+
+    try:
+        pv_anlage = await db.get(models.PVAnlage, anlage_id)
+        if not pv_anlage:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/abnahme-pvanlage/{anlage_id}",
+                method="PUT",
+                message=f"PV-Anlage mit id {anlage_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PV-Anlage nicht gefunden")
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/abnahme-pvanlage/{anlage_id}",
+            method="PUT",
+            message=f"Datenbankfehler beim Abrufen der PV-Anlage: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="PV-Anlage konnte nicht abgerufen werden")
+
+    empty_fields = [field for field, value in vars(pv_anlage).items() if value is None]
+    if empty_fields:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/abnahme-pvanlage/{anlage_id}",
+            method="PUT",
+            message=f"PV-Anlage {anlage_id} hat fehlende Attribute: {empty_fields}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail=f"Nicht alle erforderlichen Attribute der PV-Anlage sind ausgefüllt: {empty_fields}")
+
+    try:
+        pv_anlage.prozess_status = models.ProzessStatus.Abgenommen
+        db.add(pv_anlage)
+        await db.commit()
+        await db.refresh(pv_anlage)
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/abnahme-pvanlage/{anlage_id}",
+            method="PUT",
+            message=f"PV-Anlage {anlage_id} Status aktualisiert auf 'Abgenommen'",
+            success=True
+        )
+        logger.info(logging_obj.dict())
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/abnahme-pvanlage/{anlage_id}",
+            method="PUT",
+            message=f"Datenbankfehler beim Aktualisieren der PV-Anlage: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=500, detail=f"Aktualisierung der PV-Anlage fehlgeschlagen")
+
+    response = schemas.PVAnlageAbnahmeResponse(
+        message=f"Abnahmebestätigung für PV-Anlage {anlage_id} erfolgreich.",
+        anlage_id=anlage_id,
+        prozess_status=pv_anlage.prozess_status.value
+    )
+
+    return response

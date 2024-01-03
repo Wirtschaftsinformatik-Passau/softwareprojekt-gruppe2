@@ -643,3 +643,9 @@ class EnergieausweisCreate(BaseModel):
 class EnergieausweisCreateResponse(BaseModel):
     message: str
     ausweis_status: str
+
+
+class PVAnlageAbnahmeResponse(BaseModel):
+    message: str
+    anlage_id: int
+    prozess_status: str

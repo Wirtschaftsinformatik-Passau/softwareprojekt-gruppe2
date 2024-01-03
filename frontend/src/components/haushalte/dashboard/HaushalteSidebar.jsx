@@ -228,34 +228,8 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            <Typography
-              variant="h6"
-              color={colors.white[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Haushalt
-            </Typography>
-            <Item
-              title="Übersicht über Haushalte"
-              to="/haushalteOverview"
-              icon={<HolidayVillageIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Offene Anträge"
-              to="/einspeisungenOverview"
-              icon={<AccessTimeIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Angenommene Anträge"
-              to="/einspeisungenAngenommen"
-              icon={< CheckBoxIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
+           
+
             <Typography
               variant="h6"
               color={colors.white[300]}

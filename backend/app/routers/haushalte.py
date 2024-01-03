@@ -3,8 +3,8 @@ from datetime import date, datetime
 from uuid import uuid4
 from typing import List
 import sqlalchemy
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path
-from sqlalchemy import select, func, exc, update
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path, Query
+from sqlalchemy import select, func, exc, update, and_
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -148,7 +148,7 @@ async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get
     await check_haushalt_role(current_user, "GET", f"/tarifantrag/{tarif_id}")
     try:
         tarif_query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                           (models.Tarif.active == True))
+                                                 (models.Tarif.active == True))
         result = await db.execute(tarif_query)
         tarif = result.scalar_one_or_none()
 
@@ -539,8 +539,8 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
                          current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
     await check_haushalt_role(current_user, "POST", "/datenfreigabe")
-
-    haushaltsdaten = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == current_user.user_id))
+    user_id = current_user.user_id
+    haushaltsdaten = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == user_id))
     haushalt = haushaltsdaten.scalars().first()
     if not haushalt:
         logging_obj = schemas.LoggingSchema(
@@ -578,6 +578,15 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         )
         await db.execute(update_query)
         await db.commit()
+
+        pv_anlagen = await db.execute(
+            select(models.PVAnlage).where(models.PVAnlage.haushalt_id == current_user.user_id))
+        pv_anlagen = pv_anlagen.all()
+        if pv_anlagen:
+            for pv in pv_anlagen:
+                pv[0].prozess_status = models.ProzessStatus.DatenFreigegeben
+                await db.commit()
+                await db.refresh(pv[0])
     except SQLAlchemyError as e:
         await db.rollback()
         logging_obj = schemas.LoggingSchema(
@@ -668,7 +677,7 @@ async def deactivate_vertrag(vertrag_id: int,
         await db.refresh(vertrag)
         return {"message": f"Vertrag {vertrag_id} wurde erfolgreich deaktiviert"}
     except Exception as e:
-        raise e
+        # raise e
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
 
@@ -727,6 +736,7 @@ async def update_haushalt_daten(haushalt_id: int,
                                 db: AsyncSession = Depends(database.get_db_async),
                                 haushalt_daten: schemas.HaushaltsDatenFreigabe = Depends(get_haushalt_daten)):
     await check_haushalt_role(current_user, "PUT", f"/haushalt-daten/{haushalt_id}")
+
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
         result = await db.execute(stmt)
@@ -906,3 +916,100 @@ async def angebot_ablehnen(anlage_id: int = Path(..., description="Die ID der PV
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
     return {"message": f"Angebot für PV-Anlage {anlage_id} erfolgreich abgelehnt."}
+
+
+@router.get("/angebote/{anlage_id}")
+async def get_angebot(anlage_id: int,
+                      current_user: models.Nutzer = Depends(oauth.get_current_user),
+                      db: AsyncSession = Depends(database.get_db_async)):
+    await check_haushalt_role(current_user, "GET", f"/angebote/{anlage_id}")
+    try:
+        stmt = select(models.Angebot).where(models.Angebot.angebot_id == anlage_id)
+        result = await db.execute(stmt)
+        angebote = result.scalars().all()
+        if not angebote:
+            logging_obj = LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/angebote/{anlage_id}",
+                method="GET",
+                message=f"Angebot {anlage_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Angebot {anlage_id} nicht gefunden")
+
+        return [{
+            "angebot_id": angebot.angebot_id,
+            "kosten": angebot.kosten,
+            "angebotsstatus": angebot.angebotsstatus,
+            "created_at": angebot.created_at,
+        } for angebot in angebote]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+
+
+@router.post("/vertragswechsel/{neuer_tarif_id}")
+async def vertragswechsel(neuer_tarif_id: int,
+                          alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
+                          current_user: models.Nutzer = Depends(oauth.get_current_user),
+                          db: AsyncSession = Depends(database.get_db_async)):
+    user_id = current_user.user_id
+    query = select(models.Vertrag).where(
+        and_(
+            models.Vertrag.vertrag_id == alter_vertrag_id,
+            models.Vertrag.user_id == user_id,
+            models.Vertrag.vertragstatus == True
+        )
+    )
+    alter_vertrag = await db.execute(query)
+    alter_vertrag = alter_vertrag.scalar_one_or_none()
+    if not alter_vertrag:
+        raise HTTPException(status_code=404, detail="Alter Vertrag nicht gefunden oder bereits deaktiviert")
+
+    # Überprüfen, ob der neue Tarif verfügbar ist
+    query = select(models.Tarif).where(
+        and_(
+            models.Tarif.tarif_id == neuer_tarif_id,
+            models.Tarif.active == True
+        )
+    )
+    neuer_tarif = await db.execute(query)
+    neuer_tarif = neuer_tarif.scalar_one_or_none()
+    if not neuer_tarif:
+        raise HTTPException(status_code=404, detail="Neuer Tarif nicht gefunden")
+
+    # Deaktiviere den alten Vertrag
+    alter_vertrag.vertragstatus = False
+    await db.commit()
+
+    # Erstelle den neuen Vertrag
+    beginn_datum = alter_vertrag.end_datum
+    end_datum = beginn_datum + timedelta(days=365 * neuer_tarif.laufzeit)
+    jahresabschlag = neuer_tarif.grundgebuehr + neuer_tarif.preis_kwh * KWH_VERBRAUCH_JAHR
+
+    try:
+        neuer_vertrag = models.Vertrag(
+            user_id=user_id,
+            tarif_id=neuer_tarif_id,
+            beginn_datum=beginn_datum,
+            end_datum=end_datum,
+            jahresabschlag=jahresabschlag,
+            vertragstatus=True,
+            netzbetreiber_id=neuer_tarif.netzbetreiber_id
+        )
+        db.add(neuer_vertrag)
+        await db.commit()
+        await db.refresh(neuer_vertrag)
+        return schemas.VertragResponse(
+            vertrag_id=neuer_vertrag.vertrag_id,
+            user_id=neuer_vertrag.user_id,
+            tarif_id=neuer_vertrag.tarif_id,
+            beginn_datum=neuer_vertrag.beginn_datum,
+            end_datum=neuer_vertrag.end_datum,
+            jahresabschlag=neuer_vertrag.jahresabschlag,
+            vertragstatus=neuer_vertrag.vertragstatus
+        )
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Fehler  bei der Vertragserstellung: {e}")

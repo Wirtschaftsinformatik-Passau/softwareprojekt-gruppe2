@@ -5,7 +5,7 @@ from typing import List
 import sqlalchemy
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path
 from sqlalchemy import select, func, exc, update
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -147,10 +147,11 @@ async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get
     # Prüfen, ob der angeforderte Tarif existiert
     await check_haushalt_role(current_user, "GET", f"/tarifantrag/{tarif_id}")
     try:
-        query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
+        tarif_query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
                                            (models.Tarif.active == True))
-        result = await db.execute(query)
+        result = await db.execute(tarif_query)
         tarif = result.scalar_one_or_none()
+
         if not tarif:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
@@ -161,17 +162,38 @@ async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get
             )
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarif nicht gefunden")
-
+    except IntegrityError as ie:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/vertrag-preview",
+            method="GET",
+            message=f"Integritätsfehler beim Abrufen des Tarifs: {ie}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Problem mit der Datenintegrität aufgetreten")
+    except SQLAlchemyError as sae:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/vertrag-preview",
+            method="GET",
+            message=f"Datenbankfehler beim Abrufen des Tarifs: {sae}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Datenbankfehler aufgetreten")
     except Exception as e:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/vertrag-preview",
             method="GET",
-            message=f"Felher beim Abrufen des Tarifs: {e}",
+            message=f"Unerwarteter Fehler beim Abrufen des Tarifs: {e}",
             success=False
         )
         logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen des Tarifs")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail="Unerwarteter Fehler aufgetreten")
 
     try:
         beginn_datum = date.today()

@@ -1,0 +1,53 @@
+# Ignore specific directories
+tose_backend/
+venv_new/
+logs/
+frontend/
+
+# Ignore Python byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ignore C extensions
+*.so
+
+# Ignore IDE-specific files
+.idea/
+
+# Ignore distribution / packaging
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ignore installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Ignore Sphinx documentation
+docs/_build/
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignore environment configuration files
+vars/.env

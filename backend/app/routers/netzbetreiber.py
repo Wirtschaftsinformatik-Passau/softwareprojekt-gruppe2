@@ -953,4 +953,3 @@ async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.ge
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Deaktivieren des Tarifs: {e}")
- 

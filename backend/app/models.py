@@ -217,4 +217,3 @@ class Energieeffizienzmassnahmen(Base):
                                                    create_type=False))
     einsparpotenzial = Column(Float)
     kosten = Column(Float)
- 

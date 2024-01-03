@@ -5,6 +5,7 @@ import { useNavigate , useParams} from "react-router-dom";
 import Header from "../../utility/Header";
 import SuccessModal from "../../utility/SuccessModal";
 import axios from "axios";
+import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CircularProgress from '@mui/material/CircularProgress';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
@@ -124,9 +125,22 @@ const VertragDetail = ({}) => {
                 }}>
                     Abbrechen    
                 </Button>
-                <Button variant="contained" color="primary" onClick={handleKuendigung}
+                <Button variant="contained" color="primary" 
+                onClick={() => navigate(`/haushalte/vertragChangeOverview/${vertragID}`)}
                 sx = {{
                     backgroundColor: `${colors.color1[500]} !important`,
+                    color: theme.palette.background.default
+                }}>
+                    <ChangeCircleIcon sx={{
+                        marginRight: "6px",
+                        marginBottom: "1px"
+                    
+                    }}/>
+                    Vertrag wechseln    
+                </Button>
+                <Button variant="contained" color="primary" onClick={handleKuendigung}
+                sx = {{
+                    backgroundColor: `${colors.color5[500]} !important`,
                     color: theme.palette.background.default
                 }}>
                     <DeleteForeverIcon sx={{

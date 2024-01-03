@@ -33,13 +33,18 @@ export const formatDate = (dateString) => {
     return `${year}-${month}-${day}`;
 }
 
-export const dateFormater = (date) => {
+export const dateFormater = (date, usformat=false) => {
     const dateObject = new Date(date);
     const year = dateObject.getFullYear();
     const month = dateObject.getMonth() + 1;
     const day = dateObject.getDate();
     const hours = dateObject.getHours();
     const minutes = dateObject.getMinutes();
-    const dateString = day + "." + month + "." + year + " " + hours + ":" + minutes;
+    const minutesString = minutes < 10 ? "0" + minutes : minutes;
+    const hoursString = hours < 10 ? "0" + hours : hours;
+    const dateString = day + "." + month + "." + year + " " + hoursString + ":" + minutesString
+    if (usformat) {
+        return month + "/" + day + "/" + year + " " + hoursString + ":" + minutesString;
+    }
     return dateString;
 }

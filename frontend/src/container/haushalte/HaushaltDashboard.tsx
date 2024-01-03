@@ -17,6 +17,8 @@ import HaushaltSmartMeterOverview from "../../components/haushalte/dashboard/Hau
 import HaushhaltAntragOverview from "../../components/haushalte/dashboard/HaushalteAntragOverview";
 import HaushalteEinspeisungsAnfrage from "../../components/haushalte/dashboard/HaushalteEinpeisungsAnfrage";
 import HaushalteDataOverview from "../../components/haushalte/dashboard/HaushalteDataOverview";
+import HaushalteAngebote from "../../components/haushalte/dashboard/HaushalteAngebote";
+import HaushalteHome from "../../components/haushalte/dashboard/HaushalteHome";
 
 const  HaushaltDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -40,7 +42,7 @@ const  HaushaltDashboard = () => {
                 <Topbar fixed={true}/>
                 <Routes>
                     <Route path="/tarifTable" element={<HaushalteTarifTable/>}/>
-
+                    <Route path="/" element={<HaushalteHome/>}/>
                     <Route path="/vertragSelect/:tarifID" element={<HaushalteVertragCreate/>}/>
                     <Route path="/vertragOverview" element={<HaushalteVertrag/>}/>  
                     <Route path="/vertragOverview/:vertragID" element={<HaushalteVertragDetail/>}/>
@@ -49,6 +51,7 @@ const  HaushaltDashboard = () => {
                     <Route path="/smartMeterOverview" element={<HaushaltSmartMeterOverview/>}/>
                     <Route path="/eispesungsantragOverview" element={<HaushhaltAntragOverview/>}/>    
                     <Route path="/einspeisungsanfrage" element={<HaushalteEinspeisungsAnfrage/>}/>
+                    <Route path="/angebote/:anlageID" element={<HaushalteAngebote/>}/>
                     <Route path="/dataOverview" element={<HaushalteDataOverview/>}/>
                 </Routes>
                 </div>

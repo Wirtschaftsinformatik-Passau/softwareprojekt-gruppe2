@@ -27,8 +27,14 @@ const AntragTable = () => {
     setStateOtherwiseRedirect(setData, "haushalte/angebot-anfordern", navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
-  const handleRowClick = (params: { row: { tarif_id: SetStateAction<null>; }; }) => {
-    navigate(`/haushalte/vertragSelect/${params.row.tarif_id}`);
+  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number> ,
+                                          prozess_status: SetStateAction<String>}; }) => {
+    const { row } = params;
+    console.log(row)
+    row.prozess_status === "DatenAngefordert" ? navigate("/haushalte/dataOverview/") :
+    row.prozess_status === "AngebotGemacht" ? navigate("/haushalte/angebote/"+row.anlage_id) :
+    undefined
+    
   }
 
   
@@ -88,8 +94,10 @@ const columns = [
               justifyContent="center"
               backgroundColor={
                 prozess_status === "DatenAngefordert"
-                  ? colors.color5[400]
-                  : undefined}
+                  ? colors.color5[400] :
+                  prozess_status === "AngebotGemacht"
+                  ? colors.color3[400] :
+                   undefined}
             >
               <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
                 {prozess_status}
@@ -169,13 +177,14 @@ return (
     <Grow in={true} timeout={1000}>
     <Box gridColumn={"span 2"} display={"grid"} justifyContent={"center"} gridTemplateColumns="repeat(2, 1fr)" mt="20px" >
           <Box textAlign={"center"} gridColumn={"span 2"} >
-        <Header title="Erklärung Prozessstatus" variant="h4" mb="10px" subtitle="Wenn Handlung nötig, dann bitte auf Antrag in Tabelle klicken und bearbeiten"/>
+        <Header title="Erklärung Prozessstatus" variant="h3" mb="10px" subtitle="Wenn Handlung nötig, dann bitte auf Antrag in Tabelle klicken und bearbeiten"/>
         </Box>
 
         <Box display={"flex"} justifyContent={"center"} gridColumn={"span 2"} mb={"10px"} mt="10px" ml="10px"
         sx = {{
           "& .MuiTableCell-root": {
             color: colors.color1[400],
+            fontSize: "0.9rem",
           },
           "& .MuiTableCell-head": {
             fontWeight: "bold",

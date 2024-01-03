@@ -32,3 +32,14 @@ export const formatDate = (dateString) => {
 
     return `${year}-${month}-${day}`;
 }
+
+export const dateFormater = (date) => {
+    const dateObject = new Date(date);
+    const year = dateObject.getFullYear();
+    const month = dateObject.getMonth() + 1;
+    const day = dateObject.getDate();
+    const hours = dateObject.getHours();
+    const minutes = dateObject.getMinutes();
+    const dateString = day + "." + month + "." + year + " " + hours + ":" + minutes;
+    return dateString;
+}

@@ -10,7 +10,8 @@ from pydantic import ValidationError
 import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
-from app.schemas import LoggingSchema
+from app.config import Settings
+from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, TarifResponse
 from app import config
 import pandas as pd
 import io
@@ -97,9 +98,7 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
-                       current_user: models.Nutzer = Depends(oauth.get_current_user),
-                       db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 

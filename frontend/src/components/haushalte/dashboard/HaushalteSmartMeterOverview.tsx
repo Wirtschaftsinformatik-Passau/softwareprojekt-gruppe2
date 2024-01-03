@@ -6,6 +6,7 @@ import { DateRangePicker, DateRange } from "mui-daterange-picker";
 import React, { Dispatch, useEffect } from "react";
 import {Grow} from "@mui/material";
 import axios from "axios";
+import { DataGrid } from "@mui/x-data-grid";
 
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import LineChart from "../../utility/visualization/LineChart";
@@ -13,8 +14,9 @@ import Header from "../../utility/Header";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { tokens } from "../../../utils/theme";
 import SuccessModal from "../../utility/SuccessModal";
-import { convertToDateOnly, convertToTimeOnly, formatDate } from "../../../utils/dateUtils";
+import { convertToDateOnly, convertToTimeOnly, dateFormater, formatDate } from "../../../utils/dateUtils";
 import { IUser } from "../../../entitities/user";
+import {smartMeterData} from "../../../entitities/smartMeter";
 
 interface IUserFull extends IUser {
     user_id: number
@@ -78,13 +80,14 @@ const extractFieldFromData = (rawData: Array<SmartmeterData>, field: string): Ex
 
 // todo: smart meter peak daten anzeigen
 // am besten als barchart
-const NetzbetreiberSmartmeterOverview = () => {
+const HaushalteSmartmeterOverview = () => {
     const navigate = useNavigate();
   
     const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
+    const colors: Object = tokens(theme.palette.mode);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
     const [currentUser, setCurrentUser] = React.useState<IUserFull | null>(null)
+    const [smartMeterData, setSmartMeterData] = React.useState<SmartmeterData[]>([])
     const [pvData, setPvData] = React.useState<ExtractedFieldData[]>([])
     const [socData, setSocData] = React.useState<ExtractedFieldData[]>([])
     const [batterieData, setBatterieData] = React.useState<ExtractedFieldData[]>([])
@@ -103,7 +106,68 @@ const NetzbetreiberSmartmeterOverview = () => {
         const toggleDateRangePicker = () => {
             setOpenDateRangePicker(!openDateRangePicker);
           };
-
+    
+        const columns = [
+        {
+            field: "datum",
+            headerName: "Datum",
+            flex: 1,
+            align: "left",
+            headerAlign: "left",
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                dateFormater(params.value, true)
+              ),
+            },
+            {
+            field: "gesamt_pv_erzeugung",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt PV Erzeugung Watt",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+              ),
+            },
+    
+        {
+            field: "gesamt_soc",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt SOC % ",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+              ),
+            
+            },
+            {
+            field: "gesamt_batterie_leistung",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt Batterieleistung Watt",
+            type: "number",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+              ),
+            },
+            {
+            field: "gesamt_last",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt Last Watt",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+              ),
+            
+            },
+        ];
 
     const intervalMapping = {
         "WEEK": 2,
@@ -166,6 +230,11 @@ const NetzbetreiberSmartmeterOverview = () => {
         setStateOtherwiseRedirect(setCurrentUser, "users/current/single", navigate, {Authorization: `Bearer ${token}`})
       }, [])
 
+    useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+        setStateOtherwiseRedirect(setSmartMeterData, `netzbetreiber/dashboard/${currentUser?.user_id}?field=all&period=${pvPeriod}&start=${formatDate(dateRange.startDate)}&end=${formatDate(dateRange.endDate)}`,
+        navigate, {Authorization: `Bearer ${token}`})
+    }, [pvData, dateRange])
 
    
 
@@ -189,7 +258,7 @@ const NetzbetreiberSmartmeterOverview = () => {
                 },
                 '& .MuiSelect-outlined': { 
                     color: `${colors.color1[500]} !important`,
-                },
+                },                  
                 '& .MuiFormLabel-root': {
                     color: `${colors.color1[500]} !important`,
                 },
@@ -317,10 +386,38 @@ const NetzbetreiberSmartmeterOverview = () => {
                 <LineChart isDashboard={false} data={[{id:"gesamt_pv_erzeugung", data: periodMapping[pvPeriod](lastData)}]} 
                 tickInterval={intervalMapping[pvPeriod]} enablePoints={false} marginRight={10} legendOffset={-60} ylabel="Watt Gesamtlast"/>
                  </Box>
-        </Grow>
-        
-            
-                </Box>)}
+        </Grow>           
+                </Box>
+                )}
+                <Grow in={true} timeout={1000}>
+    <Box ml="0px" borderRadius="20px" gridRow={"span 12"} 
+            gridColumn={"span 4"}  width={"100%"} 
+    >
+ <Box
+    m="20px 0 0 0"
+    height="100vh"
+    gridColumn={"span-2"}
+    sx={{
+        "& .MuiDataGrid-cell": {
+            color: colors.grey[400],
+            borderBottom: "none",
+          },
+          "& .name-column--cell": {
+            color: colors.grey[400]
+          },
+          "& .MuiDataGrid-columnHeaders": {
+            backgroundColor: "",
+            color: colors.grey[400],
+            borderBottom: "none",
+          }
+    }}
+    
+  >
+    <DataGrid  getRowId={(row) => row.datum} rows={smartMeterData} 
+               columns={columns} hideFooter={false}/>
+  </Box>
+</Box>
+    </Grow>
 
             <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
              text="Keine Daten für diesen Haushalt für diese Zeitangabe gefunden" />
@@ -328,4 +425,4 @@ const NetzbetreiberSmartmeterOverview = () => {
     )
 }
 
-export default NetzbetreiberSmartmeterOverview;
+export default HaushalteSmartmeterOverview;

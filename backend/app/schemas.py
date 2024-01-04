@@ -637,4 +637,4 @@ class EnergieausweisCreateResponse(BaseModel):
     message: str
     ausweis_status: str
     
-    
+

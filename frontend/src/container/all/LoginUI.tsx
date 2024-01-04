@@ -72,8 +72,8 @@ const LoginUI = () => {
                 navigate("/haushalte")
             }
 
-            else if (currentUser.rolle === "Geschaeft"){
-                navigate("/geschaeft")
+            else if (currentUser.rolle === "Solarteure"){
+                navigate("/solarteure")
         }
         }
      }, [currentUser])

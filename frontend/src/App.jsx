@@ -7,6 +7,7 @@ import Registration from "./container/all/Registration.tsx"
 import AdminDashboard from "./container/admin/AdminDashboard.tsx";
 import NetzbetreiberDashboard from "./container/netzbetreiber/NetzbetreiberDashboard.tsx";
 import HaushaltDashboard from "./container/haushalte/HaushaltDashboard.tsx";
+import SolarteureDashboard from "./container/solarteure/SolarteureDashboard.tsx";
 import LoginUI from "./container/all/LoginUI.tsx"
 import RegistrationUI from "./container/all/RegistrationUI.tsx";
 import Profile from "./container/all/Profile.tsx";
@@ -47,7 +48,8 @@ const App = () => {
             <Route path="/admin/*" element={<AdminDashboard/>}/>
             <Route path="/netzbetreiber/*" element={<NetzbetreiberDashboard/>}/>
             <Route path="/haushalte/*" element={<HaushaltDashboard/>}/>
-            <Route path="/profile" element={<Profile/>}/>
+            <Route path="/solarteure/*" element={<SolarteureDashboard/>}/>
+            <Route path="/profile"  element={<Profile/>}/>
             <Route path="*" element={<LoginUI isAlreadyLoggedIn={isLoggedIn}/>}/>
         </Routes>
         </ThemeProvider>

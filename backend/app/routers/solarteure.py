@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File,
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
+from typing import List
 from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
@@ -27,6 +28,50 @@ async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoin
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Solarteure haben Zugriff auf diese Daten")
+
+
+@router.get("/angebote", response_model=List[schemas.PVSolarteuerResponse])
+async def get_angebote(current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
+    await check_solarteur_role(current_user, "GET", "/angebote")
+
+    try:
+        stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                .where(models.PVAnlage.prozess_status == models.ProzessStatus.AnfrageGestellt))
+
+        result = await db.execute(stmt)
+        angebote = result.all()
+
+        if not angebote:
+            return []
+
+
+        return [{
+            "anlage_id": angebot.anlage_id,
+            "prozess_status": angebot.prozess_status,
+            "vorname": nutzer.vorname,
+            "nachname": nutzer.nachname,
+            "email": nutzer.email,
+            "strasse": adresse.strasse,
+            "hausnummer": adresse.hausnummer,
+            "plz": adresse.plz,
+            "stadt": adresse.stadt
+        } for angebot, nutzer, adresse in angebote]
+
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebote",
+            method="GET",
+            message=f"Fehler beim Abrufen der Angebote: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Abrufen der Angebote: {e}")
+
 
 
 #  TODO:  Check funktion hier

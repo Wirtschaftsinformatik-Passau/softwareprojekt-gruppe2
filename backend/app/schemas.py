@@ -339,7 +339,19 @@ class PVAnlageAnfrage(BaseModel):
 class PVAnforderungResponse(BaseModel):
     anlage_id: int
     prozess_status: ProzessStatus
-    solarteur_id: int
+
+
+class PVSolarteuerResponse(BaseModel):
+    anlage_id: int
+    prozess_status: ProzessStatus
+    vorname: str
+    nachname: str
+    email: str
+    strasse: str
+    hausnummer: int
+    plz: int
+    stadt: str
+
 
 
 class TarifLaufzeitResponse(BaseModel):

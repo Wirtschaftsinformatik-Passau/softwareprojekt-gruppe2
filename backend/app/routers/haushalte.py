@@ -49,22 +49,10 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
                 .order_by("anfragen_count")
                 .where(models.Nutzer.rolle == models.Rolle.Solarteure))
         result = await db.execute(stmt)
-        solarteur = result.first()
 
-        if not solarteur:
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint="/angebot-anfordern",
-                method="POST",
-                message="Kein Solarteur verfügbar",
-                success=False
-            )
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=404, detail="Kein Solarteur verfügbar")
 
         pv_anlage = models.PVAnlage(
             haushalt_id=current_user.user_id,
-            solarteur_id=solarteur.user_id,
             prozess_status=models.ProzessStatus.AnfrageGestellt
         )
 
@@ -84,7 +72,6 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
         return schemas.PVAnforderungResponse(
             anlage_id=pv_anlage.anlage_id,
             prozess_status=pv_anlage.prozess_status,
-            solarteur_id=solarteur.user_id
         )
 
     except Exception as e:

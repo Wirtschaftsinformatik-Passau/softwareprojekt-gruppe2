@@ -1,3 +1,5 @@
 node_modules
 backend/logs/*
 ./.vscode
+backend/tose_backend/*
+backend/tose_backend/

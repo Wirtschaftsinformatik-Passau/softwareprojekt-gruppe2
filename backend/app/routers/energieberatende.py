@@ -408,3 +408,4 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Unexpected error occurred") from e
+ 

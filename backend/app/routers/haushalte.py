@@ -916,3 +916,4 @@ async def vertragswechsel(
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Fehler  bei der Vertragserstellung: {e}")
+ 

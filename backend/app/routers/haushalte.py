@@ -15,7 +15,7 @@ from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
-from app.schemas import LoggingSchema, TarifAntragCreate, VertragResponse
+from app.schemas import *
 
 KWH_VERBRAUCH_JAHR = 1500
 
@@ -170,7 +170,7 @@ async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get
             user_id=current_user.user_id,
             endpoint="/vertrag-preview",
             method="GET",
-            message=f"Felher beim Abrufen des Tarifs: {e}",
+            message=f"Fehler beim Abrufen des Tarifs: {e}",
             success=False
         )
         logger.error(logging_obj.dict())
@@ -229,7 +229,7 @@ async def tarifantrag(tarif_id: int,
             user_id=current_user.user_id,
             endpoint="/tarifantrag",
             method="POST",
-            message=f"Felher beim Abrufen des Tarifs: {e}",
+            message=f"Fehler beim Abrufen des Tarifs: {e}",
             success=False
         )
         logger.error(logging_obj.dict())
@@ -246,7 +246,7 @@ async def tarifantrag(tarif_id: int,
             beginn_datum=beginn_datum,
             end_datum=end_datum,
             jahresabschlag=jahresabschlag,
-            vertragstatus=True,
+            vertragstatus=models.Vertragsstatus.Laufend,
             netzbetreiber_id=tarif.netzbetreiber_id
         )
         db.add(vertrag)
@@ -640,28 +640,32 @@ async def deactivate_vertrag(vertrag_id: int,
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
     endpoint = f"/vertrag-deaktivieren/{vertrag_id}"
     await check_haushalt_role(current_user, "GET", endpoint)
+
     try:
         stmt = select(models.Vertrag).where(models.Vertrag.vertrag_id == vertrag_id)
         result = await db.execute(stmt)
         vertrag = result.first()[0]
-        if not vertrag.vertragstatus:
-            logging_error = LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint=endpoint,
-                method="PUT",
-                message=f"Vertrag {vertrag_id} is bereits deaktiviert",
-                success=False
-            )
-            logger.error(logging_error.dict())
+
+        if vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt or \
+           vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                                detail=f"Vertrag {vertrag_id} is bereits deaktiviert")
-        vertrag.vertragstatus = False
+                                detail=f"Vertrag {vertrag_id} ist bereits gekündigt oder Kündigung ist ausstehend")
+
+        vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt_Unbestaetigt
+
+        kuendigungsanfrage = models.Kündigungsanfrage(
+            vertrag_id=vertrag.vertrag_id,
+            bestätigt=False
+        )
+        db.add(kuendigungsanfrage)
+
         await db.commit()
-        await db.refresh(vertrag)
-        return {"message": f"Vertrag {vertrag_id} wurde erfolgreich deaktiviert"}
-    except Exception as e:
-        #raise e
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+        return {"message": f"Kündigungsanfrage für Vertrag {vertrag_id} wurde erstellt"}
+    except SQLAlchemyError as e:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 @router.get("/haushalt-daten/{haushalt_id}", response_model=schemas.HaushaltsDatenFreigabe)
 async def get_haushalt_daten(haushalt_id: int,
                              db: AsyncSession = Depends(database.get_db_async),
@@ -858,68 +862,78 @@ async def get_angebot(anlage_id: int,
 async def vertragswechsel(
         neuer_tarif_id: int,
         alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
-                                  current_user: models.Nutzer = Depends(oauth.get_current_user),
-                                  db: AsyncSession = Depends(database.get_db_async)):
+        current_user: models.Nutzer = Depends(oauth.get_current_user),
+        db: AsyncSession = Depends(database.get_db_async)):
     
     user_id = current_user.user_id
+
+    # Überprüfe den alten Vertrag
     query = select(models.Vertrag).where(
         and_(
             models.Vertrag.vertrag_id == alter_vertrag_id,
-            models.Vertrag.user_id == user_id,
-            models.Vertrag.vertragstatus == True
+            models.Vertrag.user_id == user_id
         )
     )
-    alter_vertrag = await db.execute(query)
-    alter_vertrag = alter_vertrag.scalar_one_or_none()
+    alter_vertrag_result = await db.execute(query)
+    alter_vertrag = alter_vertrag_result.scalar_one_or_none()
     if not alter_vertrag:
-        raise HTTPException(status_code=404, detail="Alter Vertrag nicht gefunden oder bereits deaktiviert")
+        raise HTTPException(status_code=404, detail="Alter Vertrag nicht gefunden")
 
-    # Überprüfen, ob der neue Tarif verfügbar ist
+    # Überprüfe den neuen Tarif
     query = select(models.Tarif).where(
         and_(
             models.Tarif.tarif_id == neuer_tarif_id,
             models.Tarif.active == True
         )
     )
-    neuer_tarif = await db.execute(query)
-    neuer_tarif = neuer_tarif.scalar_one_or_none()
+    neuer_tarif_result = await db.execute(query)
+    neuer_tarif = neuer_tarif_result.scalar_one_or_none()
     if not neuer_tarif:
         raise HTTPException(status_code=404, detail="Neuer Tarif nicht gefunden")
 
-    # Deaktiviere den alten Vertrag
-    alter_vertrag.vertragstatus = False
-    await db.commit()
-
-    # Erstelle den neuen Vertrag
-    beginn_datum = alter_vertrag.end_datum
-    end_datum = beginn_datum + timedelta(days=365 * neuer_tarif.laufzeit)
-    jahresabschlag = neuer_tarif.grundgebuehr + neuer_tarif.preis_kwh * KWH_VERBRAUCH_JAHR
-
-    try:
-        neuer_vertrag = models.Vertrag(
-            user_id=user_id,
-            tarif_id=neuer_tarif_id,
-            beginn_datum=beginn_datum,
-            end_datum=end_datum,
-            jahresabschlag=jahresabschlag,
-            vertragstatus=True,
-            netzbetreiber_id=neuer_tarif.netzbetreiber_id
+    # Erstelle eine Kündigungsanfrage für den alten Vertrag
+    if alter_vertrag.vertragstatus != models.Vertragsstatus.Gekuendigt:
+        alter_vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt_Unbestaetigt
+        kuendigungsanfrage = models.Kündigungsanfrage(
+            vertrag_id=alter_vertrag.vertrag_id,
+            bestätigt=False
         )
-        db.add(neuer_vertrag)
+        db.add(kuendigungsanfrage)
         await db.commit()
-        await db.refresh(neuer_vertrag)
-        return schemas.VertragResponse(
-            vertrag_id=neuer_vertrag.vertrag_id,
-            user_id=neuer_vertrag.user_id,
-            tarif_id=neuer_vertrag.tarif_id,
-            beginn_datum=neuer_vertrag.beginn_datum,
-            end_datum=neuer_vertrag.end_datum,
-            jahresabschlag=neuer_vertrag.jahresabschlag,
-            vertragstatus=neuer_vertrag.vertragstatus
-        )
-    except SQLAlchemyError as e:
-        await db.rollback()
-        raise HTTPException(status_code=500, detail=f"Fehler  bei der Vertragserstellung: {e}")
+        raise HTTPException(status_code=202, detail="Kündigungsanfrage für den alten Vertrag erstellt")
+
+    # Wenn die Kündigung bestätigt wurde, erstelle den neuen Vertrag
+    if alter_vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt:
+        beginn_datum = alter_vertrag.end_datum
+        end_datum = beginn_datum + timedelta(days=365 * neuer_tarif.laufzeit)
+        jahresabschlag = neuer_tarif.grundgebuehr + neuer_tarif.preis_kwh * KWH_VERBRAUCH_JAHR
+
+        try:
+            neuer_vertrag = models.Vertrag(
+                user_id=user_id,
+                tarif_id=neuer_tarif_id,
+                beginn_datum=beginn_datum,
+                end_datum=end_datum,
+                jahresabschlag=jahresabschlag,
+                vertragstatus=models.Vertragsstatus.Laufend,
+                netzbetreiber_id=neuer_tarif.netzbetreiber_id
+            )
+            db.add(neuer_vertrag)
+            await db.commit()
+            await db.refresh(neuer_vertrag)
+            return schemas.VertragResponse(
+                vertrag_id=neuer_vertrag.vertrag_id,
+                user_id=neuer_vertrag.user_id,
+                tarif_id=neuer_vertrag.tarif_id,
+                beginn_datum=neuer_vertrag.beginn_datum,
+                end_datum=neuer_vertrag.end_datum,
+                jahresabschlag=neuer_vertrag.jahresabschlag,
+                vertragstatus=neuer_vertrag.vertragstatus
+            )
+        except SQLAlchemyError as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=f"Fehler bei der Vertragserstellung: {e}")
+        
 
 
 @router.put("/angebot-ablehnen/{anlage_id}", status_code=status.HTTP_200_OK)

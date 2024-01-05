@@ -343,6 +343,7 @@ class PVAnforderungResponse(BaseModel):
 
 class PVSolarteuerResponse(BaseModel):
     anlage_id: int
+    haushalt_id: int
     prozess_status: ProzessStatus
     vorname: str
     nachname: str

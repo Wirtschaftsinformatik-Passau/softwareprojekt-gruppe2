@@ -32,7 +32,21 @@ async def check_energieberatende_role(current_user: models.Nutzer, method: str, 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
-        neue_rechnung = models.Rechnungen(**rechnung.dict())
+        # Hier holen wir die Energieeffizienzmaßnahmen des Nutzers, um die Kosten zu erhalten.
+        massnahmen_query = select(models.Energieeffizienzmassnahmen).where(
+            models.Energieeffizienzmassnahmen.haushalt_id == rechnung.user_id
+        )
+        massnahmen_result = await db.execute(massnahmen_query)
+        massnahme = massnahmen_result.scalar_one_or_none()
+
+        if massnahme is None:
+            raise HTTPException(status_code=404, detail="Energieeffizienzmaßnahme nicht gefunden")
+
+        # Setzen der Kosten als Rechnungsbetrag
+        rechnung_dict = rechnung.dict()
+        rechnung_dict["rechnungsbetrag"] = massnahme.kosten
+
+        neue_rechnung = models.Rechnungen(**rechnung_dict)
         db.add(neue_rechnung)
         await db.commit()
         await db.refresh(neue_rechnung)

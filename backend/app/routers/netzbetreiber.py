@@ -783,7 +783,22 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
-        neue_rechnung = models.Rechnungen(**rechnung.dict())
+        # Hier holen wir den aktiven Vertrag des Nutzers, um den Jahresabschlag zu erhalten.
+        vertrag_query = select(models.Vertrag).where(
+            (models.Vertrag.user_id == rechnung.user_id) & 
+            (models.Vertrag.vertragstatus == True)
+        )
+        vertrag_result = await db.execute(vertrag_query)
+        aktiver_vertrag = vertrag_result.scalar_one_or_none()
+
+        if aktiver_vertrag is None:
+            raise HTTPException(status_code=404, detail="Aktiver Vertrag nicht gefunden")
+
+        # Setzen des Jahresabschlags als Rechnungsbetrag
+        rechnung_dict = rechnung.dict()
+        rechnung_dict["rechnungsbetrag"] = aktiver_vertrag.jahresabschlag
+
+        neue_rechnung = models.Rechnungen(**rechnung_dict)
         db.add(neue_rechnung)
         await db.commit()
         await db.refresh(neue_rechnung)

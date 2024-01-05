@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
 from app.types import (Rolle, Orientierung, ProzessStatus, Montagesystem, Schatten, AusweisStatus,
-                       Isolierungsqualitaet, Rechnungsart, MassnahmeTyp)
+                       Isolierungsqualitaet, Rechnungsart, MassnahmeTyp, Vertragsstatus)
 
 
 class Adresse(Base):
@@ -201,11 +201,16 @@ class Vertrag(Base):
     end_datum = Column(Date)
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     jahresabschlag = Column(Float)
-    vertragstatus = Column(Boolean, default=True) 
-
+    vertragstatus = Column(Enum(Vertragsstatus), 
+                           default=Vertragsstatus.Laufend.value,  # default-Wert
+                           name='vertragsstatus' if settings.OS == 'Linux' else "Vertragsstatus")
     __table_args__ = (
         UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc'),
     )
+
+    # Beziehung zu Kündigungsanfrage, falls verwendet
+    kündigungsanfrage = relationship("Kündigungsanfrage", uselist=False, back_populates="vertrag")
+
 
 
 class Energieeffizienzmassnahmen(Base):
@@ -218,3 +223,11 @@ class Energieeffizienzmassnahmen(Base):
                                                    create_type=False))
     einsparpotenzial = Column(Float)
     kosten = Column(Float)
+
+class Kündigungsanfrage(Base):
+    __tablename__ = 'kündigungsanfrage' if settings.OS == 'Linux' else "Kündigungsanfrage"
+    anfrage_id = Column(Integer, primary_key=True)
+    vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id'))
+    bestätigt = Column(Boolean, default=False)
+    
+    vertrag = relationship("Vertrag", back_populates="kündigungsanfrage")

@@ -8,6 +8,7 @@ import { ColorModeContext, useMode } from "../../utils/theme";
 import Topbar from "../../components/admin/dashboards/Topbar";
 import Sidebar from "../../components/solarteure/dashboard/SolarteureSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
+import SolarteureAnfragen from "../../components/solarteure/dashboard/SolarteureAnfragen";
 //import SolarteurHome from "../../components/solarteure/dashboard/SolarteureHome";
 
 
@@ -33,7 +34,8 @@ const  NetzbetreiberDashboard = () => {
                 <div className="flex-1 overflow-y-auto">
                 <Topbar fixed={true}/>
                 <Routes>
-               
+                    <Route path="/antragTable" element={<SolarteureAnfragen/>}/>
+                    <Route path="/faq" element={<FAQ faqItems={faqItems}/>}/>
                 </Routes>
                 </div>
                 

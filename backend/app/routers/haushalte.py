@@ -37,6 +37,17 @@ async def check_haushalt_role(current_user: models.Nutzer, method: str, endpoint
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Haushalte haben Zugriff auf diese Daten")
 
+async def check_haushalt_or_solarteur_role(current_user: models.Nutzer, method: str, endpoint: str):
+    if current_user.rolle != models.Rolle.Haushalte or current_user.rolle != models.Rolle.Solarteure:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=endpoint,
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Haushalt",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail="Nur Haushalte haben Zugriff auf diese Daten")
 
 @router.post("/angebot-anfordern", status_code=status.HTTP_201_CREATED, response_model=schemas.PVAnforderungResponse)
 async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.get_db_async),
@@ -655,7 +666,7 @@ async def deactivate_vertrag(vertrag_id: int,
 async def get_haushalt_daten(haushalt_id: int,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_haushalt_role(current_user, "GET", f"/haushalt-daten/{haushalt_id}")
+    await check_haushalt_or_solarteur_role(current_user, "GET", f"/haushalt-daten/{haushalt_id}")
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
         result = await db.execute(stmt)

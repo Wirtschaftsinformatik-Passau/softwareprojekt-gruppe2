@@ -7,9 +7,6 @@ import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
-import TableViewIcon from '@mui/icons-material/TableView';
-import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
@@ -40,7 +37,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
       icon={icon}
     >
       <Typography>{title}</Typography>
-      <Link to={"/haushalte" + to} />
+      <Link to={"/solarteure" + to} />
     </MenuItem>
   );
 };
@@ -66,6 +63,9 @@ const Sidebar1 = () => {
     <Box
     sx={{
       "minHeight": "100vh",
+      "& .pro-sidebar": {
+        width: isCollapsed ? "90px !important" : "280px !important",
+      },
       "& .pro-sidebar-inner": {
         background: `${colors.color1[400]} !important`,
         width: isCollapsed ? "90% !important" : "100% !important",
@@ -152,7 +152,7 @@ const Sidebar1 = () => {
               title="Dashboard"
               to="/"
               icon={<HomeOutlinedIcon />}
-              selected={location.pathname === "/admin" ? "Dashboard" : selected}
+              selected={location.pathname === "/solarteure" ? "Dashboard" : selected}
               setSelected={setSelected}
           
             />
@@ -162,20 +162,27 @@ const Sidebar1 = () => {
               color={colors.white[200]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              Vertrag
+              Anträge
             </Typography>
             <Item
-              title="Tarifübersicht"
-              to="/tarifTable"
-              icon={<TableViewIcon/>}
+              title="Offene Anträge"
+              to="/antragTable"
+              icon={<TrackChangesIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
           
             <Item
-              title="Laufende Verträge"
+              title="Bearbeitete Anträge"
               to="/vertragOverview"
               icon={<ReceiptIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+             <Item
+              title="Abgeschlossene Anträge"
+              to="/vertragOverview"
+              icon={<CheckBoxIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
@@ -184,64 +191,7 @@ const Sidebar1 = () => {
               color={colors.white[200]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              PV
-            </Typography>
-            <Item
-              title="Haushaltsdaten"
-              to="/dataOverview"
-              icon={<HouseIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Einspeisungsanfrage"
-              to="/einspeisungsanfrage"
-              icon={<SolarPowerIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-            <Item
-              title="Antragsübersicht"
-              to="/eispesungsantragOverview"
-              icon={<TrackChangesIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-             <Item
-              title="Energieausweis"
-              to="/energieausweisOverview"
-              icon={<FilePresentIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
-          <Typography
-              variant="h6"
-              color={colors.white[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Daten
-            </Typography>
-            <Item
-              title="Smart Meter Upload"
-              to="/pvuploadOverview"
-              icon={<FileUploadIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-             <Item
-              title="Smart Meter Overview"
-              to="/smartMeterOverview"
-              icon={<DataSaverOnIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
-           
-
-            <Typography
-              variant="h6"
-              color={colors.white[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
+             
               Pages
             </Typography>
             <Item

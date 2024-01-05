@@ -30,8 +30,9 @@ async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoin
         raise HTTPException(status_code=403, detail="Nur Solarteure haben Zugriff auf diese Daten")
 
 
-@router.get("/angebote", response_model=List[schemas.PVSolarteuerResponse])
-async def get_angebote(current_user: models.Nutzer = Depends(oauth.get_current_user),
+@router.get("/anfragen", response_model=List[schemas.PVSolarteuerResponse])
+async def get_anfragen(prozess_status: types.ProzessStatus = models.ProzessStatus.AnfrageGestellt,
+                        current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
     await check_solarteur_role(current_user, "GET", "/angebote")
 
@@ -39,12 +40,12 @@ async def get_angebote(current_user: models.Nutzer = Depends(oauth.get_current_u
         stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
                 .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
-                .where(models.PVAnlage.prozess_status == models.ProzessStatus.AnfrageGestellt))
+                .where(models.PVAnlage.prozess_status == prozess_status))
 
         result = await db.execute(stmt)
-        angebote = result.all()
+        anfragen = result.all()
 
-        if not angebote:
+        if not anfragen:
             return []
 
 
@@ -58,7 +59,7 @@ async def get_angebote(current_user: models.Nutzer = Depends(oauth.get_current_u
             "hausnummer": adresse.hausnummer,
             "plz": adresse.plz,
             "stadt": adresse.stadt
-        } for angebot, nutzer, adresse in angebote]
+        } for angebot, nutzer, adresse in anfragen]
 
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
@@ -71,6 +72,70 @@ async def get_angebote(current_user: models.Nutzer = Depends(oauth.get_current_u
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Fehler beim Abrufen der Angebote: {e}")
+
+
+@router.get("/anfragen/{anlage_id}", response_model=schemas.PVSolarteuerResponse)
+async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
+                        db: AsyncSession = Depends(database.get_db_async)):
+    await check_solarteur_role(current_user, "GET", f"/angebote/{anlage_id}")
+
+    try:
+        stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                .where(models.PVAnlage.anlage_id == anlage_id))
+
+        result = await db.execute(stmt)
+        angebot = result.first()
+
+        if not angebot:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/angebote/{anlage_id}",
+                method="GET",
+                message="Angebot nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Anfrage {anlage_id} nicht gefunden")
+
+        return {
+            "anlage_id": angebot[0].anlage_id,
+            "prozess_status": angebot[0].prozess_status,
+            "vorname": angebot[1].vorname,
+            "nachname": angebot[1].nachname,
+            "email": angebot[1].email,
+            "strasse": angebot[2].strasse,
+            "hausnummer": angebot[2].hausnummer,
+            "plz": angebot[2].plz,
+            "stadt": angebot[2].stadt
+        }
+
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebote/{anlage_id}",
+            method="GET",
+            message=f"Fehler beim Abrufen des Angebots: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Fehler beim Abrufen des Angebots: {e}")
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/angebote/{anlage_id}",
+            method="GET",
+            message=f"Fehler beim Abrufen des Angebots: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Abrufen des Angebots: {e}")
 
 
 

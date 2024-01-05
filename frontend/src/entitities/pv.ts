@@ -24,3 +24,25 @@ enum ProzessStatus {
     Abgenommen = 'Abgenommen',
     InstallationAbgeschlossen = 'InstallationAbgeschlossen'
 }
+
+export interface PVAngebotCreate{
+    anlage_id: number | "",
+    modultyp: string | "",
+    kapazitaet: number | "",
+    installationsflaeche: number | "",
+    modulanordnung: Orientierung | "",
+    kosten: number | "",
+}
+
+export interface SolarteurResponse {
+    anlage_id: number,
+    vorname: string,
+    nachname: string,
+    email: string,
+    strasse: string,
+    hausnummer: number,
+    plz: number,    
+    stadt: string,
+    prozess_status: string,
+
+}

@@ -38,6 +38,7 @@ const VertragDetail = ({}) => {
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState<boolean>(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
+    const [conflictModalIsOpen, setConflictModalIsOpen] = React.useState<boolean>(false);
     const {vertragID} = useParams();
     const [vertrag, setVertrag] = React.useState<Vertrag>({
             "vorname": "",
@@ -194,6 +195,8 @@ const VertragDetail = ({}) => {
     text="Vertrag erfolgreich gekündigt!" navigationGoal="/haushalte"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
+    <SuccessModal open={conflictModalIsOpen} handleClose={() => setConflictModalIsOpen(false)}
+    text="Vetrag wurde bereits gewechselt oder ist gekündigt!"/>
         </Box>
     )
 }

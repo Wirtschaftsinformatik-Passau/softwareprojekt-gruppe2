@@ -1,3 +1,5 @@
+import { Orientierung } from "./haushalt"
+
 export interface PVAntrag {
     anlage_id: number | "",
     haushalt_id: number | "",
@@ -13,7 +15,7 @@ export interface Angebot {
     created_at: Date | "",
 }
 
-enum ProzessStatus {
+export enum ProzessStatus {
     AnfrageGestellt = 'AnfrageGestellt',
     DatenAngefordert = 'DatenAngefordert',
     DatenFreigegeben = 'DatenFreigegeben',

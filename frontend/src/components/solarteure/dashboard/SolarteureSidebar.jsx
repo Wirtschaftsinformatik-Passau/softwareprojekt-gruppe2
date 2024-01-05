@@ -171,17 +171,9 @@ const Sidebar1 = () => {
               selected={selected}
               setSelected={setSelected}
             />
-          
-            <Item
-              title="Bearbeitete Anträge"
-              to="/vertragOverview"
-              icon={<ReceiptIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
              <Item
               title="Abgeschlossene Anträge"
-              to="/vertragOverview"
+              to="/antragTableAbgeschlossen"
               icon={<CheckBoxIcon/>}
               selected={selected}
               setSelected={setSelected}

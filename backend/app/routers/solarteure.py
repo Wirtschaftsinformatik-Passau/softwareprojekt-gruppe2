@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -31,18 +31,22 @@ async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoin
 
 
 @router.get("/anfragen", response_model=List[schemas.PVSolarteuerResponse])
-async def get_anfragen(prozess_status: types.ProzessStatus = models.ProzessStatus.AnfrageGestellt,
-                        current_user: models.Nutzer = Depends(oauth.get_current_user),
-                       db: AsyncSession = Depends(database.get_db_async)):
+async def get_anfragen(
+        prozess_status: List[types.ProzessStatus] = Query(None),
+        current_user: models.Nutzer = Depends(oauth.get_current_user),
+        db: AsyncSession = Depends(database.get_db_async)
+):
     await check_solarteur_role(current_user, "GET", "/angebote")
 
     try:
-        stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
-                .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
-                .where(models.PVAnlage.prozess_status == prozess_status))
+        query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                 .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id))
 
-        result = await db.execute(stmt)
+        if prozess_status:
+            query = query.where(models.PVAnlage.prozess_status.in_(prozess_status))
+
+        result = await db.execute(query)
         anfragen = result.all()
 
         if not anfragen:
@@ -51,6 +55,7 @@ async def get_anfragen(prozess_status: types.ProzessStatus = models.ProzessStatu
 
         return [{
             "anlage_id": angebot.anlage_id,
+            "haushalt_id": angebot.haushalt_id,
             "prozess_status": angebot.prozess_status,
             "vorname": nutzer.vorname,
             "nachname": nutzer.nachname,
@@ -101,6 +106,7 @@ async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oaut
 
         return {
             "anlage_id": angebot[0].anlage_id,
+            "haushalt_id": angebot[0].haushalt_id,
             "prozess_status": angebot[0].prozess_status,
             "vorname": angebot[1].vorname,
             "nachname": angebot[1].nachname,
@@ -147,21 +153,21 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
     await check_solarteur_role(current_user, "POST", "/angebote")
 
     pv_anlage = await db.get(models.PVAnlage, angebot_data.anlage_id)
-    if not pv_anlage or pv_anlage.solarteur_id != current_user.user_id:
+    if not pv_anlage:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/angebote",
             method="POST",
-            message="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur.",
+            message="PV-Anlage nicht gefunden",
             success=False
         )
         logger.error(logging_obj.dict())
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur."
+            detail="PV-Anlage nicht gefunden "
         )
 
-    if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt and  pv_anlage.prozess_status\
+    if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt and pv_anlage.prozess_status\
             != models.ProzessStatus.DatenFreigegeben:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -365,16 +371,6 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             )
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PV-Anlage nicht gefunden")
-        if pv_anlage.solarteur_id != current_user.user_id:
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint=f"/datenanfrage/{anlage_id}",
-                method="POST",
-                message="Nicht autorisiert für diese PV-Anlage",
-                success=False
-            )
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Nicht autorisiert für diese PV-Anlage")
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
-import { ProzessStatus } from "../../../entitities/pv";
+
 
 const AntragTable = () => {
   const theme = useTheme();
@@ -17,12 +17,11 @@ const AntragTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=DatenAngefordert&prozess_status=AnfrageGestellt&prozess_status=DatenFreigegeben&prozess_status=AngebotGemacht",
+    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=AngebotAngenommen&prozess_status=PlanErstellt&prozess_status=Genehmigt&prozess_status=Abgenommen&prozess_status=InstallationAbgeschlossen",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
-  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>, prozess_status: SetStateAction<ProzessStatus> }; }) => {
-    ProzessStatus
+  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>; }; }) => {
     navigate(`/solarteure/antragTable/${params.row.anlage_id}`);
   }
 

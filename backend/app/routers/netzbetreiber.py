@@ -15,7 +15,7 @@ from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, 
 from app import config
 import pandas as pd
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 
 EXPECTED_COLUMNS = {
     'Zeit': 'datetime64',
@@ -757,8 +757,8 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
     try:
         # Hier holen wir den aktiven Vertrag des Nutzers, um den Jahresabschlag zu erhalten.
         vertrag_query = select(models.Vertrag).where(
-            (models.Vertrag.user_id == rechnung.user_id) &
-            (models.Vertrag.vertragstatus == True)
+            (models.Vertrag.user_id == rechnung.user_id) & 
+            (models.Vertrag.vertragstatus == models.Vertragsstatus.Laufend)
         )
         vertrag_result = await db.execute(vertrag_query)
         aktiver_vertrag = vertrag_result.scalar_one_or_none()
@@ -922,3 +922,52 @@ async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.ge
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Deaktivieren des Tarifs: {e}")
+
+
+@router.get("/kuendigungsanfragen", response_model=List[schemas.KündigungsanfrageResponse])
+async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_async)):
+    query = select(models.Kündigungsanfrage)
+    result = await db.execute(query)
+    kuendigungsanfragen = result.scalars().all()
+    return kuendigungsanfragen
+
+
+@router.put("/kuendigungsanfrage/{anfrage_id}/{aktion}", response_model=schemas.KündigungsanfrageResponse)
+async def handle_kuendigungsanfrage(anfrage_id: int, aktion: str, db: AsyncSession = Depends(database.get_db_async)):
+    try:
+        # Abrufen der Kündigungsanfrage
+        query = select(models.Kündigungsanfrage).where(models.Kündigungsanfrage.anfrage_id == anfrage_id)
+        result = await db.execute(query)
+        anfrage = result.scalar_one_or_none()
+
+        if anfrage is None:
+            raise HTTPException(status_code=404, detail="Kündigungsanfrage nicht gefunden")
+
+        if aktion == "bestaetigen":
+            # Kündigung bestätigen und den Vertragstatus aktualisieren
+            anfrage.bestätigt = True
+            anfrage.vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt
+
+            # Erstelle eine Rechnung für den Haushalt
+            rechnung = models.Rechnungen(
+                user_id=anfrage.vertrag.user_id,
+                rechnungsbetrag=anfrage.vertrag.jahresabschlag,
+                rechnungsdatum=datetime.now(),
+                faelligkeitsdatum=datetime.now() + timedelta(days=30),
+                rechnungsart=models.Rechnungsart.Netzbetreiber_Rechnung,
+                zeitraum=datetime.now()  # Oder entsprechendes Datum
+            )
+            db.add(rechnung)
+        elif aktion == "ablehnen":
+            # Kündigung ablehnen und den Vertragstatus aktualisieren
+            anfrage.bestätigt = False
+            anfrage.vertrag.vertragstatus = models.Vertragsstatus.Laufend
+        else:
+            raise HTTPException(status_code=400, detail="Ungültige Aktion")
+
+        await db.commit()
+        return anfrage
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.error(f"Fehler bei der Verarbeitung der Kündigungsanfrage: {e}")
+        raise HTTPException(status_code=500, detail="Fehler bei der Verarbeitung der Kündigungsanfrage")

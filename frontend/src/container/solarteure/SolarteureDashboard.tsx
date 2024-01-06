@@ -9,7 +9,8 @@ import Topbar from "../../components/admin/dashboards/Topbar";
 import Sidebar from "../../components/solarteure/dashboard/SolarteureSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import SolarteureAnfragen from "../../components/solarteure/dashboard/SolarteureAnfragen";
-//import SolarteurHome from "../../components/solarteure/dashboard/SolarteureHome";
+import SolarteureAnfragenDetail from "../../components/solarteure/dashboard/SolarteureAnfragenDetail";
+import SolarteuereAnfragenAbgeschlossen from "../../components/solarteure/dashboard/SolarteureAnfragenAbgeschlossen";
 
 
 
@@ -35,6 +36,8 @@ const  NetzbetreiberDashboard = () => {
                 <Topbar fixed={true}/>
                 <Routes>
                     <Route path="/antragTable" element={<SolarteureAnfragen/>}/>
+                    <Route path="/antragTable/:anlageID" element={<SolarteureAnfragenDetail/>}/>
+                    <Route path="/antragTableAbgeschlossen" element={<SolarteuereAnfragenAbgeschlossen/>}/>
                     <Route path="/faq" element={<FAQ faqItems={faqItems}/>}/>
                 </Routes>
                 </div>

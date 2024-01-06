@@ -10,7 +10,7 @@ import axios from "axios";
 import CircularProgress from '@mui/material/CircularProgress';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
-import { Angexbot } from "../../../entitities/pv";
+import { Angebot } from "../../../entitities/pv";
 import { dateFormater } from "../../../utils/dateUtils";
 
 
@@ -45,9 +45,9 @@ const AngebotDetail = ({}) => {
     }, []
     )
 
-   const handleAnnehmen = (angebot_id: number) => {
+   const handleAnnehmen = () => {
         const token = localStorage.getItem("accessToken");
-        const url = addSuffixToBackendURL("haushalte/angebot-akzeptieren/"+angebot_id);
+        const url = addSuffixToBackendURL("haushalte/angebot-akzeptieren/"+anlageID);
         axios.put(url, {}, {headers: {Authorization: `Bearer ${token}`}})
         .then((response) => {
             setSuccessModalIsOpen(true);

@@ -4,7 +4,7 @@ from datetime import date
 from typing import Dict, List, Optional
 from app.types import *
 
-from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus
+from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus, Vertragsstatus
 
 
 class AdresseCreate(BaseModel):
@@ -343,6 +343,7 @@ class PVAnforderungResponse(BaseModel):
 
 class PVSolarteuerResponse(BaseModel):
     anlage_id: int
+    haushalt_id: int
     prozess_status: ProzessStatus
     vorname: str
     nachname: str
@@ -473,7 +474,7 @@ class TarifAntragCreate(BaseModel):
     end_datum: date
     jahresabschlag: float
     netzbetreiber_id: int
-    vertragstatus: bool
+    vertragstatus: Vertragsstatus
 
 
 class VertragResponse(BaseModel):
@@ -483,7 +484,7 @@ class VertragResponse(BaseModel):
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
-    vertragstatus: bool
+    vertragstatus: Vertragsstatus
 
 
 class VertragTarifResponse(BaseModel):
@@ -494,7 +495,7 @@ class VertragTarifResponse(BaseModel):
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
-    vertragstatus: bool
+    vertragstatus: Vertragsstatus
     tarifname: str
     preis_kwh: float
     grundgebuehr: float
@@ -510,13 +511,13 @@ class VertragTarifResponseStatus(BaseModel):
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
-    vertragstatus: bool
+    vertragstatus: Vertragsstatus
     tarifname: str
     preis_kwh: float
     grundgebuehr: float
     laufzeit: int
     spezielle_konditionen: str
-    vertragstatus: bool
+    vertragstatus: Vertragsstatus
 
 
 class VertragTarifNBResponse(BaseModel):
@@ -529,7 +530,7 @@ class VertragTarifNBResponse(BaseModel):
     beginn_datum: date
     end_datum: date
     jahresabschlag: float
-    vertragstatus: bool
+    vertragstatus: Vertragsstatus
     preis_kwh: float
     grundgebuehr: float
     laufzeit: int
@@ -661,3 +662,14 @@ class PVAnlageAbnahmeResponse(BaseModel):
     message: str
     anlage_id: int
     prozess_status: str
+
+class KündigungsanfrageCreate(BaseModel):
+    vertrag_id: int
+
+class KündigungsanfrageResponse(BaseModel):
+    anfrage_id: int
+    vertrag_id: int
+    bestätigt: bool
+
+class VertragUpdateStatus(BaseModel):
+    vertragstatus: Vertragsstatus

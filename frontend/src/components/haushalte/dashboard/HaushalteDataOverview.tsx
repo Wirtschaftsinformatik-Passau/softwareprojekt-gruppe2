@@ -19,11 +19,12 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 
 
-const NetzbetreiberTarifEdit = ({}) => {
+const HaushalteData = ({}) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const [dashbaordModalIsOpen, setDashbaordModalIsOpen] = React.useState(false);
     const [currentUser, setCurrentUser] = React.useState<IUserFull | null>(null);
     const [dataExists, setDataExists] = React.useState<boolean>(false);
     const [headerText, setHeaderText] = React.useState<string>("Daten bearbeiten");
@@ -113,16 +114,18 @@ const NetzbetreiberTarifEdit = ({}) => {
             
             })
             .catch((error) => {
+              console.log("catching")
                 if (error.response && error.response.status === 422) {
                     console.log("Server Response on Error 422:", error.response.data);
-                } else if (error.response && error.response.status === 401 || error.response.status === 403) {
+                }
+                else if (error.response && error.response.status === 401 || error.response.status === 403) {
                     navigate("/login")
                 } 
-                else if (error.response && error.response.status === 409) {
-                    setFailModalIsOpen(true)
-                    console.log("Daten konnten nicht gespeichert werden")
-                } else {
-                    console.log("Server Error:", error.message);
+                else if (error.response && error.response.status === 412) {
+                  setDashbaordModalIsOpen(true)
+                  setIsLoading(false);
+                }else {
+                setFailModalIsOpen(true)
                 }
             })
             .finally(() => {
@@ -139,6 +142,24 @@ const NetzbetreiberTarifEdit = ({}) => {
                 console.log("Daten konnten nicht gespeichert werden")
                 }
             
+            })
+            .catch((error) => {
+              console.log("catching")
+                if (error.response && error.response.status === 422) {
+                    console.log("Server Response on Error 422:", error.response.data);
+                }
+                else if (error.response && error.response.status === 401 || error.response.status === 403) {
+                    navigate("/login")
+                } 
+                else if (error.response && error.response.status === 412) {
+                  setDashbaordModalIsOpen(true)
+                  setIsLoading(false);
+                }else {
+                setFailModalIsOpen(true)
+                }
+            })
+            .finally(() => {
+                setSubmitting(false);
             })
         }
   
@@ -159,7 +180,7 @@ return (
       <Formik
         onSubmit={updateData}
         initialValues={initialValues}
-        validationSchema={checkoutSchema}
+        validationSchema={checkoutSchemaHaushalt}
         style={{
           display:"flex",
           flexDirection:"column",
@@ -236,15 +257,17 @@ return (
 
             
     <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Haushaltsdaten erfolgreich gespeichert!" navigationGoal="/netzbetreiber/tarifTable"/>
+    text="Haushaltsdaten erfolgreich gespeichert!" navigationGoal="/haushalte/"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Es gabe einen Fehler bei der Speicherung"/>
+    <SuccessModal open={dashbaordModalIsOpen} handleClose={() => setDashbaordModalIsOpen(false)}
+    text="Dashboard Daten müssen erst noch hochgeladen werden" navigationGoal="/haushalte/pvuploadOverview"/>
     </Box>
   
 )}
 
     
-const checkoutSchema = yup.object({
+export const checkoutSchemaHaushalt = yup.object({
     anzahl_bewohner: yup.number().typeError("Nur Zahlen zugelassen").required("Anzahl Bewohner ist erforderlich"),
     heizungsart: yup.string().required("Heizungsart ist erforderlich"),
     baujahr: yup.number().typeError("Nur Zahlen zugelassen").required("Baujahr ist erforderlich"),
@@ -255,4 +278,4 @@ const checkoutSchema = yup.object({
     energieeffizienzklasse: yup.string().required("Energieeffizienzklasse ist erforderlich"),
 });
 
-export default NetzbetreiberTarifEdit;
+export default HaushalteData;

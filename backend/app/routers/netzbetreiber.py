@@ -33,6 +33,17 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Benutzer eine Netzbetreiberrolle hat.
+
+    Args:
+        current_user: models.Nutzer: Der aktuelle Benutzer.
+        method: str: Die verwendete HTTP-Methode.
+        endpoint: str: Der Endpunkt, auf den zugegriffen wird.
+
+    Raises:
+        HTTPException: Wenn der Benutzer nicht die erforderliche Rolle hat.
+    """
     if current_user.rolle != models.Rolle.Netzbetreiber:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -63,6 +74,18 @@ def is_haushalt(user: models.Nutzer) -> bool:
 
 
 def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
+    """
+    Validiert die PV-Installation anhand bestimmter Kriterien.
+
+    Args:
+        pv_anlage: models.PVAnlage: Die zu überprüfende PV-Anlage.
+
+    Returns:
+        bool: Ob die PV-Anlage die Kriterien erfüllt.
+
+    Raises:
+        HTTPException: Wenn die erforderlichen Daten fehlen.
+    """
     # Annahmen für die Netzverträglichkeitsprüfung
     max_kapazitaet_kw = 100.0  # Maximale Kapazität in Kilowatt
     max_installationsflaeche_m2 = 1000.0  # Maximale Installationsfläche in Quadratmetern
@@ -90,6 +113,20 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
 
 
 async def perform_network_compatibility_check(anlage_id: int, db: AsyncSession, current_user: models.Nutzer):
+    """
+    Führt eine Netzwerkkompatibilitätsprüfung für eine bestimmte PV-Installation durch.
+
+    Args:
+        anlage_id: int: Die ID der PV-Anlage.
+        db: AsyncSession: Die Datenbanksitzung.
+        current_user: models.Nutzer: Der aktuelle Benutzer.
+
+    Returns:
+        bool: Das Ergebnis der Netzwerkkompatibilitätsprüfung.
+
+    Raises:
+        DatabaseOperationError: Wenn es ein Problem bei der Aktualisierung der Datenbank gibt.
+    """
     pv_anlage = await fetch_pv_anlage(anlage_id, db)
     is_compatible = validate_pv_anlage(pv_anlage)
 
@@ -106,6 +143,20 @@ async def perform_network_compatibility_check(anlage_id: int, db: AsyncSession, 
 
 
 async def fetch_pv_anlage(anlage_id: int, db: AsyncSession) -> models.PVAnlage:
+    """
+    Holt eine PV-Installation aus der Datenbank.
+
+    Args:
+        anlage_id: int: Die ID der PV-Anlage.
+        db: AsyncSession: Die Datenbanksitzung.
+
+    Returns:
+        models.PVAnlage: Die abgerufene PV-Anlage.
+
+    Raises:
+        NotFoundError: Wenn die PV-Anlage nicht gefunden wird.
+        BadRequestError: Wenn die PV-Anlage nicht den erforderlichen Status hat.
+    """
     result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id))
     pv_anlage = result.scalar_one_or_none()
 
@@ -152,6 +203,16 @@ class DatabaseOperationError(HTTPException):
 
 
 def log_activity(user_id: int, endpoint: str, method: str, message: str, success: bool):
+    """
+    Protokolliert Benutzeraktivitäten.
+
+    Args:
+        user_id: int: Die ID des Benutzers.
+        endpoint: str: Der Endpunkt, auf den zugegriffen wird.
+        method: str: Die verwendete HTTP-Methode.
+        message: str: Die zu protokollierende Nachricht.
+        success: bool: Ob der Vorgang erfolgreich war.
+    """
     logging_schema = LoggingSchema(
         user_id=user_id, endpoint=endpoint, method=method, message=message, success=success
     )
@@ -344,10 +405,10 @@ async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
         await db.refresh(new_preisstruktur)
         log_activity(current_user.user_id, "/preisstrukturen", "POST",
                      f"Preisstruktur {new_preisstruktur.preis_id} erstellt", True)
-        return preisstruktur
+        return new_preisstruktur
     except exc.IntegrityError as e:
         log_activity(current_user.user_id, "/preisstrukturen", "POST",
-                     f"SQLAlchemy Fehler beim Erstellen der Preisstruktur: {e}", False)
+                     f"Fehler beim Erstellen der Preisstruktur: {e}", False)
         raise DatabaseOperationError("Datenbankfehler beim Erstellen der Preisstruktur")
     except ValidationError as e:
         log_activity(current_user.user_id, "/preisstrukturen", "POST", f"Validierungsfehler: {e}", False)
@@ -900,6 +961,21 @@ async def get_einspeisezusagen_vorschlag(anlage_id: int,
 @router.put("/tarife/deactivate/{tarif_id}", status_code=status.HTTP_200_OK)
 async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Deaktiviert einen Tarif.
+
+    Args:
+        tarif_id: int: Die ID des Tarifs, der deaktiviert werden soll.
+        db: AsyncSession: Die Datenbanksitzung.
+        current_user: models.Nutzer: Der aktuelle Benutzer.
+
+    Returns:
+        dict: Bestätigungsnachricht.
+
+    Raises:
+        DatabaseOperationError: Wenn es ein Problem bei der Aktualisierung der Datenbank gibt.
+    """
+
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/tarif/deactivate/{tarif_id}")
     try:
         stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)

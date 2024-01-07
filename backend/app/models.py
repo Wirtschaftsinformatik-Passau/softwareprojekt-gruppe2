@@ -87,7 +87,8 @@ class PVAnlage(Base):
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                               nullable=True)
     modultyp = Column(String, nullable=True)
-    energieausweis_id = Column(Integer, ForeignKey('energieausweise.energieausweis_id' if settings.OS == 'Linux' else "Energieausweise.energieausweis_id"))
+    energieausweis_id = Column(Integer, ForeignKey(
+        'energieausweise.energieausweis_id' if settings.OS == 'Linux' else "Energieausweise.energieausweis_id"))
     kapazitaet = Column(Float, nullable=True)
     installationsflaeche = Column(Float, nullable=True)
     installationsdatum = Column(Date, nullable=True)
@@ -202,7 +203,7 @@ class Vertrag(Base):
     end_datum = Column(Date)
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     jahresabschlag = Column(Float)
-    vertragstatus = Column(Enum(Vertragsstatus), 
+    vertragstatus = Column(Enum(Vertragsstatus),
                            default=Vertragsstatus.Laufend.value,  # default-Wert
                            name='vertragsstatus' if settings.OS == 'Linux' else "Vertragsstatus")
     __table_args__ = (
@@ -211,7 +212,6 @@ class Vertrag(Base):
 
     # Beziehung zu Kündigungsanfrage, falls verwendet
     kündigungsanfrage = relationship("Kündigungsanfrage", uselist=False, back_populates="vertrag")
-
 
 
 class Energieeffizienzmassnahmen(Base):
@@ -225,10 +225,11 @@ class Energieeffizienzmassnahmen(Base):
     einsparpotenzial = Column(Float)
     kosten = Column(Float)
 
+
 class Kündigungsanfrage(Base):
     __tablename__ = 'kündigungsanfrage' if settings.OS == 'Linux' else "Kündigungsanfrage"
     anfrage_id = Column(Integer, primary_key=True)
     vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id'))
     bestätigt = Column(Boolean, default=False)
-    
+
     vertrag = relationship("Vertrag", back_populates="kündigungsanfrage")

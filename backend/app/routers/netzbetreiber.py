@@ -15,7 +15,16 @@ from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, 
 from app import config
 import pandas as pd
 import io
-from datetime import datetime, timedelta
+from datetime import datetime
+
+EXPECTED_COLUMNS = {
+    'Zeit': 'datetime64',
+    'PV(W)': 'float64',
+    'SOC(%)': 'float64',
+    'Batterie(W)': 'float64',
+    'Zaehler(W)': 'float64',
+    'Last(W)': 'float64'
+}
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -24,6 +33,17 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Benutzer eine Netzbetreiberrolle hat.
+
+    Args:
+        current_user: models.Nutzer: Der aktuelle Benutzer.
+        method: str: Die verwendete HTTP-Methode.
+        endpoint: str: Der Endpunkt, auf den zugegriffen wird.
+
+    Raises:
+        HTTPException: Wenn der Benutzer nicht die erforderliche Rolle hat.
+    """
     if current_user.rolle != models.Rolle.Netzbetreiber:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -48,11 +68,24 @@ async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, meth
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber und Haushalte haben Zugriff auf diese Daten")
 
+
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
 
 
 def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
+    """
+    Validiert die PV-Installation anhand bestimmter Kriterien.
+
+    Args:
+        pv_anlage: models.PVAnlage: Die zu überprüfende PV-Anlage.
+
+    Returns:
+        bool: Ob die PV-Anlage die Kriterien erfüllt.
+
+    Raises:
+        HTTPException: Wenn die erforderlichen Daten fehlen.
+    """
     # Annahmen für die Netzverträglichkeitsprüfung
     max_kapazitaet_kw = 100.0  # Maximale Kapazität in Kilowatt
     max_installationsflaeche_m2 = 1000.0  # Maximale Installationsfläche in Quadratmetern
@@ -75,7 +108,118 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
             is_valid_schattenanalyse
         ])
     except TypeError as e:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                            detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
+
+
+async def perform_network_compatibility_check(anlage_id: int, db: AsyncSession, current_user: models.Nutzer):
+    """
+    Führt eine Netzwerkkompatibilitätsprüfung für eine bestimmte PV-Installation durch.
+
+    Args:
+        anlage_id: int: Die ID der PV-Anlage.
+        db: AsyncSession: Die Datenbanksitzung.
+        current_user: models.Nutzer: Der aktuelle Benutzer.
+
+    Returns:
+        bool: Das Ergebnis der Netzwerkkompatibilitätsprüfung.
+
+    Raises:
+        DatabaseOperationError: Wenn es ein Problem bei der Aktualisierung der Datenbank gibt.
+    """
+    pv_anlage = await fetch_pv_anlage(anlage_id, db)
+    is_compatible = validate_pv_anlage(pv_anlage)
+
+    # Update the database with the result
+    update_stmt = (
+        update(models.PVAnlage)
+        .where(models.PVAnlage.anlage_id == anlage_id)
+        .values(nvpruefung_status=is_compatible)
+        .execution_options(synchronize_session="fetch")
+    )
+    await db.execute(update_stmt)
+    await db.commit()
+    return is_compatible
+
+
+async def fetch_pv_anlage(anlage_id: int, db: AsyncSession) -> models.PVAnlage:
+    """
+    Holt eine PV-Installation aus der Datenbank.
+
+    Args:
+        anlage_id: int: Die ID der PV-Anlage.
+        db: AsyncSession: Die Datenbanksitzung.
+
+    Returns:
+        models.PVAnlage: Die abgerufene PV-Anlage.
+
+    Raises:
+        NotFoundError: Wenn die PV-Anlage nicht gefunden wird.
+        BadRequestError: Wenn die PV-Anlage nicht den erforderlichen Status hat.
+    """
+    result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id))
+    pv_anlage = result.scalar_one_or_none()
+
+    if pv_anlage is None:
+        raise NotFoundError("PV-Anlage nicht gefunden")
+    if pv_anlage.prozess_status != models.ProzessStatus.PlanErstellt:
+        raise BadRequestError("PV-Anlage ist nicht im Status 'PlanErstellt'")
+    return pv_anlage
+
+
+async def fetch_pv_anlage_for_feed_in(anlage_id: int, db: AsyncSession) -> models.PVAnlage:
+    pv_anlage = await fetch_pv_anlage(anlage_id, db)
+
+    if not pv_anlage.nvpruefung_status:
+        raise BadRequestError("Netzverträglichkeitsprüfung nicht bestanden")
+
+    return pv_anlage
+
+
+def validate_csv_data(df: pd.DataFrame):
+    if not all(column in df.columns for column in EXPECTED_COLUMNS.keys()):
+        missing_columns = set(EXPECTED_COLUMNS.keys()) - set(df.columns)
+        if missing_columns:
+            raise ValueError(f"Fehlende Spalten: {missing_columns}")
+
+    incorrect_types = {col: df[col].dtype for col in EXPECTED_COLUMNS if df[col].dtype != EXPECTED_COLUMNS[col]}
+    if incorrect_types:
+        raise TypeError(f"Falsche Datentypen: {incorrect_types}")
+
+
+class NotFoundError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=404, detail=detail)
+
+
+class BadRequestError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
+class DatabaseOperationError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=500, detail=detail)
+
+
+def log_activity(user_id: int, endpoint: str, method: str, message: str, success: bool):
+    """
+    Protokolliert Benutzeraktivitäten.
+
+    Args:
+        user_id: int: Die ID des Benutzers.
+        endpoint: str: Der Endpunkt, auf den zugegriffen wird.
+        method: str: Die verwendete HTTP-Methode.
+        message: str: Die zu protokollierende Nachricht.
+        success: bool: Ob der Vorgang erfolgreich war.
+    """
+    logging_schema = LoggingSchema(
+        user_id=user_id, endpoint=endpoint, method=method, message=message, success=success
+    )
+    if success:
+        logger.info(logging_schema.dict())
+    else:
+        logger.error(logging_schema.dict())
 
 
 # Tarif erstellen
@@ -98,11 +242,10 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     try:
-        query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
-
-        await check_netzbetreiber_role(current_user, "PUT", "/tarife")
         user_id = current_user.user_id
         query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
                                            (models.Tarif.user_id == user_id))
@@ -128,8 +271,6 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSessi
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
-
     await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
 
     user_id = current_user.user_id
@@ -150,7 +291,7 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    #TODO: nur tarife von netzbetreiber ausgeben
+    # TODO: nur tarife von netzbetreiber ausgeben
     await check_netzbetreiber_role(current_user, "GET", "/tarife")
     user_id = current_user.user_id
     result = await db.execute(select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id))
@@ -257,38 +398,19 @@ async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
     try:
         user_id = current_user.user_id
         preisstruktur.user_id = user_id
-        preisstruktur = models.Preisstrukturen(**preisstruktur.dict())
-        db.add(preisstruktur)
+        new_preisstruktur = models.Preisstrukturen(**preisstruktur.dict())
+        db.add(new_preisstruktur)
         await db.commit()
-        await db.refresh(preisstruktur)
-        logging_info = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/preisstrukturen",
-            method="POST",
-            message=f"Preisstruktur {preisstruktur.preis_id} erstellt",
-            success=True
-        )
-        logger.info(logging_info.dict())
-        return preisstruktur
-    except SQLAlchemyError as e:
-        logging_error = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/preisstrukturen",
-            method="POST",
-            message=f"SQLAlchemy Fehler beim Erstellen der Preisstruktur: {str(e)}",
-            success=False
-        )
-        logger.error(logging_error.dict())
-        raise HTTPException(status_code=500, detail="Datenbankfehler beim Erstellen der Preisstruktur")
+        await db.refresh(new_preisstruktur)
+        log_activity(current_user.user_id, "/preisstrukturen", "POST",
+                     f"Preisstruktur {new_preisstruktur.preis_id} erstellt", True)
+        return new_preisstruktur
+    except exc.IntegrityError as e:
+        log_activity(current_user.user_id, "/preisstrukturen", "POST",
+                     f"Fehler beim Erstellen der Preisstruktur: {e}", False)
+        raise DatabaseOperationError("Datenbankfehler beim Erstellen der Preisstruktur")
     except ValidationError as e:
-        logging_error = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/preisstrukturen",
-            method="POST",
-            message=f"Validierungsfehler: {str(e)}",
-            success=False
-        )
-        logger.error(logging_error.dict())
+        log_activity(current_user.user_id, "/preisstrukturen", "POST", f"Validierungsfehler: {e}", False)
         raise HTTPException(status_code=400, detail="Ungültige Eingabedaten")
 
 
@@ -301,19 +423,12 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
     user_id = current_user.user_id
     query = select(models.Preisstrukturen).where((models.Preisstrukturen.preis_id == preis_id) &
                                                  (models.Preisstrukturen.user_id == user_id))
-    result = await db.execute(query)
-    preisstruktur = result.scalars().first()
+    preisstruktur = await db.execute(query).scalars().first()
 
     if preisstruktur is None:
-        logging_error = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/preisstrukturen",
-            method="PUT",
-            message=f"Preisstruktur mit ID {preis_id} nicht gefunden",
-            success=False
-        )
-        logger.error(logging_error.dict())
-        raise HTTPException(status_code=404, detail=f"Preisstruktur mit ID {preis_id} nicht gefunden")
+        log_activity(current_user.user_id, "/preisstrukturen", "PUT",
+                     f"Preisstruktur mit ID {preis_id} nicht gefunden", False)
+        raise NotFoundError("Preis nicht gefunden")
 
     try:
         for key, value in preisstruktur_data.dict().items():
@@ -321,29 +436,15 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
 
         await db.commit()
         await db.refresh(preisstruktur)
-        logging_info = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/preisstrukturen/{preis_id}",
-            method="PUT",
-            message=f"Preisstruktur {preis_id} aktualisiert",
-            success=True
-        )
-        logger.info(logging_info.dict())
+        log_activity(current_user.user_id, f"/preisstrukturen/{preis_id}", "PUT",
+                     f"Preisstruktur {preis_id} aktualisiert", True)
         return preisstruktur
-
-    except SQLAlchemyError as e:
-        logging_error = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/preisstrukturen/{preis_id}",
-            method="PUT",
-            message=f"Fehler beim Aktualisieren der Preisstruktur {preis_id}: {str(e)}",
-            success=False
-        )
-        logger.error(logging_error.dict())
-        raise HTTPException(status_code=500, detail="Interner Serverfehler")
+    except exc.IntegrityError as e:
+        log_activity(current_user.user_id, f"/preisstrukturen/{preis_id}", "PUT",
+                     f"Fehler beim Aktualisieren der Preisstruktur {preis_id}: {e}", False)
+        raise DatabaseOperationError("Interner Serverfehler")
 
 
-# haben wir einen datencheck drin, das nichts falsches hochgeladen wird??
 @router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
 async def add_dashboard_smartmeter_data(haushalt_id: int,
@@ -355,17 +456,12 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
         user_id = current_user.user_id
         if not haushalt_user or haushalt_user.rolle != models.Rolle.Haushalte:
-            logging_error = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint="/dashboard",
-                method="POST",
-                message=f"Nutzer {haushalt_id} ist nicht in der Rolle 'Haushalte'",
-                success=False
-            )
-            logger.error(logging_error.dict())
+            log_activity(current_user.user_id, f"/dashboard/{haushalt_id}", "POST",
+                         f"Nutzer {haushalt_id} ist nicht in der Rolle 'Haushalte'", False)
             raise HTTPException(status_code=400, detail="Nutzer ist nicht in der Rolle 'Haushalte'")
 
         df = pd.read_csv(io.StringIO(file.file.read().decode('utf-8')))
+        validate_csv_data(df)
         df['Zeit'] = pd.to_datetime(df['Zeit'])
 
         for _, row in df.iterrows():
@@ -382,26 +478,24 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
             db.add(dashboard_data)
         await db.commit()
 
-        logging_info = schemas.LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/dashboard",
-            method="POST",
-            message=f"Smart-Meter-Daten für Nutzer {haushalt_id} erfolgreich hinzugefügt",
-            success=True
-        )
-        logger.info(logging_info.dict())
+        log_activity(current_user.user_id, f"/dashboard/{haushalt_id}", "POST",
+                     f"Smart-Meter-Daten für Benutzer {haushalt_id} erfolgreich hinzugefügt", True)
 
         return {"message": "Smart-Meter-Daten erfolgreich hochgeladen"}
 
+    except ValueError as ve:
+        log_activity(current_user.user_id, f"/dashboard/{haushalt_id}", "POST",
+                     f"Fehler bei der Datenüberprüfung: {ve}", False)
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    except TypeError as te:
+        log_activity(current_user.user_id, f"/dashboard/{haushalt_id}", "POST",
+                     f"Falscher Datentyp: {te}", False)
+        raise HTTPException(status_code=400, detail=str(te))
+
     except Exception as e:
-        logging_error = schemas.LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint="/dashboard",
-            method="POST",
-            message=f"Fehler beim Hinzufügen von Smart-Meter-Daten: {str(e)}",
-            success=False
-        )
-        logger.error(logging_error.dict())
+        log_activity(current_user.user_id, f"/dashboard/{haushalt_id}", "POST",
+                     f"Unerwarteter Fehler: {e}", False)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
 
@@ -464,9 +558,8 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role_or_haushalt(current_user, "POST", f"/dashboard/{haushalt_id}")
     try:
-        await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard/{haushalt_id}")
-
         if period not in ["MINUTE", "HOUR", "DAY", "WEEK", "MONTH"]:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
@@ -669,64 +762,25 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
                                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/nvpruefung/{anlage_id}")
 
-    stmt = select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id)
-    result = await db.execute(stmt)
-    pv_anlage = result.scalar_one_or_none()
+    try:
+        is_compatible = await perform_network_compatibility_check(anlage_id, db, current_user)
+        log_activity(current_user.user_id, f"/netzbetreiber/nvpruefung/{anlage_id}", "PUT",
+                     "Netzverträglichkeitsprüfung durchgeführt", True)
 
-    if pv_anlage is None:
-        logging_obj = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/netzbetreiber/nvpruefung/{anlage_id}",
-            method="PUT",
-            message="PV-Anlage nicht gefunden",
-            success=False
-        )
-        logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PV-Anlage nicht gefunden")
+        return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
 
-    if pv_anlage.prozess_status != models.ProzessStatus.PlanErstellt:
-        logging_obj = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/netzbetreiber/nvpruefung/{anlage_id}",
-            method="PUT",
-            message="PV-Anlage ist nicht im Status 'PlanErstellt'",
-            success=False
-        )
-        logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="PV-Anlage ist nicht im Status 'PlanErstellt'")
+    except NotFoundError as ne:
+        log_activity(current_user.user_id, f"/netzbetreiber/nvpruefung/{anlage_id}", "PUT", ne.detail, False)
+        raise
 
-    is_compatible = validate_pv_anlage(pv_anlage)
+    except BadRequestError as bre:
+        log_activity(current_user.user_id, f"/netzbetreiber/nvpruefung/{anlage_id}", "PUT", bre.detail, False)
+        raise
 
-    update_stmt = (
-        update(models.PVAnlage)
-        .where(models.PVAnlage.anlage_id == anlage_id)
-        .values(nvpruefung_status=is_compatible)
-        .execution_options(synchronize_session="fetch")
-    )
-    await db.execute(update_stmt)
-    await db.commit()
-
-    logging_obj = LoggingSchema(
-        user_id=current_user.user_id,
-        endpoint=f"/netzbetreiber/nvpruefung/{anlage_id}",
-        method="PUT",
-        message="Netzverträglichkeitsprüfung durchgeführt",
-        success=True
-    )
-    logger.info(logging_obj.dict())
-
-    return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
-
-
-@router.get("/anlagen", status_code=status.HTTP_200_OK)
-async def anlage_ueberpruefung(db: AsyncSession = Depends(database.get_db_async),
-                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "GET", "/anlagen")
-
-    stmt = select(models.PVAnlage).where(models.PVAnlage.netzbetreiber_id == None)
-    result = await db.execute(stmt)
-    pv_anlage = result.scalars().all()
+    except Exception as e:
+        error_msg = f"Unerwarteter Fehler bei der Prüfung der Netzverträglichkeit: {e}"
+        log_activity(current_user.user_id, f"/netzbetreiber/nvpruefung/{anlage_id}", "PUT", error_msg, False)
+        raise DatabaseOperationError(error_msg)
 
 
 @router.put("/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
@@ -734,50 +788,28 @@ async def anlage_ueberpruefung(db: AsyncSession = Depends(database.get_db_async)
 async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/einspeisezusage/{anlage_id}")
+    try:
+        pv_anlage = await fetch_pv_anlage_for_feed_in(anlage_id, db)
+        pv_anlage.netzbetreiber_id = current_user.user_id
+        db.add(pv_anlage)
+        await db.commit()
 
-    stmt = select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id)
-    result = await db.execute(stmt)
-    pv_anlage = result.scalars().first()
+        log_activity(current_user.user_id, f"/netzbetreiber/einspeisezusage/{anlage_id}", "PUT",
+                     "Einspeisezusage erteilt",True)
+        return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
 
-    if pv_anlage is None:
-        logging_obj = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/netzbetreiber/einspeisezusage/{anlage_id}",
-            method="PUT",
-            message="PV-Anlage nicht gefunden",
-            success=True
-        )
-        logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PV-Anlage nicht gefunden")
+    except NotFoundError as ne:
+        log_activity(current_user.user_id, f"/netzbetreiber/einspeisezusage/{anlage_id}", "PUT", ne.detail, False)
+        raise
 
-    if not pv_anlage.nvpruefung_status:
-        logging_obj = LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/netzbetreiber/einspeisezusage/{anlage_id}",
-            method="PUT",
-            message="Netzverträglichkeitsprüfung nicht bestanden",
-            success=True
-        )
-        # wenn nv pruedung false kommt 400 zurück
-        logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Netzverträglichkeitsprüfung nicht bestanden")
+    except BadRequestError as bre:
+        log_activity(current_user.user_id, f"/netzbetreiber/einspeisezusage/{anlage_id}", "PUT", bre.detail, False)
+        raise
 
-    pv_anlage.prozess_status = models.ProzessStatus.Genehmigt
-    pv_anlage.netzbetreiber_id = current_user.user_id
-    db.add(pv_anlage)
-    await db.commit()
-
-    logging_obj = LoggingSchema(
-        user_id=current_user.user_id,
-        endpoint=f"/netzbetreiber/einspeisezusage/{anlage_id}",
-        method="PUT",
-        message="Einspeisezusage erteilt",
-        success=True
-    )
-    logger.info(logging_obj.dict())
-
-    return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
+    except Exception as e:
+        error_msg = f"Unerwarteter Fehler bei der Einspeisezusage: {e}"
+        log_activity(current_user.user_id, f"/netzbetreiber/einspeisezusage/{anlage_id}", "PUT", error_msg, False)
+        raise DatabaseOperationError(error_msg)
 
 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
@@ -785,7 +817,9 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
     try:
         # Hier holen wir den aktiven Vertrag des Nutzers, um den Jahresabschlag zu erhalten.
         vertrag_query = select(models.Vertrag).where(
-            (models.Vertrag.user_id == rechnung.user_id) & 
+            (models.Vertrag.user_id == rechnung.user_id) &
+            (models.Vertrag.vertragstatus == True)
+            (models.Vertrag.user_id == rechnung.user_id) &
             (models.Vertrag.vertragstatus == models.Vertragsstatus.Laufend)
         )
         vertrag_result = await db.execute(vertrag_query)
@@ -811,10 +845,8 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
 @router.get("/pv-angenommen", response_model=List[schemas.AngebotVorschlag])
 async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db),
                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", "/pv-angenommen")
     try:
-        if current_user.rolle != models.Rolle.Netzbetreiber:
-            raise HTTPException(status_code=403, detail="Nicht autorisiert")
-
         stmt = select(models.PVAnlage).where(models.PVAnlage.netzbetreiber_id == current_user.user_id)
         result = await db.execute(stmt)
         pv_anlagen = result.scalars().all()
@@ -930,6 +962,21 @@ async def get_einspeisezusagen_vorschlag(anlage_id: int,
 @router.put("/tarife/deactivate/{tarif_id}", status_code=status.HTTP_200_OK)
 async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Deaktiviert einen Tarif.
+
+    Args:
+        tarif_id: int: Die ID des Tarifs, der deaktiviert werden soll.
+        db: AsyncSession: Die Datenbanksitzung.
+        current_user: models.Nutzer: Der aktuelle Benutzer.
+
+    Returns:
+        dict: Bestätigungsnachricht.
+
+    Raises:
+        DatabaseOperationError: Wenn es ein Problem bei der Aktualisierung der Datenbank gibt.
+    """
+
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/tarif/deactivate/{tarif_id}")
     try:
         stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)

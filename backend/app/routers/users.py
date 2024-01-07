@@ -342,7 +342,7 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-async def get_users(skip: int = 0, limit: int = 100, current_user: models.Nutzer = Depends(oauth.get_current_user),
+async def get_users(skip: int = 0, limit: int = 0, current_user: models.Nutzer = Depends(oauth.get_current_user),
                     db: AsyncSession = Depends(database.get_db_async)):
     stmt = (
         select(models.Nutzer, models.Adresse)

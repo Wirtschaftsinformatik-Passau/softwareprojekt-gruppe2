@@ -87,6 +87,7 @@ class PVAnlage(Base):
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                               nullable=True)
     modultyp = Column(String, nullable=True)
+    energieausweis_id = Column(Integer, ForeignKey('energieausweise.energieausweis_id' if settings.OS == 'Linux' else "Energieausweise.energieausweis_id"))
     kapazitaet = Column(Float, nullable=True)
     installationsflaeche = Column(Float, nullable=True)
     installationsdatum = Column(Date, nullable=True)

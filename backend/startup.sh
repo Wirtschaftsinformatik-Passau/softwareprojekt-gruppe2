@@ -1,5 +1,6 @@
 
 VOLUME_NAME="backend-volume"
+VOLUME_NAME2="alembic-volume"
 IMAGE_NAME="fastapi-backend"
 CONTAINER_NAME="fastapi-backend"
 
@@ -22,7 +23,7 @@ fi
 
 # Build the Docker image
 echo "Building Docker image '$IMAGE_NAME'..."
-sudo docker build -t $IMAGE_NAME .
+sudo docker build -t $IMAGE_NAME . --rm --no-cache
 
 # Check if the container is already running and stop it
 if [ "$(sudo docker ps -q -f name=$CONTAINER_NAME)" ]; then
@@ -35,7 +36,8 @@ fi
 echo "Running container '$CONTAINER_NAME'..."
 sudo docker run -d \
   --name $CONTAINER_NAME \
-  -v $VOLUME_NAME:/path/in/container \
+  -v $VOLUME_NAME:/logs \
+  -v $VOLUME_NAME2:/tose_backend/ \
   -p 8000:8000 \
   $IMAGE_NAME
 

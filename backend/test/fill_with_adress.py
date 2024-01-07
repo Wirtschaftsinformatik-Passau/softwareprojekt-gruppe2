@@ -68,6 +68,7 @@ def send_post_request(request_number):
     data = adresses[request_number]
     # Sending the POST request
     response = requests.post(url, json=data)
+    print(response)
     return response
 
 

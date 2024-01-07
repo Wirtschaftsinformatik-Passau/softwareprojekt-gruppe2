@@ -305,31 +305,8 @@ async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(databas
     await check_haushalt_role(current_user, "POST", "/kontaktaufnahme-energieberatenden")
 
     try:
-        stmt = (
-            select(models.Nutzer.user_id)
-            .join(models.Energieausweise, models.Nutzer.user_id == models.Energieausweise.energieberater_id,
-                  isouter=True)
-            .where(models.Nutzer.rolle == models.Rolle.Energieberatende)
-            .group_by(models.Nutzer.user_id)
-            .order_by(func.count(models.Energieausweise.energieausweis_id))
-            .limit(1))
-        result = await db.execute(stmt)
-        energieberater = result.scalars().first()
-
-        if not energieberater:
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint="/kontaktaufnahme-energieberatenden",
-                method="POST",
-                message="Kein Energieberatende verfügbar",
-                success=False
-            )
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=404, detail="Kein Energieberatende verfügbar")
-
         neue_anfrage = models.Energieausweise(
             haushalt_id=current_user.user_id,
-            energieberater_id=energieberater,
             ausweis_status=models.AusweisStatus.AnfrageGestellt
         )
 
@@ -365,6 +342,10 @@ async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(databas
         raise HTTPException(status_code=409, detail="Konflikt beim Erstellen der Energieausweis Anfrage")
 
     except Exception as e:
+
+        if isinstance(e, HTTPException):
+            raise e
+
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/kontaktaufnahme-energieberatenden",

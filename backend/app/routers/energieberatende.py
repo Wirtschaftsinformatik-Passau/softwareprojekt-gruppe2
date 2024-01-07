@@ -202,6 +202,7 @@ async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: sche
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Energieausweis-ID angegeben")
 
         energieausweis = await db.get(models.Energieausweise, energieausweis_id)
+        user_id = energieausweis.energieberater_id
         if not energieausweis:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
@@ -244,6 +245,7 @@ async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: sche
         neue_massnahme = models.Energieeffizienzmassnahmen(
             haushalt_id=energieausweis.haushalt_id,
             massnahmetyp=massnahmen_data.massnahmetyp,
+            energieberater_id=user_id,
             einsparpotenzial=massnahmen_data.einsparpotenzial,
             kosten=massnahmen_data.kosten
         )

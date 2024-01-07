@@ -40,7 +40,7 @@ def send_post_request(request_number):
     return response
 
 
-for x in [hh,admin,nb]:
+for x in [hh,admin,nb, ss]:
     response = requests.post(url, json=x)
     print(response)
 

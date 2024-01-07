@@ -6,7 +6,10 @@ COPY tose_backend ./tose_backend
 COPY vars/.env.prod ./vars/.env
 COPY reqs.txt . 
 RUN pip install --no-cache-dir -r reqs.txt
-RUN alembic revision --autogenerate
-RUN alembic upgrade head 
+COPY alembic_entrypoint.sh .
+
 EXPOSE 8000 
+
+ENTRYPOINT ["./alembic_entrypoint.sh"]
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

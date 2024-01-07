@@ -10,7 +10,7 @@ import { SolarteurResponse } from "../../../entitities/pv";
 import { NoRowsOverlay } from "../../utility/NoRows";
 
 
-const AntragTable = () => {
+const EnergieberatendeAnfragenAbgeschlossen = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<SolarteurResponse[]>([]);
@@ -18,7 +18,7 @@ const AntragTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=Genehmigt&prozess_status=Abgenommen&prozess_status=InstallationAbgeschlossen",
+    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=Genehmigt&prozess_status=Abgenommen&prozess_status=InstallationAbgeschlossen&prozess_status=AusweisErstellt",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
@@ -172,4 +172,4 @@ return (
 }
 
 
-export default AntragTable;
+export default EnergieberatendeAnfragenAbgeschlossen;

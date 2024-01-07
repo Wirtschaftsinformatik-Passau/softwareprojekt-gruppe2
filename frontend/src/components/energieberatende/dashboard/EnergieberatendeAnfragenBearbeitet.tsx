@@ -9,7 +9,6 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
 import { NoRowsOverlay } from "../../utility/NoRows";
 
-
 const AntragTable = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
@@ -18,12 +17,12 @@ const AntragTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=Genehmigt&prozess_status=Abgenommen&prozess_status=InstallationAbgeschlossen",
+    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=AngebotGemacht&prozess_status=DatenAngefordert&prozess_status=DatenFreigegeben&prozess_status=AngebotAngenommen&prozess_status=AusweisErstellt",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
-  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>; }; }) => {
-    navigate(`/solarteure/antragTable/${params.row.anlage_id}`);
+  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>, prozess_status: SetStateAction<String>; }; }) => {
+    navigate(`/solarteure/antragTable/${params.row.anlage_id}?status=${params.row.prozess_status}`);
   }
 
 
@@ -156,12 +155,7 @@ return (
     }}
   >
     <DataGrid checkboxSelection getRowId={(row) => row.anlage_id} rows={data} 
-      columns={columns} hideFooter={false} sx={{cursor: "pointer"}} 
-      localeText={{
-        noRowsOverlay: NoRowsOverlay("Keine Anträge vorhanden")
-      
-      }}
-      />
+      columns={columns} hideFooter={false} sx={{cursor: "pointer"}} onRowClick={handleRowClick}/>
   </Box>
 </Box>
     </Grow>

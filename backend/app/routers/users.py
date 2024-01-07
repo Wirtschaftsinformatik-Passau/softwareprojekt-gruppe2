@@ -342,14 +342,15 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-async def get_users(skip: int = 0, limit: int = 0, current_user: models.Nutzer = Depends(oauth.get_current_user),
+async def get_users(skip: int = 0, limit: int | None = None, current_user: models.Nutzer = Depends(oauth.get_current_user),
                     db: AsyncSession = Depends(database.get_db_async)):
     stmt = (
         select(models.Nutzer, models.Adresse)
         .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
         .offset(skip)
-        .limit(limit)
     )
+    if limit is not None:
+        stmt = stmt.limit(limit)
     try:
         result = await db.execute(stmt)
         user_adresse_pairs = result.all()

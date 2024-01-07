@@ -2,6 +2,7 @@ import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../../utils/theme";
 import { useEffect } from "react";
 import React from "react";
+import { useMemo } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
@@ -49,13 +50,20 @@ const AdminEndPointActivity = () => {
         const response = res.data
         setActivityData(response)
         setIsLoading(false)
-    
-        const change = Math.round((response[response.length-1].value / response[response.length-2].value) *100 - 100, 2)
+        console.log(response[response.length-1])
+        let change: number = 0
+        try {
+        change = Math.round((response[response.length-1].value / response[response.length-2].value) *100 - 100, 2)
+        }
+        catch {
+            change = 0
+        }
         const value = change > 0 ? "+" + change.toString() + "%" : "-" + change.toString() + "%"
         setActivityValue(value)
         setIsLoading2(false)
       })
       .catch((err) => { 
+        console.log(err)
         if (err.response.status === 401) {
           navigate("/login");
         }
@@ -72,6 +80,27 @@ const AdminEndPointActivity = () => {
       const token = localStorage.getItem("accessToken");
       setStateOtherwiseRedirect(setPieData, "admin/userOverview", navigate,  {Authorization: `Bearer ${token}`})
     }, [])
+
+    const adminCount = useMemo(() => {
+      return users.filter((user) => user.rolle === "Admin").length
+    }, [users]);
+
+    const solarteurCount = useMemo(() => {
+      return users.filter((user) => user.rolle === "Solarteure").length
+    }, [users]);
+
+    const energieberaterCount = useMemo(() => {
+      return users.filter((user) => user.rolle === "Energieberatende").length
+    }, [users]);
+
+    const haushalteCount = useMemo(() => {
+      return users.filter((user) => user.rolle === "Haushalte").length
+    }, [users]);
+
+    const netzbetreiberCount = useMemo(() => {
+      return users.filter((user) => user.rolle === "Netzbetreiber").length
+    }, [users]);
+
 
 
 
@@ -208,9 +237,9 @@ const AdminEndPointActivity = () => {
             alignItems="center"
             justifyContent="center">
                 <StatBox
-                title={users.filter((user) => user.rolle === "Admin").length.toString()}
+                title={adminCount.toString()}
                 subtitle="Admins"
-                progress= {(Math.round((users.filter((user) => user.rolle === "Admin").length / numberUsers) * 100) / 100).toString()}
+                progress= {(Math.round((adminCount / numberUsers) * 100) / 100).toString()}
                 increase="+0%"
                 icon={
                   <AdminPanelSettingsIcon
@@ -227,9 +256,9 @@ const AdminEndPointActivity = () => {
             alignItems="center"
             justifyContent="center">
                 <StatBox
-                title={users.filter((user) => user.rolle === "Solarteure").length.toString()}
+                title={solarteurCount.toString()}
                 subtitle="Solarteure"
-                progress= {(Math.round((users.filter((user) => user.rolle === "Solarteure").length / numberUsers) * 100) / 100).toString()}
+                progress= {(Math.round((solarteurCount/ numberUsers) * 100) / 100).toString()}
                 increase="+0%"
                 icon={
                   <SolarPowerIcon
@@ -246,9 +275,9 @@ const AdminEndPointActivity = () => {
             alignItems="center"
             justifyContent="center">
                 <StatBox
-                title={users.filter((user) => user.rolle === "Energieberatende").length.toString()}
+                title={energieberaterCount.toString()}
                 subtitle="Energieberater"
-                progress= {(Math.round((users.filter((user) => user.rolle === "Energieberatende").length / numberUsers) * 100) / 100).toString()}
+                progress= {(Math.round((energieberaterCount.length / numberUsers) * 100) / 100).toString()}
                 increase="+0%"
                 icon={
                   <PointOfSaleIcon
@@ -265,9 +294,9 @@ const AdminEndPointActivity = () => {
             alignItems="center"
             justifyContent="center">
                 <StatBox
-                title={users.filter((user) => user.rolle === "Haushalte").length.toString()}
+                title={haushalteCount.toString()}
                 subtitle="Haushalte"
-                progress= {(Math.round((users.filter((user) => user.rolle === "Haushalte").length / numberUsers) * 100) / 100).toString()}
+                progress= {(Math.round((haushalteCount / numberUsers) * 100) / 100).toString()}
                 increase="+0%"
                 icon={
                   <HomeIcon
@@ -285,9 +314,9 @@ const AdminEndPointActivity = () => {
             alignItems="center"
             justifyContent="center">
                 <StatBox
-                title={users.filter((user) => user.rolle === "Netzbetreiber").length.toString()}
+                title={netzbetreiberCount.toString()}
                 subtitle="Netzbetreiber"
-                progress= {(Math.round((users.filter((user) => user.rolle === "Netzbetreiber").length / numberUsers) * 100) / 100).toString()}
+                progress= {(Math.round((netzbetreiberCount / numberUsers) * 100) / 100).toString()}
                 increase="+0%"
                 icon={
                   <PowerIcon

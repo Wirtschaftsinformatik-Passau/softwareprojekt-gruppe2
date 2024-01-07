@@ -16,14 +16,14 @@ import { Angebot, PVAngebotCreate } from "../../../entitities/pv";
 import Header from "../../utility/Header";
 import { Orientierung } from "../../../entitities/haushalt";
 import { SolarteurResponse, Installationsplan, Schatten, Montagesystem} from "../../../entitities/pv";
-import SolarteurePlanErstellen from "./SolarteurePlanErstellen";
-import AngebotErstellen from "./SolarteureAngebotErstellen";
+import SolarteurePlanErstellen from "./EnergieberatendePlanErstellen";
+import AngebotErstellen from "./EnergieberatendeAngebotErstellen";
 
 export interface SolarteurResponseExtended extends SolarteurResponse {
     haushalt_id: number
 }
 
-const AnfrageDetail = ({}) => {
+const EnergieberatendeAnfragenDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -390,4 +390,4 @@ const installationsplanSchema = yup.object({
     installationsdatum: yup.date().required("Installationsdatum ist erforderlich"),
 })
 
-export default AnfrageDetail;
+export default EnergieberatendeAnfragenDetail;

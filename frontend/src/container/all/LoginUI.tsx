@@ -74,7 +74,10 @@ const LoginUI = () => {
 
             else if (currentUser.rolle === "Solarteure"){
                 navigate("/solarteure")
-        }
+            }
+            else if (currentUser.rolle === "Energieberatende"){
+                navigate("/energieberatende")
+            }
         }
      }, [currentUser])
     

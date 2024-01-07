@@ -1,3 +1,4 @@
+import { en } from "@fullcalendar/core/internal-common"
 import { Orientierung } from "./haushalt"
 
 export interface PVAntrag {
@@ -10,9 +11,42 @@ export interface PVAntrag {
 
 export interface Angebot {
     angebot_id: number ,
+    modulanordnung: Orientierung | "",
+    modultyp: string | "",
+    kapazitaet: number | "",
+    installationsflaeche: number | "",
     kosten: number | "",
     angebotsstatus: boolean | "",
     created_at: Date | "",
+    
+}
+
+
+
+export enum Montagesystem {
+    Aufdachmontage = "Aufdachmontage",
+    Indachmontage = "Indachmontage",
+    Flachdachmontage = "Flachdachmontage",
+    Freilandmontage = "Freilandmontage",
+    Trackermontage = "Trackermontage",
+    Fassadenmontage = "Fassadenmontage"
+}
+
+
+export enum Schatten {
+    Kein_Schatten = "Kein_Schatten",
+    Minimalschatten = "Minimalschatten",
+    Moderater_Schatten = "Moderater_Schatten",
+    Ausgedehnter_Schatten = "Ausgedehnter_Schatten",
+    Dauerhafter_Schatten = "Dauerhafter_Schatten"
+}
+
+export interface Installationsplan {
+    kabelwegfuehrung: string | "",
+    montagesystem: Montagesystem | "",
+    schattenanalyse: Schatten | "",
+    wechselrichterposition: string | "",
+    installationsdatum: Date | "",
 }
 
 export enum ProzessStatus {
@@ -47,4 +81,13 @@ export interface SolarteurResponse {
     stadt: string,
     prozess_status: string,
 
+}
+
+
+
+
+export interface EnergieausweisCreate {
+    energieeffizienzklasse: string | "",
+    verbrauchskennwerte: number | "",
+    gueltigkeit: number | "",
 }

@@ -24,6 +24,10 @@ const AngebotDetail = ({}) => {
     const {anlageID} = useParams();
     const [angebote , setAngebote] = React.useState<Angebot[]>([{
         angebot_id: 0,
+        modulanordnung: "",
+        modultyp: "",
+        kapazitaet: "",
+        installationsflaeche: "",
         kosten: "",
         angebotsstatus:  "",
         created_at: "",
@@ -31,6 +35,10 @@ const AngebotDetail = ({}) => {
 
     const keyMapping = {
         angebot_id: "Angebot ID",
+        modulanordnung: "Modulanordnung",
+        modultyp: "Modultyp",
+        kapazitaet: "Kapazität",
+        installationsflaeche: "Installationsfläche",
         kosten: "Kosten",
         angebotsstatus: "Angebotsstatus",
         created_at: "Erstellt am",
@@ -56,6 +64,20 @@ const AngebotDetail = ({}) => {
             setFailModalIsOpen(true);
         })
     }
+
+    const kontaktAufnahme = () => {
+        const token = localStorage.getItem("accessToken");
+        const url = addSuffixToBackendURL("haushalte/kontaktaufnahme-energieberatenden/");
+        axios.post(url, {}, {headers: {Authorization: `Bearer ${token}`}})
+        .then((res) => {
+            console.log("Kontaktaufnahme erfolgreich")
+        })
+        .catch((error) => {
+            console.log("Kontaktaufnahme nicht erfolgreich")
+        })
+    }
+
+    // TODO: Angebot daten anzeigen von Solarteuer
 
     if (isLoading) {
         return (
@@ -93,7 +115,9 @@ const AngebotDetail = ({}) => {
                     }}/>
                     Angebot ablehnen    
                 </Button>
-                <Button variant="contained" color="primary" onClick={() => handleAnnehmen(angebot.angebot_id)}
+                <Button variant="contained" color="primary" onClick={() => {
+                    handleAnnehmen(angebot.angebot_id)
+                    kontaktAufnahme()}}
                 sx = {{
                     backgroundColor: `${colors.color1[400]} !important`,
                     color: theme.palette.background.default

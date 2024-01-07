@@ -37,12 +37,12 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
       icon={icon}
     >
       <Typography>{title}</Typography>
-      <Link to={"/solarteure" + to} />
+      <Link to={"/energieberatende" + to} />
     </MenuItem>
   );
 };
 
-const Sidebar1 = () => {
+const EnergieSidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -216,4 +216,4 @@ const Sidebar1 = () => {
   );
 };
 
-export default Sidebar1;
+export default EnergieSidebar;

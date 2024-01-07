@@ -30,6 +30,19 @@ async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoin
         raise HTTPException(status_code=403, detail="Nur Solarteure haben Zugriff auf diese Daten")
 
 
+async def check_solarteur_role_and_berater_role(current_user: models.Nutzer, method: str, endpoint: str):
+    if current_user.rolle != models.Rolle.Solarteure and current_user.rolle != models.Rolle.Energieberatende:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=endpoint,
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Solarteur oder Energieberater",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail="Nur Solarteure und Energieberater haben Zugriff auf diese Daten")
+
+
 @router.get("/anfragen", response_model=List[schemas.PVSolarteuerResponse])
 async def get_anfragen(
         prozess_status: List[types.ProzessStatus] = Query(None),
@@ -37,15 +50,23 @@ async def get_anfragen(
         db: AsyncSession = Depends(database.get_db_async)
 ):
     await check_solarteur_role(current_user, "GET", "/angebote")
-
+    print(prozess_status)
     try:
-        query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+        if prozess_status[0] == types.ProzessStatus.AnfrageGestellt and (len(prozess_status) == 2 or len(prozess_status) == 1):
+             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
                  .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id))
+                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                 .where(models.PVAnlage.prozess_status == models.ProzessStatus.AnfrageGestellt))
 
-        if prozess_status:
-            query = query.where(models.PVAnlage.prozess_status.in_(prozess_status))
+        else:
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                    .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                    .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id))
 
+            print(prozess_status)
+            if prozess_status:
+                query = query.where((models.PVAnlage.prozess_status.in_(prozess_status))
+                                    & (models.PVAnlage.solarteur_id == current_user.user_id))
         result = await db.execute(query)
         anfragen = result.all()
 
@@ -234,6 +255,7 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
     pv_anlage.installationsflaeche = angebot_data.installationsflaeche
     pv_anlage.prozess_status = models.ProzessStatus.AngebotGemacht
     pv_anlage.modulanordnung = angebot_data.modulanordnung
+    pv_anlage.solarteur_id = current_user.user_id
     await db.commit()
 
     logging_obj = schemas.LoggingSchema(

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from datetime import date, timedelta
 from sqlalchemy.exc import SQLAlchemyError
+from typing import List
 from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
@@ -28,6 +30,62 @@ async def check_energieberatende_role(current_user: models.Nutzer, method: str, 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Nur Energieberatende haben Zugriff auf diese Daten")
 
+@router.get("/anfragen", response_model=List[schemas.PVSolarteuerResponse])
+async def get_anfragen(
+        prozess_status: List[types.ProzessStatus] = Query(None),
+        current_user: models.Nutzer = Depends(oauth.get_current_user),
+        db: AsyncSession = Depends(database.get_db_async)
+):
+    await check_energieberatende_role(current_user, "GET", "/angebote")
+    print(prozess_status)
+    try:
+        if prozess_status[0] == types.ProzessStatus.AngebotAngenommen and (len(prozess_status) == 2 or len(prozess_status) == 1):
+             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                 .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                 .where(models.PVAnlage.prozess_status == models.ProzessStatus.AngebotAngenommen))
+
+        else:
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse, models.Energieausweise)
+                    .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                    .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                    .join(models.Energieausweise, models.PVAnlage.energieausweis_id == models.Energieausweise.energieausweis_id))
+
+
+            if prozess_status:
+                query = query.where((models.PVAnlage.prozess_status.in_(prozess_status))
+                                    & (models.Energieausweise.energieberater_id == current_user.user_id))
+        result = await db.execute(query)
+        anfragen = result.all()
+
+        if not anfragen:
+            return []
+
+
+        return [{
+            "anlage_id": angebot.anlage_id,
+            "haushalt_id": angebot.haushalt_id,
+            "prozess_status": angebot.prozess_status,
+            "vorname": nutzer.vorname,
+            "nachname": nutzer.nachname,
+            "email": nutzer.email,
+            "strasse": adresse.strasse,
+            "hausnummer": adresse.hausnummer,
+            "plz": adresse.plz,
+            "stadt": adresse.stadt
+        } for angebot, nutzer, adresse in anfragen]
+
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/angebote",
+            method="GET",
+            message=f"Fehler beim Abrufen der Angebote: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"Fehler beim Abrufen der Angebote: {e}")
 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
@@ -171,7 +229,7 @@ async def datenanfrage_stellen(energieausweis_id: int = Path(..., description="D
 
 
 @router.post("/zusatzdaten-eingeben/{energieausweis_id}", status_code=status.HTTP_200_OK)
-async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: schemas.EnergieausweiseUpdate,
+async def zusatzdaten_eingeben(energieausweis_id: int,
                                massnahmen_data: schemas.EnergieeffizienzmassnahmenCreate,
                                current_user: models.Nutzer = Depends(oauth.get_current_user),
                                db: AsyncSession = Depends(database.get_db_async)):
@@ -214,18 +272,6 @@ async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: sche
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Energieausweis nicht gefunden.")
 
-        if energieausweis.ausweis_status != models.AusweisStatus.AnfrageGestellt:
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint=f"/daten-erfassung/{energieausweis_id}",
-                method="POST",
-                message=f"Ausweis status is not 'AnfrageGestellt' for id: {energieausweis_id}",
-                success=False
-            )
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Ausweis Status ist nicht 'AnfrageGestellt'.")
-
         haus_data = await db.get(models.Haushalte, energieausweis.haushalt_id)
         if not haus_data or any(attribute is None for attribute in vars(haus_data).values()):
             logging_obj = schemas.LoggingSchema(
@@ -236,11 +282,8 @@ async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: sche
                 success=False
             )
             logger.error(logging_obj.dict())
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Haushaltsdaten sind unvollständig.")
-
-        energieausweis.energieeffizienzklasse = energieausweis_data.energieeffizienzklasse
-        energieausweis.verbrauchskennwerte = energieausweis_data.verbrauchskennwerte
-        energieausweis.ausweis_status = models.AusweisStatus.ZusatzdatenEingegeben
+            raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
+                                detail="Haushaltsdaten sind unvollständig.")
 
         neue_massnahme = models.Energieeffizienzmassnahmen(
             haushalt_id=energieausweis.haushalt_id,
@@ -284,6 +327,10 @@ async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: sche
         raise http_ex
     except Exception as e:
         await db.rollback()
+
+        if isinstance(e, HTTPException):
+            raise e
+
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint=f"/daten-erfassung/{energieausweis_id}",
@@ -294,6 +341,7 @@ async def zusatzdaten_eingeben(energieausweis_id: int, energieausweis_data: sche
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Unerwarteter Fehler aufgetreten") from e
+
 
 
 @router.post("/energieausweis-erstellen/{energieausweis_id}", status_code=status.HTTP_200_OK,
@@ -353,21 +401,12 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Ausweis Status ist nicht 'ZusatzdatenEingegeben'.")
 
-        if erstellen_data.gueltigkeit <= erstellen_data.ausstellungsdatum:
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
-                method="POST",
-                message=f"Gültigkeit muss später als das Ausstellungsdatum sein.",
-                success=False
-            )
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Gültigkeit muss später als das Ausstellungsdatum sein.")
-
-        energieausweis.ausstellungsdatum = erstellen_data.ausstellungsdatum
-        energieausweis.gueltigkeit = erstellen_data.gueltigkeit
+        gueltigkeit = timedelta(days=int(erstellen_data.gueltigkeit * 30.5)) + date.today()
+        energieausweis.ausstellungsdatum = date.today()
+        energieausweis.gueltigkeit = gueltigkeit
         energieausweis.ausweis_status = models.AusweisStatus.Ausgestellt
+        energieausweis.energieeffizienzklasse = erstellen_data.energieeffizienzklasse
+        energieausweis.verbrauchskennwerte = erstellen_data.verbrauchskennwerte
 
         await db.commit()
 

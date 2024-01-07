@@ -558,7 +558,6 @@ class EnergieausweisAnfrage(BaseModel):
 class EnergieausweisAnfrageResponse(BaseModel):
     energieausweis_id: int
     haushalt_id: int
-    energieberater_id: int
     ausweis_status: AusweisStatus
 
     class Config:
@@ -575,6 +574,15 @@ class AngebotAnnahmeResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class AgebotVorschlagResponseHaushalt(BaseModel):
+    anlage_id: int
+    haushalt_id: int
+    solarteur_id: int
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    modulanordnung: Orientierung
+    kosten: float
 
 class AngebotVorschlag(BaseModel):
     anlage_id: int = None
@@ -637,10 +645,6 @@ class PVAnlageHaushaltResponse(BaseModel):
     nvpruefung_status: Optional[bool] | str = "Noch nicht geprüft"
 
 
-class EnergieausweiseUpdate(BaseModel):
-    energieeffizienzklasse: str
-    verbrauchskennwerte: float
-
 
 class EnergieeffizienzmassnahmenCreate(BaseModel):
     massnahmetyp: MassnahmeTyp
@@ -649,8 +653,9 @@ class EnergieeffizienzmassnahmenCreate(BaseModel):
 
 
 class EnergieausweisCreate(BaseModel):
-    ausstellungsdatum: date
-    gueltigkeit: date
+    energieeffizienzklasse: str
+    verbrauchskennwerte: float
+    gueltigkeit_monate: int
 
 
 class EnergieausweisCreateResponse(BaseModel):

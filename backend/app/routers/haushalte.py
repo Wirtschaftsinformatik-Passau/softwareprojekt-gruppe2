@@ -326,7 +326,6 @@ async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(databas
         return schemas.EnergieausweisAnfrageResponse(
             energieausweis_id=neue_anfrage.energieausweis_id,
             haushalt_id=current_user.user_id,
-            energieberater_id=neue_anfrage.energieberater_id,
             ausweis_status=neue_anfrage.ausweis_status.value
         )
 
@@ -342,6 +341,8 @@ async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(databas
         raise HTTPException(status_code=409, detail="Konflikt beim Erstellen der Energieausweis Anfrage")
 
     except Exception as e:
+
+        raise e
 
         if isinstance(e, HTTPException):
             raise e
@@ -827,9 +828,11 @@ async def get_angebot(anlage_id: int,
                       db: AsyncSession = Depends(database.get_db_async)):
     await check_haushalt_role(current_user, "GET", f"/angebote/{anlage_id}")
     try:
-        stmt = select(models.Angebot).where(models.Angebot.anlage_id == anlage_id)
+        stmt = select(models.Angebot, models.PVAnlage)\
+            .join(models.PVAnlage, models.Angebot.anlage_id == models.PVAnlage.anlage_id)\
+            .where(models.Angebot.anlage_id == anlage_id)
         result = await db.execute(stmt)
-        angebote = result.scalars().all()
+        angebote = result.all()
         if not angebote:
             logging_obj = LoggingSchema(
                 user_id=current_user.user_id,
@@ -846,9 +849,17 @@ async def get_angebot(anlage_id: int,
             "angebot_id": angebot.angebot_id,
             "kosten": angebot.kosten,
             "angebotsstatus": angebot.angebotsstatus,
+            "modulanordnung": anlage.modulanordnung,   
+            "modultyp": anlage.modultyp,
+            "kapazitaet": anlage.kapazitaet,
+            "installationsflaeche": anlage.installationsflaeche,
             "created_at": angebot.created_at,
-        } for angebot in angebote]
+        } for angebot, anlage in angebote]
     except Exception as e:
+
+        if isinstance(e, HTTPException):
+            raise e
+
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
 

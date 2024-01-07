@@ -16,7 +16,6 @@ RUN npm install --force
 
 COPY ./frontend .
 
-
 RUN npm run build
 
 RUN npm install -g serve

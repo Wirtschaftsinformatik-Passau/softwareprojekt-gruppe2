@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { Box, Button, TextField, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../../utils/theme";
-import { useNavigate , useParams} from "react-router-dom";
+import { useNavigate , useParams, useSearchParams} from "react-router-dom";
 import Header from "../../utility/Header";
 import SuccessModal from "../../utility/SuccessModal";
 import axios from "axios";

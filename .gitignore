@@ -1,6 +1,7 @@
 node_modules
 backend/logs/*
 backend/logs/server.log
+backend/alembic.ini
 ./.vscode
 backend/tose_backend/*
 backend/tose_backend/

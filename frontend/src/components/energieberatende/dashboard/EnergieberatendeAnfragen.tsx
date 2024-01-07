@@ -7,10 +7,9 @@ import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
-import { NoRowsOverlay } from "../../utility/NoRows";
+import { ProzessStatus } from "../../../entitities/pv";
 
-
-const AntragTable = () => {
+const EnergieberatendeAnfragen = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<SolarteurResponse[]>([]);
@@ -18,12 +17,13 @@ const AntragTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=Genehmigt&prozess_status=Abgenommen&prozess_status=InstallationAbgeschlossen",
+    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=AngebotAngenommen",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
-  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>; }; }) => {
-    navigate(`/solarteure/antragTable/${params.row.anlage_id}`);
+  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>, prozess_status: SetStateAction<ProzessStatus> }; }) => {
+    ProzessStatus
+    navigate(`/energieberatende/antragTable/${params.row.anlage_id}`);
   }
 
 
@@ -156,12 +156,7 @@ return (
     }}
   >
     <DataGrid checkboxSelection getRowId={(row) => row.anlage_id} rows={data} 
-      columns={columns} hideFooter={false} sx={{cursor: "pointer"}} 
-      localeText={{
-        noRowsOverlay: NoRowsOverlay("Keine Anträge vorhanden")
-      
-      }}
-      />
+      columns={columns} hideFooter={false} sx={{cursor: "pointer"}} onRowClick={handleRowClick}/>
   </Box>
 </Box>
     </Grow>
@@ -172,4 +167,4 @@ return (
 }
 
 
-export default AntragTable;
+export default EnergieberatendeAnfragen;

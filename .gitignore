@@ -5,3 +5,6 @@ backend/alembic.ini
 ./.vscode
 backend/tose_backend/*
 backend/tose_backend/
+frontend/.env
+backend/vars/.env
+backend/vars/.env.prod

@@ -18,4 +18,4 @@ if [ "$(sudo docker ps -aq -f name=$CONTAINER_NAME)" ]; then
 fi
 
 # Run the container
-sudo docker run -d -p 8000:5000 --name $CONTAINER_NAME $IMAGE_NAME
+sudo docker run -d -p 80:5000 --name $CONTAINER_NAME $IMAGE_NAME

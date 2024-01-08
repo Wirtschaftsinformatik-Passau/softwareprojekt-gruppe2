@@ -413,6 +413,8 @@ async def zusatzdaten_eingeben(energieausweis_id: int,
                             detail="Unerwarteter Fehler aufgetreten") from e
 
 
+
+#TODO: in pvanlage status ändern
 @router.post("/energieausweis-erstellen/{energieausweis_id}", status_code=status.HTTP_200_OK,
              response_model=schemas.EnergieausweisCreateResponse)
 async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schemas.EnergieausweisCreate,
@@ -471,14 +473,29 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
             raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
                                 detail="Ausweis Status ist nicht 'ZusatzdatenEingegeben' oder 'AnfrageGestellt'.")
 
+        result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.energieausweis_id == energieausweis_id))
+        anlagen = result.scalars().all()
+
+
         gueltigkeit = timedelta(days=int(erstellen_data.gueltigkeit_monate * 30.5)) + date.today()
         energieausweis.ausstellungsdatum = date.today()
         energieausweis.gueltigkeit = gueltigkeit
         energieausweis.ausweis_status = models.AusweisStatus.Ausgestellt
         energieausweis.energieeffizienzklasse = erstellen_data.energieeffizienzklasse
         energieausweis.verbrauchskennwerte = erstellen_data.verbrauchskennwerte
-
         await db.commit()
+        await db.refresh(energieausweis)
+
+        if anlagen:
+            for anlage in anlagen:
+                anlage.prozess_status \
+                    = models.ProzessStatus.AusweisErstellt if anlage.prozess_status == models.ProzessStatus.AusweisAngefordert \
+                    else models.ProzessStatus.EnergieausweisErstellt
+                db.add(anlage)
+                await db.commit()
+                await db.refresh(anlage)
+
+
 
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

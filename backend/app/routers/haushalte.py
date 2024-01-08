@@ -328,24 +328,26 @@ async def kontakt_aufnehmen_energieberatenden(anlage_id: int = Query(None, descr
         await db.commit()
         await db.refresh(neue_anfrage)
 
-        if anlage_id:
-            anlage = await db.execute(select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id))
-            anlage = anlage.scalar_one_or_none()
-            if not anlage:
-                logging_obj = schemas.LoggingSchema(
-                    user_id=current_user.user_id,
-                    endpoint="/kontaktaufnahme-energieberatenden",
-                    method="POST",
-                    message=f"Anlage {anlage_id} nicht gefunden",
-                    success=False
-                )
-                logger.error(logging_obj.dict())
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                    detail=f"Anlage {anlage_id} nicht gefunden")
+        anlagen = await db.execute(select(models.PVAnlage).where(models.PVAnlage.haushalt_id == current_user.user_id))
+        anlagen = anlagen.scalars().all()
+
+        for anlage in anlagen:
             anlage.energieausweis_id = neue_anfrage.energieausweis_id
             anlage.prozess_status = models.ProzessStatus.AusweisAngefordert
-            await db.commit()
-            await db.refresh(anlage)
+
+        await db.commit()
+
+        if anlage_id and anlage_id not in [a.anlage_id for a in anlagen]:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/kontaktaufnahme-energieberatenden",
+                method="POST",
+                message=f"Anlage {anlage_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f"Anlage {anlage_id} nicht gefunden oder gehört nicht zum Haushalt")
 
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

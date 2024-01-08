@@ -115,7 +115,6 @@ async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oaut
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Anfrage {anlage_id} nicht gefunden")
 
-
         return {
             "anlage_id": angebot[0].anlage_id,
             "haushalt_id": angebot[0].haushalt_id,
@@ -358,7 +357,6 @@ async def zusatzdaten_eingeben(energieausweis_id: int,
         neue_massnahme = models.Energieeffizienzmassnahmen(
             haushalt_id=energieausweis.haushalt_id,
             massnahmetyp=massnahmen_data.massnahmetyp,
-            energieberater_id=user_id,
             einsparpotenzial=massnahmen_data.einsparpotenzial,
             kosten=massnahmen_data.kosten
         )
@@ -413,8 +411,7 @@ async def zusatzdaten_eingeben(energieausweis_id: int,
                             detail="Unerwarteter Fehler aufgetreten") from e
 
 
-
-#TODO: in pvanlage status ändern
+# TODO: in pvanlage status ändern
 @router.post("/energieausweis-erstellen/{energieausweis_id}", status_code=status.HTTP_200_OK,
              response_model=schemas.EnergieausweisCreateResponse)
 async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schemas.EnergieausweisCreate,
@@ -437,17 +434,6 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
     await check_energieberatende_role(current_user, "POST", f"/energieausweis-erstellen/{energieausweis_id}")
 
     try:
-        if not energieausweis_id:
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
-                method="POST",
-                message="Ungültige Energieausweis-ID angegeben",
-                success=False
-            )
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Energieausweis-ID angegeben")
-
         energieausweis = await db.get(models.Energieausweise, energieausweis_id)
         if not energieausweis:
             logging_obj = schemas.LoggingSchema(
@@ -460,42 +446,43 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Energieausweis nicht gefunden.")
 
-        if (energieausweis.ausweis_status != models.AusweisStatus.ZusatzdatenEingegeben and
-                energieausweis.ausweis_status != models.AusweisStatus.AnfrageGestellt):
+        result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.energieausweis_id == energieausweis_id))
+        anlagen = result.scalars().all()
+
+        if not anlagen:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Zugehörige PVAnlagen nicht gefunden.")
+
+        condition_met = energieausweis.ausweis_status == models.AusweisStatus.AnfrageGestellt or \
+                        any(anlage.prozess_status == models.ProzessStatus.AusweisAngefordert for anlage in anlagen)
+
+        if not condition_met:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
                 method="POST",
-                message=f"Ausweis status is not 'ZusatzdatenEingegeben' or 'AnfrageGestellt' for id: {energieausweis_id}",
+                message=f"Ausweis Status ist nicht 'AusweisAngefordert'. für id: {energieausweis_id}",
                 success=False
             )
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
-                                detail="Ausweis Status ist nicht 'ZusatzdatenEingegeben' oder 'AnfrageGestellt'.")
-
-        result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.energieausweis_id == energieausweis_id))
-        anlagen = result.scalars().all()
-
+                                detail="AusweisStatus ist nicht 'AnfrageGestellt' oder kein zugehöriger "
+                                       "PVAnlage-Prozessstatus ist 'AusweisAngefordert'.")
 
         gueltigkeit = timedelta(days=int(erstellen_data.gueltigkeit_monate * 30.5)) + date.today()
         energieausweis.ausstellungsdatum = date.today()
         energieausweis.gueltigkeit = gueltigkeit
+        energieausweis.energieberater_id = current_user.user_id
         energieausweis.ausweis_status = models.AusweisStatus.Ausgestellt
         energieausweis.energieeffizienzklasse = erstellen_data.energieeffizienzklasse
         energieausweis.verbrauchskennwerte = erstellen_data.verbrauchskennwerte
         await db.commit()
         await db.refresh(energieausweis)
 
-        if anlagen:
-            for anlage in anlagen:
-                anlage.prozess_status \
-                    = models.ProzessStatus.AusweisErstellt if anlage.prozess_status == models.ProzessStatus.AusweisAngefordert \
-                    else models.ProzessStatus.EnergieausweisErstellt
-                db.add(anlage)
-                await db.commit()
-                await db.refresh(anlage)
+        for anlage in anlagen:
+            anlage.prozess_status = models.ProzessStatus.AusweisErstellt
+            db.add(anlage)
 
-
+        await db.commit()
 
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

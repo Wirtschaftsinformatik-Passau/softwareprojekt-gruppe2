@@ -165,8 +165,6 @@ async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oaut
                             detail=f"Fehler beim Abrufen des Angebots: {e}")
 
 
-
-#  TODO:  Check funktion hier
 @router.post("/angebote", status_code=status.HTTP_201_CREATED, response_model=schemas.AngebotResponse)
 async def create_angebot(angebot_data: schemas.AngebotCreate,
                          current_user: models.Nutzer = Depends(oauth.get_current_user),

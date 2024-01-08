@@ -10,7 +10,6 @@ from logging.config import dictConfig
 from app.logger import LogConfig
 from app.schemas import LoggingSchema
 
-
 router = APIRouter(prefix="/energieberatende", tags=["Energieberatende"])
 
 dictConfig(LogConfig().dict())
@@ -30,6 +29,7 @@ async def check_energieberatende_role(current_user: models.Nutzer, method: str, 
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail="Nur Energieberatende haben Zugriff auf diese Daten")
 
+
 @router.get("/anfragen", response_model=List[schemas.PVSolarteuerResponse])
 async def get_anfragen(
         prozess_status: List[types.ProzessStatus] = Query(None),
@@ -39,18 +39,19 @@ async def get_anfragen(
     await check_energieberatende_role(current_user, "GET", "/angebote")
     print(prozess_status)
     try:
-        if prozess_status[0] == types.ProzessStatus.AngebotAngenommen and (len(prozess_status) == 2 or len(prozess_status) == 1):
-             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
-                 .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
-                 .where(models.PVAnlage.prozess_status == models.ProzessStatus.AngebotAngenommen))
+        if prozess_status[0] == types.ProzessStatus.AngebotAngenommen and (
+                len(prozess_status) == 2 or len(prozess_status) == 1):
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                     .where(models.PVAnlage.prozess_status == models.ProzessStatus.AngebotAngenommen))
 
         else:
             query = (select(models.PVAnlage, models.Nutzer, models.Adresse, models.Energieausweise)
-                    .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                    .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
-                    .join(models.Energieausweise, models.PVAnlage.energieausweis_id == models.Energieausweise.energieausweis_id))
-
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                     .join(models.Energieausweise,
+                           models.PVAnlage.energieausweis_id == models.Energieausweise.energieausweis_id))
 
             if prozess_status:
                 query = query.where((models.PVAnlage.prozess_status.in_(prozess_status))
@@ -60,7 +61,6 @@ async def get_anfragen(
 
         if not anfragen:
             return []
-
 
         return [{
             "anlage_id": angebot.anlage_id,
@@ -86,6 +86,7 @@ async def get_anfragen(
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Fehler beim Abrufen der Angebote: {e}")
+
 
 @router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
 async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
@@ -343,7 +344,6 @@ async def zusatzdaten_eingeben(energieausweis_id: int,
                             detail="Unerwarteter Fehler aufgetreten") from e
 
 
-
 @router.post("/energieausweis-erstellen/{energieausweis_id}", status_code=status.HTTP_200_OK,
              response_model=schemas.EnergieausweisCreateResponse)
 async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schemas.EnergieausweisCreate,
@@ -410,14 +410,33 @@ async def energieausweis_erstellen(energieausweis_id: int, erstellen_data: schem
 
         await db.commit()
 
-        logging_obj = schemas.LoggingSchema(
-            user_id=current_user.user_id,
-            endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
-            method="POST",
-            message=f"Energieausweis erfolgreich aktualisiert für id: {energieausweis_id}",
-            success=True
-        )
-        logger.info(logging_obj.dict())
+        pv_anlagen = await db.execute(select(models.PVAnlage)
+                                     .where(models.PVAnlage.haushalt_id == energieausweis.haushalt_id))
+        pv_anlage = pv_anlagen.scalars().first()
+
+        if pv_anlage:
+            pv_anlage.energieausweis_id = energieausweis_id
+            db.add(pv_anlage)
+            await db.commit()
+            await db.refresh(pv_anlage)
+
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+                method="POST",
+                message=f"Energieausweis erfolgreich aktualisiert für ID: {energieausweis_id}",
+                success=True
+            )
+            logger.info(logging_obj.dict())
+        else:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/energieausweis-erstellen/{energieausweis_id}",
+                method="POST",
+                message=f"Keine PVAnlage für Haushalt ID gefunden: {energieausweis_id}",
+                success=False
+            )
+            logger.error(logging_obj.dict())
 
         return schemas.EnergieausweisCreateResponse(message="Energieausweis erfolgreich erstellt "
                                                             "und AusweisStatus aktualisiert",

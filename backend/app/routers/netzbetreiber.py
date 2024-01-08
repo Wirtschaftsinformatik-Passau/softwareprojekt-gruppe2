@@ -15,7 +15,7 @@ from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, 
 from app import config
 import pandas as pd
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 
 EXPECTED_COLUMNS = {
     'Zeit': 'datetime64',

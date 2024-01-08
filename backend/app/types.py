@@ -74,6 +74,7 @@ class MassnahmeTyp(enum.Enum):
     Heizungssystem = "Heizungssystem"
     Fenstererneuerung = "Fenstererneuerung"
 
+
 class Vertragsstatus(enum.Enum):
     Gekuendigt = "Gekuendigt"
     Laufend = "Laufend"

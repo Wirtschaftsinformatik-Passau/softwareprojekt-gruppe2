@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File,
 from sqlalchemy import select, func, exc, update, and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from  pydantic_core._pydantic_core import ValidationError
+from pydantic_core._pydantic_core import ValidationError
 from sqlalchemy.orm import selectinload
 
 from sqlalchemy.orm import selectinload
@@ -51,6 +51,7 @@ async def check_haushalt_or_solarteur_role(current_user: models.Nutzer, method: 
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Haushalte oder Solarteure haben Zugriff auf diese Daten")
 
+
 @router.post("/angebot-anfordern", status_code=status.HTTP_201_CREATED, response_model=schemas.PVAnforderungResponse)
 async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.get_db_async),
                                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
@@ -62,7 +63,6 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
                 .order_by("anfragen_count")
                 .where(models.Nutzer.rolle == models.Rolle.Solarteure))
         result = await db.execute(stmt)
-
 
         pv_anlage = models.PVAnlage(
             haushalt_id=current_user.user_id,
@@ -133,7 +133,7 @@ async def get_pv_anlage(db: AsyncSession = Depends(database.get_db_async),
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        
+
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/angebot-anfordern",
@@ -549,7 +549,7 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED, detail=f"Keine Dashboard Daten: {e}")
 
-    try:        
+    try:
         update_query = (
             update(models.Haushalte)
             .where(models.Haushalte.user_id == current_user.user_id)
@@ -557,8 +557,9 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
         )
         await db.execute(update_query)
         await db.commit()
-        
-        pv_anlagen = await db.execute(select(models.PVAnlage).where(models.PVAnlage.haushalt_id == current_user.user_id))
+
+        pv_anlagen = await db.execute(
+            select(models.PVAnlage).where(models.PVAnlage.haushalt_id == current_user.user_id))
         pv_anlagen = pv_anlagen.all()
         if pv_anlagen:
             for pv in pv_anlagen:
@@ -642,7 +643,7 @@ async def deactivate_vertrag(vertrag_id: int,
         vertrag = result.first()[0]
 
         if vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt or \
-           vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt:
+                vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail=f"Vertrag {vertrag_id} ist bereits gekündigt oder Kündigung ist ausstehend")
 
@@ -716,7 +717,7 @@ async def update_haushalt_daten(haushalt_id: int,
                                 db: AsyncSession = Depends(database.get_db_async),
                                 haushalt_daten: schemas.HaushaltsDatenFreigabe = Depends(get_haushalt_daten)):
     await check_haushalt_role(current_user, "PUT", f"/haushalt-daten/{haushalt_id}")
-    
+
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
         result = await db.execute(stmt)
@@ -828,8 +829,8 @@ async def get_angebot(anlage_id: int,
                       db: AsyncSession = Depends(database.get_db_async)):
     await check_haushalt_role(current_user, "GET", f"/angebote/{anlage_id}")
     try:
-        stmt = select(models.Angebot, models.PVAnlage)\
-            .join(models.PVAnlage, models.Angebot.anlage_id == models.PVAnlage.anlage_id)\
+        stmt = select(models.Angebot, models.PVAnlage) \
+            .join(models.PVAnlage, models.Angebot.anlage_id == models.PVAnlage.anlage_id) \
             .where(models.Angebot.anlage_id == anlage_id)
         result = await db.execute(stmt)
         angebote = result.all()
@@ -849,7 +850,7 @@ async def get_angebot(anlage_id: int,
             "angebot_id": angebot.angebot_id,
             "kosten": angebot.kosten,
             "angebotsstatus": angebot.angebotsstatus,
-            "modulanordnung": anlage.modulanordnung,   
+            "modulanordnung": anlage.modulanordnung,
             "modultyp": anlage.modultyp,
             "kapazitaet": anlage.kapazitaet,
             "installationsflaeche": anlage.installationsflaeche,
@@ -869,7 +870,6 @@ async def vertragswechsel(
         alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
         current_user: models.Nutzer = Depends(oauth.get_current_user),
         db: AsyncSession = Depends(database.get_db_async)):
-    
     user_id = current_user.user_id
 
     # Überprüfe den alten Vertrag
@@ -938,7 +938,6 @@ async def vertragswechsel(
         except SQLAlchemyError as e:
             await db.rollback()
             raise HTTPException(status_code=500, detail=f"Fehler bei der Vertragserstellung: {e}")
-        
 
 
 @router.put("/angebot-ablehnen/{anlage_id}", status_code=status.HTTP_200_OK)
@@ -988,6 +987,12 @@ async def angebot_ablehnen(anlage_id: int = Path(..., description="Die ID der PV
 
     try:
         pv_anlage.prozess_status = models.ProzessStatus.AngebotAbgelehnt
+        pv_anlage.modultyp = None
+        pv_anlage.kapazitaet = None
+        pv_anlage.installationsflaeche = None
+        pv_anlage.modulanordnung = None
+        pv_anlage.solarteur_id = None
+
         await db.commit()
         await db.refresh(pv_anlage)
 
@@ -995,7 +1000,8 @@ async def angebot_ablehnen(anlage_id: int = Path(..., description="Die ID der PV
             user_id=current_user.user_id,
             endpoint=f"/angebot-ablehnen/{anlage_id}",
             method="PUT",
-            message=f"Benutzer {current_user.user_id} hat Angebot für PV-Anlage {anlage_id} abgelehnt",
+            message=f"Benutzer {current_user.user_id} hat Angebot für PV-Anlage {anlage_id} abgelehnt "
+                    f"und Daten zurückgesetzt",
             success=True
         )
         logger.info(logging_obj.dict())

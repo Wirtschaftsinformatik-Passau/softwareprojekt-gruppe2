@@ -28,6 +28,7 @@ class ProzessStatus(enum.Enum):
     AngebotGemacht = 'AngebotGemacht'
     AngebotAngenommen = 'AngebotAngenommen'
     AngebotAbgelehnt = 'AngebotAbgelehnt'
+    AusweisAngefordert = 'AusweisAngefordert'
     AusweisErstellt = 'AusweisErstellt'
     PlanErstellt = 'PlanErstellt'
     Genehmigt = "Genehmigt"

@@ -103,7 +103,7 @@ async def get_anfragen(
 @router.get("/anfragen/{anlage_id}", response_model=schemas.PVSolarteuerResponse)
 async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                         db: AsyncSession = Depends(database.get_db_async)):
-    await check_solarteur_role(current_user, "GET", f"/angebote/{anlage_id}")
+    await check_solarteur_role_and_berater_role(current_user, "GET", f"/angebote/{anlage_id}")
 
     try:
         stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)

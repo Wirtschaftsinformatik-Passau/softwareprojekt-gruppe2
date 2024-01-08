@@ -51,6 +51,19 @@ async def check_haushalt_or_solarteur_role(current_user: models.Nutzer, method: 
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Haushalte oder Solarteure haben Zugriff auf diese Daten")
 
+async def check_haushalt_or_solarteur_role_or_berater(current_user: models.Nutzer, method: str, endpoint: str):
+    if current_user.rolle != models.Rolle.Haushalte and current_user.rolle != models.Rolle.Solarteure \
+            and current_user.rolle != models.Rolle.Energieberatende:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=endpoint,
+            method=method,
+            message="Zugriff verweigert: Nutzer ist kein Haushalt",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail="Nur Haushalte oder Solarteure haben Zugriff auf diese Daten")
+
 @router.post("/angebot-anfordern", status_code=status.HTTP_201_CREATED, response_model=schemas.PVAnforderungResponse)
 async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.get_db_async),
                                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
@@ -300,7 +313,8 @@ async def tarifantrag(tarif_id: int,
 
 @router.post("/kontaktaufnahme-energieberatenden", status_code=status.HTTP_201_CREATED,
              response_model=schemas.EnergieausweisAnfrageResponse)
-async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(database.get_db_async),
+async def kontakt_aufnehmen_energieberatenden(anlage_id: int = Query(None, description="Anlage ID der PV Anlage",),
+                                              db: AsyncSession = Depends(database.get_db_async),
                                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_haushalt_role(current_user, "POST", "/kontaktaufnahme-energieberatenden")
 
@@ -313,6 +327,25 @@ async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(databas
         db.add(neue_anfrage)
         await db.commit()
         await db.refresh(neue_anfrage)
+
+        if anlage_id:
+            anlage = await db.execute(select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id))
+            anlage = anlage.scalar_one_or_none()
+            if not anlage:
+                logging_obj = schemas.LoggingSchema(
+                    user_id=current_user.user_id,
+                    endpoint="/kontaktaufnahme-energieberatenden",
+                    method="POST",
+                    message=f"Anlage {anlage_id} nicht gefunden",
+                    success=False
+                )
+                logger.error(logging_obj.dict())
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail=f"Anlage {anlage_id} nicht gefunden")
+            anlage.energieausweis_id = neue_anfrage.energieausweis_id
+            anlage.prozess_status = models.ProzessStatus.AusweisAngefordert
+            await db.commit()
+            await db.refresh(anlage)
 
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -341,8 +374,6 @@ async def kontakt_aufnehmen_energieberatenden(db: AsyncSession = Depends(databas
         raise HTTPException(status_code=409, detail="Konflikt beim Erstellen der Energieausweis Anfrage")
 
     except Exception as e:
-
-        raise e
 
         if isinstance(e, HTTPException):
             raise e
@@ -665,7 +696,9 @@ async def deactivate_vertrag(vertrag_id: int,
 async def get_haushalt_daten(haushalt_id: int,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_haushalt_or_solarteur_role(current_user, "GET", f"/haushalt-daten/{haushalt_id}")
+    await check_haushalt_or_solarteur_role_or_berater(
+        current_user, "GET", f"/haushalt-daten/{haushalt_id}"
+    )
     try:
         stmt = select(models.Haushalte).where(models.Haushalte.user_id == haushalt_id)
         result = await db.execute(stmt)

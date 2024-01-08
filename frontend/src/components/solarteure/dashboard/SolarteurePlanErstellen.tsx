@@ -31,13 +31,14 @@ const SolarteurePlanErstellen: React.FC<SolarteurePlanErstellenProps> = (props: 
         "installationsdatum": "Installationsdatum",
     }
 
-    const planAbschicken = () => {
+    const planAbschicken = (values: SolarteurePlanErstellenProps) => {
         const token = localStorage.getItem("accessToken");
-        const url = addSuffixToBackendURL("solarteure/installationsplan/" + props.anlage_id);
+        console.log(values)
+        const url = addSuffixToBackendURL("solarteure/installationsplan/" + props.anlageID);
         const config = {
             headers: {Authorization: `Bearer ${token}`}
         }
-        axios.post(url, props.plan, config)
+        axios.post(url, values, config)
         .then((response) => {
             console.log(response);
             props.sucessModalSetter(true);
@@ -51,7 +52,7 @@ const SolarteurePlanErstellen: React.FC<SolarteurePlanErstellenProps> = (props: 
     return (
         <>
     <Box mt={5} ml={1} gridColumn={"span 4"}>
-    <Header title={"Installtionsplan erstellen"} subtitle="Alle Daten zum Erstellen des Installationsplan eingeben" variant="h3"/>
+    <Header title={"Installationsplan erstellen"} subtitle="Alle Daten zum Erstellen des Installationsplan eingeben" variant="h3"/>
     </Box>
     <Box mt={2} ml={1} gridColumn={"span 4"}>
     <Formik
@@ -81,18 +82,19 @@ const SolarteurePlanErstellen: React.FC<SolarteurePlanErstellenProps> = (props: 
                 "& > div": {gridColumn: "span 2"} 
               }}
             >
-               {Object.entries(props.plan).map(([key, value]) => {
+               {Object.entries({...props.plan, empty:""}).map(([key, value]) => {
                 return (
                   <TextField
                     fullWidth
                     variant="outlined"
-                    type="text"
-                    label={keyMapping[key]}
-                    disabled={key === "anlage_id"}
+                    hidden = {key === "empty" ? true : false}
+                    type={key === "installationsdatum"? "date" : "text"}
+                    label={key === "empty" ? undefined : keyMapping[key]}
+                    disabled={key === "empty"}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    value={values[key]}
-                    name={key}
+                    value={key === "empty" ? undefined : values[key]}
+                    name={key === "empty" ? undefined : key}
                     error={!!touched[key] && !!errors[key]}
                     helperText={touched[key] && errors[key]}
                     InputLabelProps={{
@@ -101,13 +103,13 @@ const SolarteurePlanErstellen: React.FC<SolarteurePlanErstellenProps> = (props: 
                   sx={{
                       gridColumn: "span 2",
                       '& .MuiInputBase-input': { 
-                          color: touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
+                          color: key === "empty" ? theme.palette.background.default : touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
                       },
                       '.css-p51h6s-MuiInputBase-input-MuiOutlinedInput-input.Mui-disabled': {
                          "-webkit-text-fill-color": `${colors.color1[500]} !important`,
                       },
                       '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
+                          borderColor: key === "empty" ? theme.palette.background.default : touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
                       },
                   }}
                   />

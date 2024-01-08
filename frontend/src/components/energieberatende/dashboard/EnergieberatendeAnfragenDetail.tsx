@@ -12,38 +12,51 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { IHaushaltData } from "../../../entitities/haushalt";
-import { Angebot, PVAngebotCreate } from "../../../entitities/pv";
+import { Angebot, PVAngebotCreate, ProzessStatus } from "../../../entitities/pv";
 import Header from "../../utility/Header";
-import { Orientierung } from "../../../entitities/haushalt";
-import { SolarteurResponse, Installationsplan, Schatten, Montagesystem} from "../../../entitities/pv";
-import SolarteurePlanErstellen from "./EnergieberatendePlanErstellen";
-import AngebotErstellen from "./EnergieberatendeAngebotErstellen";
+import { EnergieausweisCreate, SolarteurResponse, EnergieeffizienzmassnahmenCreate, MassnahmeTyp, } from "../../../entitities/pv";
+import EnergieberatendeAusweisErstellen from "./EnergieberatendeAusweisErstellen";
 
-export interface SolarteurResponseExtended extends SolarteurResponse {
+export interface EnergieberatendeResponseExtended extends SolarteurResponse {
     haushalt_id: number
+    energieausweis_id: number
 }
 
 const EnergieberatendeAnfragenDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState<boolean>(false);
-    const [freigabeSuccessModalIsOpen, setFreigabeSuccessModalIsOpen] = React.useState<boolean>(false);
-    const [freigabeFailModalIsOpen, setFreigabeFailModalIsOpen] = React.useState<boolean>(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
+    const [datenfreigabe, setDatenfreigabe] = React.useState<boolean>(false);
+    const [aufFreigabeWarten, setAufFreigabeWarten] = React.useState<boolean>(false);
     const [initialFailModelIsOpen, setInitialFailModalIsOpen] = React.useState<boolean>(false);
     const [planSuccessModalIsOpen, setPlanSuccessModalIsOpen] = React.useState<boolean>(false);
     const [planFailModalIsOpen, setPlanFailModalIsOpen] = React.useState<boolean>(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const status = searchParams.get("status");
-    const [datenfreigabe, setDatenfreigabe] = React.useState<boolean>(false);
-    const [aufFreigabeWarten, setAufFreigabeWarten] = React.useState<boolean>(false);
-    const aufAngebotAnnahmeWarten = status === "AngebotGemacht" ? true : false;
-    const aufEnergieberaterWarten = status === "AngebotAngenommen" ? true : false;
-    const planErstellen = status === "AusweisErstellt" ? true : false;
+    const ausweisErstellen = status === ProzessStatus.AusweisAngefordert.valueOf() ? true : false;
+
     const {anlageID} = useParams();
-    const [antrag, setAntrag] = React.useState<SolarteurResponseExtended>({
+    const navigate = useNavigate();
+
+    const ausweis: EnergieausweisCreate = {
+        energieeffizienzklasse: "",
+        verbrauchskennwerte: "",
+        gueltigkeit: "",
+    }
+   
+
+    const massnahmen: EnergieeffizienzmassnahmenCreate = {
+        massnahmetyp: "",
+        einsparpotenzial: "",
+        kosten: "",
+    }
+        
+
+    const [antrag, setAntrag] = React.useState<EnergieberatendeResponseExtended>({
         anlage_id: 0,
         haushalt_id: 0,
         prozess_status: "",
@@ -54,24 +67,8 @@ const EnergieberatendeAnfragenDetail = ({}) => {
         hausnummer: 0,
         plz: 0,
         stadt: "",
-    })
-    const angebot: PVAngebotCreate = {
-            anlage_id: Number(anlageID),
-            modultyp: "",
-            kapazitaet: "",
-            installationsflaeche: "",
-            modulanordnung: "",
-            kosten: "",
-    }
-
-    const installationsplan: Installationsplan = {
-        kabelwegfuehrung: "",
-        montagesystem: "",
-        schattenanalyse: "",
-        wechselrichterposition: "",
-        installationsdatum: "",
-    }
-   
+        energieausweis_id: 0,
+    })  
 
     const [hauhalt, setHaushalt] = React.useState<IHaushaltData>({
            anzahl_bewohner: "",
@@ -82,8 +79,6 @@ const EnergieberatendeAnfragenDetail = ({}) => {
               ausrichtung_dach: "",
               dachflaeche: "",
               energieeffizienzklasse: "",
-                
-
     })
 
    const keyMappingHaushalt = {
@@ -95,7 +90,6 @@ const EnergieberatendeAnfragenDetail = ({}) => {
         ausrichtung_dach: "Ausrichtung Dach",
         dachflaeche: "Dachfläche",
         energieeffizienzklasse: "Energieeffizienzklasse",
-    
     }
 
     const keyMappingAntrag = {
@@ -111,20 +105,12 @@ const EnergieberatendeAnfragenDetail = ({}) => {
         stadt: "Stadt",
     }
 
-    const keyMappingAngebot = {
-        anlage_id: "Anlage ID",
-        modultyp: "Modultyp",
-        kapazitaet: "Kapazität",
-        installationsflaeche: "Installationsfläche",
-        modulanordnung: "Modulanordnung",
-        kosten: "Kosten",
-    }
 
-    const navigate = useNavigate();
 
+    // fetch anfrage and haushalt data and render the text fiedlds
     useEffect(() => {  
         const token = localStorage.getItem("accessToken");
-        axios.get(addSuffixToBackendURL("solarteure/anfragen/" + anlageID), {headers: {Authorization: `Bearer ${token}`}})
+        axios.get(addSuffixToBackendURL("energieberatende/anfragen/" + anlageID), {headers: {Authorization: `Bearer ${token}`}})
         .then((response) => {
             setAntrag(response.data);
             console.log(response.data)
@@ -158,40 +144,6 @@ const EnergieberatendeAnfragenDetail = ({}) => {
     }, []
     )
 
-    const freigabeButton = () => {
-        const token = localStorage.getItem("accessToken");
-        axios.post(addSuffixToBackendURL("solarteure/datenanfrage/" + anlageID), {}, {headers: {Authorization: `Bearer ${token}`}})
-        .then((response) => {
-            setFreigabeSuccessModalIsOpen(true);
-            setAufFreigabeWarten(true);
-            setDatenfreigabe(false);
-        })
-        .catch((error) => {
-            if (error.response.status === 403 || error.response.status === 401) {
-                navigate("/login");
-            }
-            setFreigabeFailModalIsOpen(true);
-            console.log(error);
-        })
-    }
-
-    const angebotButton = (values: PVAngebotCreate) => {
-        const token = localStorage.getItem("accessToken");
-        axios.post(addSuffixToBackendURL("solarteure/angebote"), values, {headers: {Authorization: `Bearer ${token}`}})
-        .then((response) => {
-            setSuccessModalIsOpen(true);
-            navigate("/solarteure/antragTable");
-        })
-        .catch((error) => {
-            if (error.response.status === 403 || error.response.status === 401) {
-                navigate("/login");
-            }
-            else {
-                setFailModalIsOpen(true);
-            }
-            console.log(error);
-        })
-    }
 
     if (isLoading) {
         return (
@@ -235,29 +187,7 @@ const EnergieberatendeAnfragenDetail = ({}) => {
                 <Box gridColumn={"span 4"}>
                 <LinearProgress sx={{ bgcolor: colors.color1[400] }}/>
                 </Box>
-            </Box> : 
-            aufAngebotAnnahmeWarten ?
-            <Box display={"grid"} gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} justifyContent={"center"}>
-                <Box gridColumn={"span 4"} justifyContent={"center"} display={"flex"}>
-            <Typography variant="h5" color={colors.color1[400]} sx={{mb: 2}}>
-                Angebot gemacht, aber Annahme noch ausstehend
-                </Typography>
-                </Box>
-                <Box gridColumn={"span 4"}>
-                <LinearProgress sx={{ bgcolor: colors.color1[400] }}/>
-                </Box>
-            </Box>
-            : aufEnergieberaterWarten ?
-            <Box display={"grid"} gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} justifyContent={"center"}>
-            <Box gridColumn={"span 4"} justifyContent={"center"} display={"flex"}>
-        <Typography variant="h5" color={colors.color1[400]} sx={{mb: 2}}>
-            Angebot angenommen, aber Energieberater muss Energieausweis noch erstellen
-            </Typography>
-            </Box>
-            <Box gridColumn={"span 4"}>
-            <LinearProgress sx={{ bgcolor: colors.color1[400] }}/>
-            </Box>
-        </Box>
+            </Box> 
             :
             
     <Box mt="30px" display={"grid"} columnGap={"5%"} gridTemplateColumns={"repeat(4, minmax(0, 1fr))"}>
@@ -271,7 +201,7 @@ const EnergieberatendeAnfragenDetail = ({}) => {
              <Box gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} display={"grid"} gridColumn={"span 2"}>
             {Object.entries(antrag).map(([key, value], index) => {
                 return ( 
-                    key == "haushalt_id" || key == "anlage_id" ? undefined :
+                    key == "haushalt_id" || key == "anlage_id" || key == "energieausweis_id" ? undefined :
                     <Box key={index} gridColumn={(key === "spezielle_konditionen") ? "span 4" : "span 2"} mt={2} ml={1}>
                         <TextField
                             fullWidth
@@ -344,12 +274,11 @@ const EnergieberatendeAnfragenDetail = ({}) => {
         )
     })}
    </Box>
-   {planErstellen ? <SolarteurePlanErstellen plan={installationsplan} navigateFN={navigate} 
-   sucessModalSetter={setPlanSuccessModalIsOpen} failModalSetter={setPlanFailModalIsOpen} anlageID={anlageID}/>
+   {ausweisErstellen ? <EnergieberatendeAusweisErstellen ausweis={ausweis} massnahmen={massnahmen} navigateFN={navigate} 
+   sucessModalSetter={setSuccessModalIsOpen} failModalSetter={setFailModalIsOpen} energieausweisID={antrag.energieausweis_id}/>
    :
    <>
-    <AngebotErstellen angebot={angebot} navigateFN={navigate} sucessModalSetter={setSuccessModalIsOpen}
-     failModalSetter={setFailModalIsOpen}/>
+    nope
       </>
         }
 
@@ -357,37 +286,19 @@ const EnergieberatendeAnfragenDetail = ({}) => {
    
 }
    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Angebot erfolgreich erstellt!" navigationGoal="/solarteure"/>
+    text="Energiesausweis erfolgreich erstellt!" navigationGoal="/energieberatende"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="Angebot konnte nicht erstellt werden"/>
-    <SuccessModal open={freigabeFailModalIsOpen} handleClose={() => setFreigabeFailModalIsOpen(false)}
-    text="Datenanfrage fehlgeschlagen"/>
-    <SuccessModal open={freigabeSuccessModalIsOpen} handleClose={() => setFreigabeSuccessModalIsOpen(false)}
-    text="Datenanfrage erfolgreich"/>
+    text="Energiesausweis konnte nicht erstellt werden"/>
     <SuccessModal open={planFailModalIsOpen} handleClose={() => setPlanFailModalIsOpen(false)}
-    text="Installationsplanerstellung fehlgeschlagen"/>
+    text="Energieffizienzmaßnahmen konnten nicht eingetragen werden"/>
     <SuccessModal open={planSuccessModalIsOpen} handleClose={() => setPlanSuccessModalIsOpen(false)}
-    text="Installationsplanerstellung erfolgreich"/>
+    text="Energieffizienzmaßnahmen wurden eingetragen"/>
     
 
         </Box>
     )
 }
 
-const angebotSchema = yup.object({
-    modultyp: yup.string().required("Modultyp ist erforderlich"),
-    kapazitaet: yup.number().typeError("Kapazität muss eine Zahl sein").required("Kapazität ist erforderlich"),
-    installationsflaeche: yup.number().typeError("Installationsfläche muss eine Zahl sein").required("Installationsfläche ist erforderlich"),
-    modulanordnung: yup.string().oneOf(Object.values(Orientierung)).required("Modulanordnung ist erforderlich"),
-    kosten: yup.number().typeError("Kosten müssen eine Zahl sein").required("Kosten sind erforderlich"),
-})
 
-const installationsplanSchema = yup.object({
-    kabelwegfuehrung: yup.string().required("Kabelwegführung ist erforderlich"),
-    montagesystem: yup.string().oneOf(Object.values(Montagesystem)).required("Montagesystem ist erforderlich"),
-    schattenanalyse: yup.string().oneOf(Object.values(Schatten)).required("Schattenanalyse ist erforderlich"),
-    wechselrichterposition: yup.string().required("Wechselrichterposition ist erforderlich"),
-    installationsdatum: yup.date().required("Installationsdatum ist erforderlich"),
-})
 
 export default EnergieberatendeAnfragenDetail;

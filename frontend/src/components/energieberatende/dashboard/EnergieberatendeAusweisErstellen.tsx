@@ -7,24 +7,36 @@ import { tokens } from "../../../utils/theme";
 import axios from "axios";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import Header from "../../utility/Header";
-import { PVAngebotCreate } from "../../../entitities/pv";
-import { Orientierung } from "../../../entitities/haushalt";
+import { EnergieausweisCreate, EnergieeffizienzmassnahmenCreate, MassnahmeTyp } from "../../../entitities/pv";
 
+interface RequestPayloadAuweis {
+    energieeffizienzklasse: string;
+    gueltigkeit_monate: number | "";
+    verbrauchskennwerte: number | "";
+}
 
 interface SolarteurePlanErstellenProps {
-    angebot: PVAngebotCreate;
+    ausweis: EnergieausweisCreate;
+    massnahmen: EnergieeffizienzmassnahmenCreate;
     sucessModalSetter: React.Dispatch<React.SetStateAction<boolean>>;
+    energieausweisID: number;
     failModalSetter: React.Dispatch<React.SetStateAction<boolean>>;
     navigateFN: NavigateFunction
 }
 
-const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
+const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
 
-    const angebotButton = (values: PVAngebotCreate) => {
+    const ausweisErstellen = (values: EnergieausweisCreate) => {
         const token = localStorage.getItem("accessToken");
-        axios.post(addSuffixToBackendURL("solarteure/angebote"), values, {headers: {Authorization: `Bearer ${token}`}})
+        const payload: RequestPayloadAuweis = {
+          energieeffizienzklasse: values.energieeffizienzklasse,
+          gueltigkeit_monate: Number(values.gueltigkeit),
+          verbrauchskennwerte: Number(values.verbrauchskennwerte),
+        }
+        axios.post(addSuffixToBackendURL("energieberatende/energieausweis-erstellen/" + props.energieausweisID),
+         payload, {headers: {Authorization: `Bearer ${token}`}})
         .then((response) => {
             props.sucessModalSetter(true);
             props.navigateFN("/solarteure/antragTable");
@@ -40,26 +52,29 @@ const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
         })
     }
 
-    const keyMappingAngebot = {
-        anlage_id: "Anlage ID",
-        modultyp: "Modultyp",
-        kapazitaet: "Kapazität",
-        installationsflaeche: "Installationsfläche",
-        modulanordnung: "Modulanordnung",
-        kosten: "Kosten",
+    const keyMappingAusweis = {
+      energieeffizienzklasse: "Energieeffizienzklasse",
+      gueltigkeit: "Gültigkeit in Monaten",
+      verbrauchskennwerte: "Verbrauchskennwerte",
+    }
+
+    const keyMappingMassnahmen = {
+      massnahmetyp: "Energieeffizienzmaßnahme",
+      kosten: "Kosten",
+      einsparpotential: "Einsparpotenzial",
     }
 
 
     return (
         <>
         <Box mt={5} ml={1} gridColumn={"span 4"}>
-   <Header title={"Angebot erstellen"} subtitle="Alle Daten zum Erstellen des Angebots eingeben" variant="h3"/>
+   <Header title={"Energieausweis erstellen"} subtitle="Alle Daten zum Erstellen des Energiesausweises eingeben" variant="h3"/>
     </Box>
    <Box mt={2} ml={1} gridColumn={"span 4"}>
    <Formik
-        onSubmit={angebotButton}
-        initialValues={props.angebot}
-        validationSchema={angebotSchema}
+        onSubmit={ausweisErstellen}
+        initialValues={props.ausweis}
+        validationSchema={ausweisSchema}
         style={{
           display:"flex",
           flexDirection:"column",
@@ -83,18 +98,19 @@ const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
                 "& > div": {gridColumn: "span 2"} 
               }}
             >
-               {Object.entries(props.angebot).map(([key, value]) => {
+               {Object.entries({...props.ausweis, empty:""}).map(([key, value]) => {
                 return (
                   <TextField
                     fullWidth
+                    
                     variant="outlined"
                     type="text"
-                    label={keyMappingAngebot[key]}
-                    disabled={key === "anlage_id"}
+                    label={key === "empty" ? undefined : keyMappingAusweis[key]}
+                    disabled={key === "empty"}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    value={values[key]}
-                    name={key}
+                    value={key === "empty" ? undefined : values[key]}
+                    name={key === "empty" ? undefined : key}
                     error={!!touched[key] && !!errors[key]}
                     helperText={touched[key] && errors[key]}
                     InputLabelProps={{
@@ -103,13 +119,13 @@ const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
                   sx={{
                       gridColumn: "span 2",
                       '& .MuiInputBase-input': { 
-                          color: touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
+                          color: key === "empty" ? theme.palette.background.default : touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
                       },
                       '.css-p51h6s-MuiInputBase-input-MuiOutlinedInput-input.Mui-disabled': {
                          "-webkit-text-fill-color": `${colors.color1[500]} !important`,
                       },
                       '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
+                          borderColor: key === "empty" ? theme.palette.background.default : touched[key] && errors[key] ? 'red' : `${colors.color1[500]} !important`,
                       },
                   }}
                   />
@@ -129,7 +145,7 @@ const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
                 color: theme.palette.background.default,
                 padding: "10px 20px"
             }}  type="submit">
-                Angebot erstellen
+                Ausweis erstellen
             </Button>
             </Box>
             </Box>
@@ -144,12 +160,16 @@ const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
         }
 
 
-export default AngebotErstellen;
+export default EnergieberatendeAusweisErstellen;
 
-const angebotSchema = yup.object({
-    modultyp: yup.string().required("Modultyp ist erforderlich"),
-    kapazitaet: yup.number().typeError("Kapazität muss eine Zahl sein").required("Kapazität ist erforderlich"),
-    installationsflaeche: yup.number().typeError("Installationsfläche muss eine Zahl sein").required("Installationsfläche ist erforderlich"),
-    modulanordnung: yup.string().oneOf(Object.values(Orientierung)).required("Modulanordnung ist erforderlich"),
-    kosten: yup.number().typeError("Kosten müssen eine Zahl sein").required("Kosten sind erforderlich"),
-})
+const ausweisSchema = yup.object({
+    energieeffizienzklasse: yup.string().required("Energieeffizienzklasse ist erforderlich"),
+    gueltigkeit: yup.number().typeError("Monate als Zahl eingeben").required("Gültigkeit ist erforderlich"),
+    verbrauchskennwerte: yup.number().typeError("Nur Dezimalzahlen erlaubt").required("Verbraucherkennwerte sind erforderlich"),
+  });
+
+  const massnahmenSchema = yup.object({
+    massnahmetyp: yup.string().oneOf(Object.values(MassnahmeTyp)).required("Maßnahmentyp ist erforderlich"),
+    kosten: yup.number().required("Kosten sind erforderlich"),
+    einsparpotenzial: yup.number().required("Einsparpotenzial ist erforderlich"),
+  });

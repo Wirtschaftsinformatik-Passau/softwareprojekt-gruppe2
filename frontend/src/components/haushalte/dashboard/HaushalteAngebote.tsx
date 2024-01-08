@@ -67,7 +67,7 @@ const AngebotDetail = ({}) => {
 
     const kontaktAufnahme = () => {
         const token = localStorage.getItem("accessToken");
-        const url = addSuffixToBackendURL("haushalte/kontaktaufnahme-energieberatenden/");
+        const url = addSuffixToBackendURL("haushalte/kontaktaufnahme-energieberatenden?anlage_id=" + anlageID);
         axios.post(url, {}, {headers: {Authorization: `Bearer ${token}`}})
         .then((res) => {
             console.log("Kontaktaufnahme erfolgreich")

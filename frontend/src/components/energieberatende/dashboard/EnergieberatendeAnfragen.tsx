@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
-import { ProzessStatus } from "../../../entitities/pv";
 
 const EnergieberatendeAnfragen = () => {
   const theme = useTheme();
@@ -17,15 +16,13 @@ const EnergieberatendeAnfragen = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=AngebotAngenommen",
+    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=AusweisAngefordert",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
-  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>, prozess_status: SetStateAction<ProzessStatus> }; }) => {
-    ProzessStatus
-    navigate(`/energieberatende/antragTable/${params.row.anlage_id}`);
+  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>, prozess_status: SetStateAction<String>; }; }) => {
+    navigate(`/energieberatende/antragTable/${params.row.anlage_id}?status=${params.row.prozess_status}`);
   }
-
 
 
 const columns = [

@@ -9,7 +9,7 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
 import { NoRowsOverlay } from "../../utility/NoRows";
 
-const AntragTable = () => {
+const EnergieberatendeAnfragenBearbeitet = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<SolarteurResponse[]>([]);
@@ -22,7 +22,7 @@ const AntragTable = () => {
   }, [])
 
   const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>, prozess_status: SetStateAction<String>; }; }) => {
-    navigate(`/solarteure/antragTable/${params.row.anlage_id}?status=${params.row.prozess_status}`);
+    navigate(`/energieberatende/antragTable/${params.row.anlage_id}?status=${params.row.prozess_status}`);
   }
 
 
@@ -166,4 +166,4 @@ return (
 }
 
 
-export default AntragTable;
+export default EnergieberatendeAnfragenBearbeitet;

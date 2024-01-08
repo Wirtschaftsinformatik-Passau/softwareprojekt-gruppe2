@@ -354,6 +354,10 @@ class PVSolarteuerResponse(BaseModel):
     stadt: str
 
 
+class EnergieberatendeAnfrageResponse(PVSolarteuerResponse):
+    energieausweis_id: int
+
+
 
 class TarifLaufzeitResponse(BaseModel):
     laufzeit: int
@@ -384,6 +388,7 @@ class InstallationsplanCreate(BaseModel):
     schattenanalyse: Schatten
     wechselrichterposition: str
     installationsdatum: date
+
 
 
 class InstallationsplanResponse(BaseModel):

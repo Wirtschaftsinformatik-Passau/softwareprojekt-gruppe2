@@ -55,6 +55,8 @@ export enum ProzessStatus {
     DatenFreigegeben = 'DatenFreigegeben',
     AngebotGemacht = 'AngebotGemacht',
     AngebotAngenommen = 'AngebotAngenommen',
+    AusweisErstellt = 'AusweisErstellt',
+    AusweisAngefordert = 'AusweisAngefordert',
     PlanErstellt = 'PlanErstellt',
     Genehmigt = "Genehmigt",
     Abgenommen = 'Abgenommen',
@@ -83,11 +85,20 @@ export interface SolarteurResponse {
 
 }
 
-
-
-
 export interface EnergieausweisCreate {
     energieeffizienzklasse: string | "",
     verbrauchskennwerte: number | "",
     gueltigkeit: number | "",
+}
+
+export interface EnergieeffizienzmassnahmenCreate {
+    massnahmetyp: MassnahmeTyp | "",
+    einsparpotenzial: number | "",
+    kosten: number | "",
+}
+
+export enum MassnahmeTyp {
+    Isolierung = "Isolierung",
+    Heizungssystem = "Heizungssystem",
+    Fenstererneuerung = "Fenstererneuerung"
 }

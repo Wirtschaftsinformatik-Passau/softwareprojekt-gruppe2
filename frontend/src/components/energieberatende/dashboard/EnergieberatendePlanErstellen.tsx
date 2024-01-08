@@ -10,7 +10,7 @@ import Header from "../../utility/Header";
 import { Orientierung } from "../../../entitities/haushalt";
 import { SolarteurResponse, Installationsplan, Schatten, Montagesystem} from "../../../entitities/pv";
 
-interface SolarteurePlanErstellenProps {
+interface EnergieberatendePlanErstellen {
     plan: Installationsplan;
     anlageID: number;
     sucessModalSetter: React.Dispatch<React.SetStateAction<boolean>>;
@@ -19,7 +19,7 @@ interface SolarteurePlanErstellenProps {
 }
 
 
-const SolarteurePlanErstellen: React.FC<SolarteurePlanErstellenProps> = (props: SolarteurePlanErstellenProps) =>  {
+const EnergieberatendePlanErstellen: React.FC<SolarteurePlanErstellenProps> = (props: SolarteurePlanErstellenProps) =>  {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
 
@@ -149,4 +149,4 @@ const installationsplanSchema = yup.object({
     installationsdatum: yup.date().required("Installationsdatum ist erforderlich"),
 })
 
-export default SolarteurePlanErstellen;
+export default EnergieberatendePlanErstellen;

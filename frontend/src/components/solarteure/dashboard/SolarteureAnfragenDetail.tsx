@@ -23,7 +23,7 @@ export interface SolarteurResponseExtended extends SolarteurResponse {
     haushalt_id: number
 }
 
-const AnfrageDetail = ({}) => {
+const SolarteureAnfragenDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -365,7 +365,7 @@ const AnfrageDetail = ({}) => {
     <SuccessModal open={freigabeSuccessModalIsOpen} handleClose={() => setFreigabeSuccessModalIsOpen(false)}
     text="Datenanfrage erfolgreich"/>
     <SuccessModal open={planFailModalIsOpen} handleClose={() => setPlanFailModalIsOpen(false)}
-    text="Installationsplanerstellung fehlgeschlagen"/>
+    text="Installationsplanerstellung fehlgeschlagen" navigationGoal="/solarteure"/>
     <SuccessModal open={planSuccessModalIsOpen} handleClose={() => setPlanSuccessModalIsOpen(false)}
     text="Installationsplanerstellung erfolgreich"/>
     
@@ -374,20 +374,4 @@ const AnfrageDetail = ({}) => {
     )
 }
 
-const angebotSchema = yup.object({
-    modultyp: yup.string().required("Modultyp ist erforderlich"),
-    kapazitaet: yup.number().typeError("Kapazität muss eine Zahl sein").required("Kapazität ist erforderlich"),
-    installationsflaeche: yup.number().typeError("Installationsfläche muss eine Zahl sein").required("Installationsfläche ist erforderlich"),
-    modulanordnung: yup.string().oneOf(Object.values(Orientierung)).required("Modulanordnung ist erforderlich"),
-    kosten: yup.number().typeError("Kosten müssen eine Zahl sein").required("Kosten sind erforderlich"),
-})
-
-const installationsplanSchema = yup.object({
-    kabelwegfuehrung: yup.string().required("Kabelwegführung ist erforderlich"),
-    montagesystem: yup.string().oneOf(Object.values(Montagesystem)).required("Montagesystem ist erforderlich"),
-    schattenanalyse: yup.string().oneOf(Object.values(Schatten)).required("Schattenanalyse ist erforderlich"),
-    wechselrichterposition: yup.string().required("Wechselrichterposition ist erforderlich"),
-    installationsdatum: yup.date().required("Installationsdatum ist erforderlich"),
-})
-
-export default AnfrageDetail;
+export default SolarteureAnfragenDetail;

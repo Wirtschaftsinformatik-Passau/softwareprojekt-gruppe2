@@ -897,83 +897,41 @@ async def get_angebot(anlage_id: int,
 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
-
-@router.post("/vertragswechsel/{neuer_tarif_id}")
-async def vertragswechsel(
-        neuer_tarif_id: int,
-        alter_vertrag_id: int = Query(..., description="Die ID des alten Vertrags"),
+@router.post("/kuendigungsanfrage/{vertrag_id}")
+async def kuendigungsanfrage(
+        vertrag_id: int,
         current_user: models.Nutzer = Depends(oauth.get_current_user),
         db: AsyncSession = Depends(database.get_db_async)):
-    
+
     user_id = current_user.user_id
 
-    # Überprüfe den alten Vertrag
+    # Überprüfe den bestehenden Vertrag
     query = select(models.Vertrag).where(
         and_(
-            models.Vertrag.vertrag_id == alter_vertrag_id,
+            models.Vertrag.vertrag_id == vertrag_id,
             models.Vertrag.user_id == user_id
         )
     )
-    alter_vertrag_result = await db.execute(query)
-    alter_vertrag = alter_vertrag_result.scalar_one_or_none()
-    if not alter_vertrag:
-        raise HTTPException(status_code=404, detail="Alter Vertrag nicht gefunden")
+    bestehender_vertrag = await db.execute(query)
+    vertrag = bestehender_vertrag.scalar_one_or_none()
+    if not vertrag:
+        raise HTTPException(status_code=404, detail="Vertrag nicht gefunden")
 
-    # Überprüfe den neuen Tarif
-    query = select(models.Tarif).where(
-        and_(
-            models.Tarif.tarif_id == neuer_tarif_id,
-            models.Tarif.active == True
-        )
+    # Überprüfe den Vertragsstatus
+    if vertrag.vertragstatus == models.Vertragsstatus.Laufend:
+        vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt_Unbestaetigt
+    elif vertrag.vertragstatus in [models.Vertragsstatus.Gekuendigt, models.Vertragsstatus.Gekuendigt_Unbestaetigt]:
+        raise HTTPException(status_code=409, detail="Vertrag ist bereits gekündigt oder Kündigung ist ausstehend")
+
+    # Erstelle eine Kündigungsanfrage
+    kuendigungsanfrage = models.Kündigungsanfrage(
+        vertrag_id=vertrag.vertrag_id,
+        bestätigt=False
     )
-    neuer_tarif_result = await db.execute(query)
-    neuer_tarif = neuer_tarif_result.scalar_one_or_none()
-    if not neuer_tarif:
-        raise HTTPException(status_code=404, detail="Neuer Tarif nicht gefunden")
+    db.add(kuendigungsanfrage)
+    await db.commit()
 
-    # Erstelle eine Kündigungsanfrage für den alten Vertrag
-    if alter_vertrag.vertragstatus != models.Vertragsstatus.Gekuendigt:
-        alter_vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt_Unbestaetigt
-        kuendigungsanfrage = models.Kündigungsanfrage(
-            vertrag_id=alter_vertrag.vertrag_id,
-            bestätigt=False
-        )
-        db.add(kuendigungsanfrage)
-        await db.commit()
-        raise HTTPException(status_code=202, detail="Kündigungsanfrage für den alten Vertrag erstellt")
-
-    # Wenn die Kündigung bestätigt wurde, erstelle den neuen Vertrag
-    if alter_vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt:
-        beginn_datum = alter_vertrag.end_datum
-        end_datum = beginn_datum + timedelta(days=365 * neuer_tarif.laufzeit)
-        jahresabschlag = neuer_tarif.grundgebuehr + neuer_tarif.preis_kwh * KWH_VERBRAUCH_JAHR
-
-        try:
-            neuer_vertrag = models.Vertrag(
-                user_id=user_id,
-                tarif_id=neuer_tarif_id,
-                beginn_datum=beginn_datum,
-                end_datum=end_datum,
-                jahresabschlag=jahresabschlag,
-                vertragstatus=models.Vertragsstatus.Laufend,
-                netzbetreiber_id=neuer_tarif.netzbetreiber_id
-            )
-            db.add(neuer_vertrag)
-            await db.commit()
-            await db.refresh(neuer_vertrag)
-            return schemas.VertragResponse(
-                vertrag_id=neuer_vertrag.vertrag_id,
-                user_id=neuer_vertrag.user_id,
-                tarif_id=neuer_vertrag.tarif_id,
-                beginn_datum=neuer_vertrag.beginn_datum,
-                end_datum=neuer_vertrag.end_datum,
-                jahresabschlag=neuer_vertrag.jahresabschlag,
-                vertragstatus=neuer_vertrag.vertragstatus
-            )
-        except SQLAlchemyError as e:
-            await db.rollback()
-            raise HTTPException(status_code=500, detail=f"Fehler bei der Vertragserstellung: {e}")
-        
+    return {"message": f"Kündigungsanfrage für Vertrag {vertrag_id} wurde erstellt"}
 
 
 @router.put("/angebot-ablehnen/{anlage_id}", status_code=status.HTTP_200_OK)

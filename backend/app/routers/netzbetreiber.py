@@ -15,7 +15,7 @@ from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, 
 from app import config
 import pandas as pd
 import io
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -962,8 +962,8 @@ async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_asy
     return kuendigungsanfragen
 
 
-@router.put("/kuendigungsanfrage/{anfrage_id}/{aktion}", response_model=schemas.KündigungsanfrageResponse)
-async def handle_kuendigungsanfrage(anfrage_id: int, aktion: str, db: AsyncSession = Depends(database.get_db_async)):
+@router.put("/kuendigungsanfragenbearbeitung/{anfrage_id}/{aktion}")
+async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: AsyncSession = Depends(database.get_db_async)):
     try:
         # Abrufen der Kündigungsanfrage
         query = select(models.Kündigungsanfrage).where(models.Kündigungsanfrage.anfrage_id == anfrage_id)
@@ -977,15 +977,20 @@ async def handle_kuendigungsanfrage(anfrage_id: int, aktion: str, db: AsyncSessi
             # Kündigung bestätigen und den Vertragstatus aktualisieren
             anfrage.bestätigt = True
             anfrage.vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt
+         
+            # Berechne den zeitanteiligen Jahresabschlag
+            jahresanfang = date(date.today().year, 1, 1)
+            tage_seit_jahresanfang = (date.today() - jahresanfang).days
+            zeitanteiliger_jahresabschlag = anfrage.vertrag.jahresabschlag * (tage_seit_jahresanfang / 365)
 
-            # Erstelle eine Rechnung für den Haushalt
+            # Erstelle eine Rechnung für den gekündigten Vertrag
             rechnung = models.Rechnungen(
                 user_id=anfrage.vertrag.user_id,
-                rechnungsbetrag=anfrage.vertrag.jahresabschlag,
+                rechnungsbetrag=zeitanteiliger_jahresabschlag,
                 rechnungsdatum=datetime.now(),
                 faelligkeitsdatum=datetime.now() + timedelta(days=30),
                 rechnungsart=models.Rechnungsart.Netzbetreiber_Rechnung,
-                zeitraum=datetime.now()  # Oder entsprechendes Datum
+                zeitraum=datetime.now()
             )
             db.add(rechnung)
         elif aktion == "ablehnen":
@@ -999,5 +1004,4 @@ async def handle_kuendigungsanfrage(anfrage_id: int, aktion: str, db: AsyncSessi
         return anfrage
     except SQLAlchemyError as e:
         await db.rollback()
-        logger.error(f"Fehler bei der Verarbeitung der Kündigungsanfrage: {e}")
         raise HTTPException(status_code=500, detail="Fehler bei der Verarbeitung der Kündigungsanfrage")

@@ -11,7 +11,7 @@ import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TableViewIcon from '@mui/icons-material/TableView';
 import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
 import DashboardIcon from '@mui/icons-material/Dashboard';import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-import SolarPowerIcon from '@mui/icons-material/SolarPower';
+import ClearIcon from '@mui/icons-material/Clear';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -187,8 +187,15 @@ const Sidebar1 = () => {
             />
             <Item
               title="Laufende Verträge"
-              to="/tarifEdit"
+              to="/vertraege"
               icon={<ReceiptIcon/>}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Kündigungsanfragen"
+              to="/vertraegeKuendigung"
+              icon={<ClearIcon/>}
               selected={selected}
               setSelected={setSelected}
             />
@@ -257,7 +264,7 @@ const Sidebar1 = () => {
             />
             <Item
               title="Offene Anträge"
-              to="/einspeisungenOverview"
+              to="/einspeisungen"
               icon={<AccessTimeIcon />}
               selected={selected}
               setSelected={setSelected}

@@ -607,6 +607,14 @@ class AngebotVorschlag(BaseModel):
     nvpruefung_status: Optional[bool] = None
 
 
+class NetzbetreiberEinspeisungDetail(AngebotVorschlag):
+    vorname: str
+    nachname: str
+    strasse: str
+    hausnr : int
+    plz: int
+    stadt: str
+
 class DatenanfrageResponse(BaseModel):
     message: str
     haushalt_id: int

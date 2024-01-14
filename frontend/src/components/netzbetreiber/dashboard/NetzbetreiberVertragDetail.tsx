@@ -7,10 +7,17 @@ import SuccessModal from "../../utility/SuccessModal";
 import axios from "axios";
 import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import CheckIcon from '@mui/icons-material/Check';
 import CircularProgress from '@mui/material/CircularProgress';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
-import { Vertrag } from "../../../entitities/vertrag";
+import { Vertrag, Vertragsstatus } from "../../../entitities/vertrag";
+
+
+export enum AntwortOptionen {
+    ablehnen = "ablehnen",
+    bestaetigen = "bestaetigen"
+}
 
 
 
@@ -20,7 +27,10 @@ const VertragDetail = ({}) => {
     const colors = tokens(theme.palette.mode);
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState<boolean>(false);
+    const [denyModalIsOpen, setDenyModalIsOpen] = React.useState<boolean>(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const vertragsstatus = searchParams.get("vertragstatus");
     const [conflictModalIsOpen, setConflictModalIsOpen] = React.useState<boolean>(false);
     const {vertragID} = useParams();
     const [vertrag, setVertrag] = React.useState<Vertrag>({
@@ -60,25 +70,27 @@ const VertragDetail = ({}) => {
         "vertragstatus": "Vertragstatus"
     }
 
+
     
 
     const navigate = useNavigate();
 
     useEffect(() => {  
         const token = localStorage.getItem("accessToken");
-        setStateOtherwiseRedirect(setVertrag, "haushalte/vertraege/"+vertragID , 
+        setStateOtherwiseRedirect(setVertrag, "netzbetreiber/vertraege/"+vertragID , 
         navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
+
     }, []
     )
 
-    const handleKuendigung = () => {
+    const handleKuendigungsAnfrage = (antwort: AntwortOptionen) => {
         const token = localStorage.getItem("accessToken");
-        axios.post(addSuffixToBackendURL(`haushalte/kuendigungsanfrage/${vertragID}`), {}, {
+        axios.put(addSuffixToBackendURL(`netzbetreiber/kuendigungsanfragenbearbeitung/${vertragID}?aktion=${antwort}`), {}, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         }).then((response) => {
-            setSuccessModalIsOpen(true);
+            antwort === AntwortOptionen.bestaetigen ? setSuccessModalIsOpen(true) : setDenyModalIsOpen(true)
         }).catch((error) => {
             setFailModalIsOpen(true);
         })
@@ -106,20 +118,10 @@ const VertragDetail = ({}) => {
                 }}>
                     Abbrechen    
                 </Button>
+                {vertragsstatus === Vertragsstatus.Gekuendigt_Unbestaetigt && 
+                <>
                 <Button variant="contained" color="primary" 
-                onClick={() => navigate(`/haushalte/vertragChangeOverview/${vertragID}`)}
-                sx = {{
-                    backgroundColor: `${colors.color1[500]} !important`,
-                    color: theme.palette.background.default
-                }}>
-                    <ChangeCircleIcon sx={{
-                        marginRight: "6px",
-                        marginBottom: "1px"
-                    
-                    }}/>
-                    Vertrag wechseln    
-                </Button>
-                <Button variant="contained" color="primary" onClick={handleKuendigung}
+                onClick={() => handleKuendigungsAnfrage(AntwortOptionen.ablehnen)}
                 sx = {{
                     backgroundColor: `${colors.color5[500]} !important`,
                     color: theme.palette.background.default
@@ -129,8 +131,22 @@ const VertragDetail = ({}) => {
                         marginBottom: "1px"
                     
                     }}/>
-                    Vertrag kündigen    
+                    Kündigung ablehnen    
                 </Button>
+                <Button variant="contained" color="primary" onClick={() => handleKuendigungsAnfrage(AntwortOptionen.bestaetigen)}
+                sx = {{
+                    backgroundColor: `${colors.color1[500]} !important`,
+                    color: theme.palette.background.default
+                }}>
+                    <CheckIcon sx={{
+                        marginRight: "6px",
+                        marginBottom: "1px"
+                    
+                    }}/>
+                    Kündigung bestätigen    
+                </Button>
+                </>
+}
 
             </Box>
     <Box gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} display={"grid"}>
@@ -175,11 +191,11 @@ const VertragDetail = ({}) => {
     })}
    </Box>
    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Vertrag erfolgreich gekündigt!" navigationGoal="/haushalte"/>
+    text="Vertrag erfolgreich gekündigt!" navigationGoal="/netzbetreiber"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="Antrag fehlgeschlagen"/>
-    <SuccessModal open={conflictModalIsOpen} handleClose={() => setConflictModalIsOpen(false)}
-    text="Vetrag wurde bereits gewechselt oder ist gekündigt!"/>
+    text="Bearbeitung fehlgeschlagen!"/>
+    <SuccessModal open={denyModalIsOpen} handleClose={() => setDenyModalIsOpen(false)}
+    text="Kündigungsantrag wurde erfoglreich abgelehnt!" navigationGoal="/netzbetreiber"/>
         </Box>
     )
 }

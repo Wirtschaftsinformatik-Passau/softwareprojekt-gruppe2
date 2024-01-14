@@ -211,23 +211,6 @@ const HaushaltHome = () => {
         
         </Grow>
         </Box>
-        <Box
-        display="grid"
-        gridTemplateRows="repeat(2, 1fr)"
-        gridTemplateColumns={"repeat(6, 1fr)"}
-        gridAutoRows="140px"
-        gridColumn={"span 3"}
-         gridRow={"span 3"}
-        gap="20px">
-            <Box gridColumn={"span 3"} m="20px">
-             <Header title="Laufzeitübersicht der Tarife" variant="h3"/>
-             </Box>
-             <Box gridColumn={"span 3"} m="20px">
-             <Header title="Geographische Verteilung der Haushalte" variant="h3"/>
-             </Box>
-            
-
-        </Box>
         </Box>
     
     )

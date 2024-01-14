@@ -45,12 +45,11 @@ async def check_solarteur_role_and_berater_role(current_user: models.Nutzer, met
 
 @router.get("/anfragen", response_model=List[schemas.PVSolarteuerResponse])
 async def get_anfragen(
-        prozess_status: List[types.ProzessStatus] = Query(None),
+        prozess_status: List[types.ProzessStatus] = Query(types.ProzessStatus.AnfrageGestellt, alias="prozess_status"),
         current_user: models.Nutzer = Depends(oauth.get_current_user),
         db: AsyncSession = Depends(database.get_db_async)
 ):
     await check_solarteur_role(current_user, "GET", "/angebote")
-    print(prozess_status)
     try:
         if prozess_status[0] == types.ProzessStatus.AnfrageGestellt and (len(prozess_status) == 2 or len(prozess_status) == 1):
              query = (select(models.PVAnlage, models.Nutzer, models.Adresse)

@@ -14,6 +14,8 @@ import HelpModal from "../../utility/HelpModal";
 import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
 import { Link } from "react-router-dom";
 
+import logo from "../../../assets/logo_large.svg"
+
 
 const Topbar = ({fixed, search=true}) => {
   const navigate = useNavigate();

@@ -10,7 +10,7 @@ import Sidebar from "../../components/netzbetreiber/dashboard/NetzSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import NetzHome from "../../components/netzbetreiber/dashboard/NetzHomeDashboard";
 import NetzbetreiberTarifCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifCreate";
-import NetzbetreiberTarifTable from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifTable.tsx";
+import NetzbetreiberTarifTable from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifTable";
 import NetzbetreiberTarifEditSelect from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifEditSelect";
 import NetzbetreiberTarifEdit from "../../components/netzbetreiber/dashboard/NetzbetreiberTarifEdit";
 import NetzbetreiberPreisCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberPreisCreate";
@@ -20,11 +20,12 @@ import NetzbetreiberPreisTable from "../../components/netzbetreiber/dashboard/Ne
 import NetzbetreiberSmartmeterOverview from "../../components/netzbetreiber/dashboard/NetzbetreiberSmartmeterOverview";
 import NetzbetreiberHaushalteTable from "../../components/netzbetreiber/dashboard/NetzbetreiberHaushalteTable";
 import NetzbetreiberEinspeisungenTable from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenTable";
-import NetzbetreiberEinspeisungenZusage from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenZusage";
 import NetzbetreiberEinspeisungenAngenommen from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenAngenommen";
 import NetzbetreiberSmartmeterUpload from "../../components/netzbetreiber/dashboard/NetzbetreiberSmartMeterUpload"
-
-
+import NetzbetreiberLaufendeVertraege from "../../components/netzbetreiber/dashboard/NetzbetreiberLaufendeVertraege"
+import NetzbetreiberKuendigungsAnfragen from "../../components/netzbetreiber/dashboard/NetzbetreiberKuendigungsAnfragen"
+import NetzbetreiberVertragDetail from"../../components/netzbetreiber/dashboard/NetzbetreiberVertragDetail"
+import NetzbertreiberEinspeisungenDetail from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenDetail";
 
 
 const  NetzbetreiberDashboard = () => {
@@ -60,10 +61,13 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/priceTable" element={<NetzbetreiberPreisTable/>}/>
                 <Route path="/smartmeterOverview" element={<NetzbetreiberSmartmeterOverview/>}/>
                 <Route path="/haushalteOverview" element={<NetzbetreiberHaushalteTable/>}/>
-                <Route path="/einspeisungenOverview" element={<NetzbetreiberEinspeisungenTable/>}/>
-                <Route path="/einspeisungenZusage/:anlageID" element={<NetzbetreiberEinspeisungenZusage/>}/>
+                <Route path="/einspeisungen" element={<NetzbetreiberEinspeisungenTable/>}/>
+                <Route path="/einspeisungen/:anlageID" element={<NetzbertreiberEinspeisungenDetail/>}/>
                 <Route path="/einspeisungenAngenommen" element={<NetzbetreiberEinspeisungenAngenommen/>}/>
                 <Route path="/smartmeterUpload" element={<NetzbetreiberSmartmeterUpload/>}/>
+                <Route path="/vertraege" element={<NetzbetreiberLaufendeVertraege/>}/>
+                <Route path="/vertraegeKuendigung" element={<NetzbetreiberKuendigungsAnfragen/>}/>
+                <Route path="vertraege/:vertragID" element={<NetzbetreiberVertragDetail/>}/>
                 </Routes>
                 </div>
                 

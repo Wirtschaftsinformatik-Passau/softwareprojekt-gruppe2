@@ -27,3 +27,4 @@ export class Tarif implements ITarif{
         this.spezielle_konditionen = spezielleKonditionen
     }
 }
+

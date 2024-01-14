@@ -7,7 +7,22 @@ import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
 import {CircularProgress} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
-import { Vertrag } from "../../../entitities/vertrag";
+
+export interface Vertrag {
+  "vertrag_id": number,
+  "user_id": number,
+  "tarif_id":  number,
+  "beginn_datum": string,
+  "end_datum": string,
+  "jahresabschlag": number,
+  "vertragstatus": boolean
+  "tarifname": string,
+  "preis_kwh": number,
+  "grundgebuehr": number,
+  "laufzeit": number,
+  "netzbetreiber_id": number,
+  "spezielle_konditionen": string,
+}
 
 const VertragTable = () => {
   const theme = useTheme();
@@ -33,21 +48,22 @@ const VertragTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "haushalte/vertraege", navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
+    setStateOtherwiseRedirect(setData, "netzbetreiber/vertraege?vertragsstatus=Gekuendigt_Unbestaetigt", navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
   }, [])
 
-  const handleRowClick = (params: any) => {
-    navigate("/haushalte/vertragOverview/"+params.row.vertrag_id)
+  const handleRowClick = (params: { row: { vertrag_id: number | string,
+                                            vertragstatus: string}}) => {
+    navigate("/netzbetreiber/vertraege/"+params.row.vertrag_id + "?vertragstatus=" + params.row.vertragstatus)
   }
 
 
 
 const columns = [
       {
-        field: "netzbetreiber_id",
+        field: "user_id",
         headerAlign: "left",
         align: "left",
-        headerName: "Netzbetreiber ID",
+        headerName: "Haushalt ID",
         flex: 1,
         cellClassName: "name-column--cell",
       },

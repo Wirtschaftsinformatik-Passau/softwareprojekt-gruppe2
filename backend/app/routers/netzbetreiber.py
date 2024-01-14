@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -12,6 +12,7 @@ from logging.config import dictConfig
 from app.logger import LogConfig
 from app.config import Settings
 from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, TarifResponse
+from app import types
 from app import config
 import pandas as pd
 import io
@@ -719,14 +720,6 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
     return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
 
 
-@router.get("/anlagen", status_code=status.HTTP_200_OK)
-async def anlage_ueberpruefung(db: AsyncSession = Depends(database.get_db_async),
-                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_netzbetreiber_role(current_user, "GET", "/anlagen")
-
-    stmt = select(models.PVAnlage).where(models.PVAnlage.netzbetreiber_id == None)
-    result = await db.execute(stmt)
-    pv_anlage = result.scalars().all()
 
 
 @router.put("/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
@@ -758,9 +751,9 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
             message="Netzverträglichkeitsprüfung nicht bestanden",
             success=True
         )
-        # wenn nv pruedung false kommt 400 zurück
+        # wenn nv pruedung false kommt 412 zurück
         logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
                             detail="Netzverträglichkeitsprüfung nicht bestanden")
 
     pv_anlage.prozess_status = models.ProzessStatus.Genehmigt
@@ -808,7 +801,7 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
         raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
 
 
-@router.get("/pv-angenommen", response_model=List[schemas.AngebotVorschlag])
+@router.get("/pv-angenommen", response_model=List[schemas.NetzbetreiberEinspeisungDetail])
 async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db),
                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
@@ -843,34 +836,46 @@ async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db)
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
 
 
-@router.get("/einspeisezusagen", response_model=List[schemas.AngebotVorschlag])
-async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get_db_async),
+@router.get("/einspeisezusagen", response_model=List[schemas.PVSolarteuerResponse])
+async def get_einspeisezusagen_vorschlag(prozess_status: List[types.ProzessStatus] =  Query(types.ProzessStatus.PlanErstellt, alias="prozess_status"),
+                                         db: AsyncSession = Depends(database.get_db_async),
                                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
-        stmt = select(models.PVAnlage).where((models.PVAnlage.netzbetreiber_id is None) or
-                                             (models.PVAnlage.prozess_status != models.ProzessStatus.Genehmigt))
-        result = await db.execute(stmt)
-        pv_anlagen = result.scalars().all()
+        if prozess_status[0] == types.ProzessStatus.PlanErstellt and (
+                len(prozess_status) == 2 or len(prozess_status) == 1):
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                     .where(models.PVAnlage.prozess_status == models.ProzessStatus.PlanErstellt))
+
+        else:
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id))
+
+            if prozess_status:
+                query = query.where((models.PVAnlage.prozess_status.in_(prozess_status))
+                                    & (models.PVAnlage.netzbetreiber_id == current_user.user_id))
+
+        result = await db.execute(query)
+        anfragen = result.all()
+
+        if not anfragen:
+            return []
 
         response = [{
-            "anlage_id": x.anlage_id,
-            "haushalt_id": x.haushalt_id,
-            "solarteur_id": x.solarteur_id,
-            "modultyp": x.modultyp,
-            "kapazitaet": x.kapazitaet,
-            "installationsflaeche": x.installationsflaeche,
-            "installationsdatum": x.installationsdatum,
-            "modulanordnung": x.modulanordnung,
-            "kabelwegfuehrung": x.kabelwegfuehrung,
-            "montagesystem": x.montagesystem,
-            "schattenanalyse": x.schattenanalyse,
-            "wechselrichterposition": x.wechselrichterposition,
-            "installationsplan": x.installationsplan,
-            "prozess_status": x.prozess_status,
-            "nvpruefung_status": x.nvpruefung_status
-        } for x in pv_anlagen]
-
+            "anlage_id": angebot.anlage_id,
+            "haushalt_id": angebot.haushalt_id,
+            "prozess_status": angebot.prozess_status,
+            "vorname": nutzer.vorname,
+            "nachname": nutzer.nachname,
+            "email": nutzer.email,
+            "strasse": adresse.strasse,
+            "hausnummer": adresse.hausnummer,
+            "plz": adresse.plz,
+            "stadt": adresse.stadt
+        } for angebot, nutzer, adresse in anfragen]
         return response
 
     except exc.IntegrityError as e:
@@ -885,32 +890,42 @@ async def get_einspeisezusagen_vorschlag(db: AsyncSession = Depends(database.get
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der PV-Anlagen: {e}")
 
 
-@router.get("/einspeisezusagen/{anlage_id}", response_model=schemas.AngebotVorschlag)
+@router.get("/einspeisezusagen/{anlage_id}", response_model=schemas.NetzbetreiberEinspeisungDetail)
 async def get_einspeisezusagen_vorschlag(anlage_id: int,
                                          db: AsyncSession = Depends(database.get_db_async),
                                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
-        stmt = select(models.PVAnlage).where((models.PVAnlage.anlage_id == anlage_id))
+        stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                .where((models.PVAnlage.anlage_id == anlage_id)))
         result = await db.execute(stmt)
-        pv_anlage = result.scalars().all()[0]
+        pv_anlage = result.first()
 
         response = {
-            "anlage_id": pv_anlage.anlage_id,
-            "haushalt_id": pv_anlage.haushalt_id,
-            "solarteur_id": pv_anlage.solarteur_id,
-            "modultyp": pv_anlage.modultyp,
-            "kapazitaet": pv_anlage.kapazitaet,
-            "installationsflaeche": pv_anlage.installationsflaeche,
-            "installationsdatum": pv_anlage.installationsdatum,
-            "modulanordnung": pv_anlage.modulanordnung,
-            "kabelwegfuehrung": pv_anlage.kabelwegfuehrung,
-            "montagesystem": pv_anlage.montagesystem,
-            "schattenanalyse": pv_anlage.schattenanalyse,
-            "wechselrichterposition": pv_anlage.wechselrichterposition,
-            "installationsplan": pv_anlage.installationsplan,
-            "prozess_status": pv_anlage.prozess_status,
-            "nvpruefung_status": pv_anlage.nvpruefung_status
+            "anlage_id": pv_anlage[0].anlage_id,
+            "haushalt_id": pv_anlage[0].haushalt_id,
+            "solarteur_id": pv_anlage[0].solarteur_id,
+            "modultyp": pv_anlage[0].modultyp,
+            "kapazitaet": pv_anlage[0].kapazitaet,
+            "installationsflaeche": pv_anlage[0].installationsflaeche,
+            "installationsdatum": pv_anlage[0].installationsdatum,
+            "modulanordnung": pv_anlage[0].modulanordnung,
+            "kabelwegfuehrung": pv_anlage[0].kabelwegfuehrung,
+            "montagesystem": pv_anlage[0].montagesystem,
+            "schattenanalyse": pv_anlage[0].schattenanalyse,
+            "wechselrichterposition": pv_anlage[0].wechselrichterposition,
+            "installationsplan": pv_anlage[0].installationsplan,
+            "prozess_status": pv_anlage[0].prozess_status,
+            "nvpruefung_status": pv_anlage[0].nvpruefung_status,
+            "vorname": pv_anlage[1].vorname,
+            "nachname": pv_anlage[1].nachname,
+            "strasse": pv_anlage[2].strasse,
+            "hausnr": pv_anlage[2].hausnummer,
+            "plz": pv_anlage[2].plz,
+            "stadt": pv_anlage[2].stadt
+
         }
 
         return response
@@ -955,18 +970,35 @@ async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.ge
 
 
 @router.get("/kuendigungsanfragen", response_model=List[schemas.KündigungsanfrageResponse])
-async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_async)):
-    query = select(models.Kündigungsanfrage)
-    result = await db.execute(query)
-    kuendigungsanfragen = result.scalars().all()
-    return kuendigungsanfragen
+async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_async),
+                                  current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    try:
+        query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
+                                              (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
+        result = await db.execute(query)
+        kuendigungsanfragen = result.scalars().all()
+        return kuendigungsanfragen
+    except SQLAlchemyError as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint="/kuendigungsanfragen",
+            method="PUT",
+            message=f"SQLAlchemy Fehler beim Abrufen der Kuendigungsanfragen: {str(e)}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Kuendigungsanfragen: {e}")
 
 
-@router.put("/kuendigungsanfragenbearbeitung/{anfrage_id}/{aktion}")
-async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: AsyncSession = Depends(database.get_db_async)):
+@router.put("/kuendigungsanfragenbearbeitung/{vertrag_id}")
+async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
+                                         db: AsyncSession = Depends(database.get_db_async),
+                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
         # Abrufen der Kündigungsanfrage
-        query = select(models.Kündigungsanfrage).where(models.Kündigungsanfrage.anfrage_id == anfrage_id)
+        query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
+                                            (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt) &
+                                             (models.Vertrag.vertrag_id == vertrag_id))
         result = await db.execute(query)
         anfrage = result.scalar_one_or_none()
 
@@ -976,16 +1008,16 @@ async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: Async
         if aktion == "bestaetigen":
             # Kündigung bestätigen und den Vertragstatus aktualisieren
             anfrage.bestätigt = True
-            anfrage.vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt
+            anfrage.vertragstatus = models.Vertragsstatus.Gekuendigt
          
             # Berechne den zeitanteiligen Jahresabschlag
             jahresanfang = date(date.today().year, 1, 1)
             tage_seit_jahresanfang = (date.today() - jahresanfang).days
-            zeitanteiliger_jahresabschlag = anfrage.vertrag.jahresabschlag * (tage_seit_jahresanfang / 365)
+            zeitanteiliger_jahresabschlag = anfrage.jahresabschlag * (tage_seit_jahresanfang / 365)
 
             # Erstelle eine Rechnung für den gekündigten Vertrag
             rechnung = models.Rechnungen(
-                user_id=anfrage.vertrag.user_id,
+                user_id=anfrage.user_id,
                 rechnungsbetrag=zeitanteiliger_jahresabschlag,
                 rechnungsdatum=datetime.now(),
                 faelligkeitsdatum=datetime.now() + timedelta(days=30),
@@ -993,15 +1025,131 @@ async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: Async
                 zeitraum=datetime.now()
             )
             db.add(rechnung)
-        elif aktion == "ablehnen":
-            # Kündigung ablehnen und den Vertragstatus aktualisieren
-            anfrage.bestätigt = False
-            anfrage.vertrag.vertragstatus = models.Vertragsstatus.Laufend
-        else:
-            raise HTTPException(status_code=400, detail="Ungültige Aktion")
+            logging_msg = LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/kuendigungsanfragenbearbeitung/{vertrag_id}/{aktion}",
+                method="PUT",
+                message=f" Kündigung wurde bestätigt von {current_user.user_id}",
+                success=True
+            )
+            logger.info(logging_msg.dict())
 
+        elif aktion == "ablehnen":
+            anfrage.vertragstatus = models.Vertragsstatus.Laufend
+            logging_msg = LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/kuendigungsanfragenbearbeitung/{vertrag_id}/{aktion}",
+                method="PUT",
+                message=f" Kündigung wurde abgelehnt von {current_user.user_id}",
+                success=True
+            )
+            logger.info(logging_msg.dict())
+        else:
+            logging_error = LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/kuendigungsanfragenbearbeitung/{vertrag_id}/{aktion}",
+                method="PUT",
+                message=f" Ungültige aktion {aktion}",
+                success=False
+            )
+            logger.info(logging_error.dict())
+            raise HTTPException(status_code=400, detail=f"Ungültige aktion {aktion}")
         await db.commit()
         return anfrage
     except SQLAlchemyError as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Fehler bei der Verarbeitung der Kündigungsanfrage")
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/kuendigungsanfragenbearbeitung/{vertrag_id}/{aktion}",
+            method="PUT",
+            message=f"Ungültige aktion {aktion}",
+            success=False
+        )
+        logger.info(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"Fehler bei der Verarbeitung der Kündigungsanfrage {e}")
+
+
+@router.get("/vertraege", response_model=List[schemas.VertragTarifResponse])
+async def get_vertraege(vertragsstatus: str = "all",
+                        db: AsyncSession = Depends(database.get_db_async),
+                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", "/vertraege")
+    try:
+        stmt = select(models.Vertrag, models.Tarif).join(models.Tarif,
+                                                         models.Vertrag.tarif_id == models.Tarif.tarif_id).where(
+            models.Vertrag.netzbetreiber_id == current_user.user_id)
+        if vertragsstatus != "all":
+            try:
+                vertragsstatus = models.Vertragsstatus(vertragsstatus)
+                stmt = stmt.where(models.Vertrag.vertragstatus == vertragsstatus)
+            except ValueError as e:
+                logging_error = LoggingSchema(
+                    user_id=current_user.user_id,
+                    endpoint=f"/vertraege/{vertragsstatus}",
+                    method="PUT",
+                    message=f"Ungültigher vertragsstatus {e}",
+                    success=False
+                )
+                logger.info(logging_error.dict())
+                raise HTTPException(status_code=404, detail=f"Ungültigher vertragsstatus {e}")
+
+        result = await db.execute(stmt)
+        vertraege = result.all()
+
+        if not vertraege:
+            return []
+
+        response = [{
+            "vertrag_id": vertrag.vertrag_id,
+            "user_id": vertrag.user_id,
+            "tarif_id": vertrag.tarif_id,
+            "beginn_datum": vertrag.beginn_datum,
+            "end_datum": vertrag.end_datum,
+            "jahresabschlag": vertrag.jahresabschlag,
+            "vertragstatus": vertrag.vertragstatus,
+            "tarifname": tarif.tarifname,
+            "preis_kwh": tarif.preis_kwh,
+            "grundgebuehr": tarif.grundgebuehr,
+            "laufzeit": tarif.laufzeit,
+            "netzbetreiber_id": tarif.netzbetreiber_id,
+            "spezielle_konditionen": tarif.spezielle_konditionen
+        } for vertrag, tarif in vertraege]
+
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+
+
+@router.get("/vertraege/{vertrag_id}", response_model=schemas.VertragTarifNBResponse)
+async def get_vertrag(vertrag_id: int,
+                      db: AsyncSession = Depends(database.get_db_async),
+                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_netzbetreiber_role(current_user, "GET", f"/vertraege/{vertrag_id}")
+    try:
+        stmt = select(models.Vertrag, models.Tarif, models.Nutzer) \
+            .join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id) \
+            .join(models.Nutzer, models.Vertrag.netzbetreiber_id == models.Nutzer.user_id) \
+            .where(models.Vertrag.vertrag_id == vertrag_id)
+        result = await db.execute(stmt)
+        vertrag = result.first()
+        response = {
+            "vertrag_id": vertrag[0].vertrag_id,
+            "tarif_id": vertrag[0].tarif_id,
+            "beginn_datum": vertrag[0].beginn_datum,
+            "end_datum": vertrag[0].end_datum,
+            "jahresabschlag": vertrag[0].jahresabschlag,
+            "tarifname": vertrag[1].tarifname,
+            "vertragstatus": vertrag[0].vertragstatus,
+            "preis_kwh": vertrag[1].preis_kwh,
+            "grundgebuehr": vertrag[1].grundgebuehr,
+            "laufzeit": vertrag[1].laufzeit,
+            "netzbetreiber_id": vertrag[1].netzbetreiber_id,
+            "spezielle_konditionen": vertrag[1].spezielle_konditionen,
+            "vorname": vertrag[2].vorname,
+            "nachname": vertrag[2].nachname,
+            "email": vertrag[2].email,
+        }
+
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")

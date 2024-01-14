@@ -17,7 +17,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import HouseIcon from '@mui/icons-material/House';
 import FilePresentIcon from '@mui/icons-material/FilePresent';
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
@@ -234,6 +234,13 @@ const Sidebar1 = () => {
               icon={<DataSaverOnIcon />}
               selected={selected}
               setSelected={setSelected}
+            />
+            <Item
+            title="Rechnungen"
+            to="/rechnungen"
+            icon={<AttachMoneyIcon/>}
+            selected={selected}
+            setSelected={setSelected}
             />
            
 

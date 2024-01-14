@@ -85,6 +85,10 @@ export interface SolarteurResponse {
 
 }
 
+export interface NetzbetreiberPVResponse extends SolarteurResponse{
+    
+}
+
 export interface EnergieausweisCreate {
     energieeffizienzklasse: string | "",
     verbrauchskennwerte: number | "",
@@ -101,4 +105,29 @@ export enum MassnahmeTyp {
     Isolierung = "Isolierung",
     Heizungssystem = "Heizungssystem",
     Fenstererneuerung = "Fenstererneuerung"
+}
+
+export interface NetzbetreiberDetailPV {
+    anlage_id: number | "";
+    haushalt_id: number | "";
+    solarteur_id: number | "";
+    modultyp: string | "";
+    kapazitaet: number | "";
+    installationsflaeche: number | "";
+    installationsdatum: Date | "";
+    modulanordnung: Orientierung | "";
+    kabelwegfuehrung: string | "";
+    montagesystem: Montagesystem | "";
+    schattenanalyse: boolean | "";
+    wechselrichterposition: string | "";
+    installationsplan: string | "";
+    prozess_status: ProzessStatus | "";
+    nvpruefung_status: string | "";
+    vorname: string | "";
+    nachname: string | "",
+    strasse: string | "",
+    hausnr: number | "",
+    plz: number | "",
+    stadt: string | ""
+
 }

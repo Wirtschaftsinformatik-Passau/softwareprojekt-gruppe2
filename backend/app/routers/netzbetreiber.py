@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import exc, update, text
-from app import models, schemas, database, oauth
+from app import models, schemas, database, oauth, hashing
 from collections import Counter
 from typing import Union, List
 from pydantic import ValidationError
@@ -16,6 +16,7 @@ from app import config
 import pandas as pd
 import io
 from datetime import datetime, timedelta, date
+import re
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -48,6 +49,7 @@ async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, meth
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber und Haushalte haben Zugriff auf diese Daten")
 
+
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
 
@@ -75,7 +77,13 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
             is_valid_schattenanalyse
         ])
     except TypeError as e:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                            detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
+
+
+def validate_email(email: str) -> bool:
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
 
 
 # Tarif erstellen
@@ -98,7 +106,9 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
@@ -150,7 +160,7 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    #TODO: nur tarife von netzbetreiber ausgeben
+    # TODO: nur tarife von netzbetreiber ausgeben
     await check_netzbetreiber_role(current_user, "GET", "/tarife")
     user_id = current_user.user_id
     result = await db.execute(select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id))
@@ -785,7 +795,7 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
     try:
         # Hier holen wir den aktiven Vertrag des Nutzers, um den Jahresabschlag zu erhalten.
         vertrag_query = select(models.Vertrag).where(
-            (models.Vertrag.user_id == rechnung.user_id) & 
+            (models.Vertrag.user_id == rechnung.user_id) &
             (models.Vertrag.vertragstatus == models.Vertragsstatus.Laufend)
         )
         vertrag_result = await db.execute(vertrag_query)
@@ -963,7 +973,8 @@ async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_asy
 
 
 @router.put("/kuendigungsanfragenbearbeitung/{anfrage_id}/{aktion}")
-async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: AsyncSession = Depends(database.get_db_async)):
+async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str,
+                                         db: AsyncSession = Depends(database.get_db_async)):
     try:
         # Abrufen der Kündigungsanfrage
         query = select(models.Kündigungsanfrage).where(models.Kündigungsanfrage.anfrage_id == anfrage_id)
@@ -977,7 +988,7 @@ async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: Async
             # Kündigung bestätigen und den Vertragstatus aktualisieren
             anfrage.bestätigt = True
             anfrage.vertrag.vertragstatus = models.Vertragsstatus.Gekuendigt
-         
+
             # Berechne den zeitanteiligen Jahresabschlag
             jahresanfang = date(date.today().year, 1, 1)
             tage_seit_jahresanfang = (date.today() - jahresanfang).days
@@ -1005,3 +1016,137 @@ async def kuendigungsanfragenbearbeitung(anfrage_id: int, aktion: str, db: Async
     except SQLAlchemyError as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail="Fehler bei der Verarbeitung der Kündigungsanfrage")
+
+
+@router.post("/create_employee", response_model=schemas.NutzerEmployeeResponse)
+async def create_employee(employee_data: schemas.NutzerCreate,
+                          db: AsyncSession = Depends(database.get_db_async),
+                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Erstellt einen neuen Mitarbeiter.
+
+    Args:
+        employee_data (schemas.NutzerCreate): Daten des neuen Mitarbeiters.
+        db (AsyncSession, optional): Datenbank-Session. Standardmäßig abhängig von get_db_async.
+        current_user (models.Nutzer, optional): Derzeit eingeloggter Nutzer. Standardmäßig abhängig von get_current_user.
+
+    Raises:
+        HTTPException: Wenn der aktuelle Nutzer nicht berechtigt ist, Mitarbeiter zu erstellen.
+
+    Returns:
+        schemas.NutzerEmployeeResponse: Daten des neu erstellten Mitarbeiters.
+    """
+    await check_netzbetreiber_role(current_user, "POST", "/create_employee")
+
+    employee_data.geburtsdatum = datetime.strptime(employee_data.geburtsdatum, "%Y-%m-%d").date()
+
+    employee_data.passwort = hashing.Hashing.hash_password(employee_data.passwort)
+
+    new_user = models.Nutzer(
+        vorname=employee_data.vorname,
+        nachname=employee_data.nachname,
+        email=employee_data.email,
+        passwort=employee_data.passwort,
+        rolle=employee_data.rolle,
+        adresse_id=employee_data.adresse_id,
+        geburtsdatum=employee_data.geburtsdatum,
+        telefonnummer=employee_data.telefonnummer,
+    )
+
+    db.add(new_user)
+    await db.flush()
+
+    new_employee = models.Employee(
+        nutzer_id=new_user.user_id,
+        netzbetreiber_id=current_user.user_id
+    )
+
+    db.add(new_employee)
+    await db.commit()
+    await db.refresh(new_user)
+
+    response = schemas.NutzerEmployeeResponse(
+        nutzer_id=new_employee.nutzer_id,
+        netzbetreiber_id=new_employee.netzbetreiber_id
+    )
+
+    return response
+
+
+@router.put("/edit-employee/{nutzer_id}", status_code=status.HTTP_200_OK, response_model=schemas.NutzerResponse)
+async def edit_employee(nutzer_id: int, updated_data: schemas.NutzerUpdate,
+                        db: AsyncSession = Depends(database.get_db_async),
+                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Bearbeitet die Daten eines Mitarbeiters.
+
+    Args:
+        nutzer_id (int): ID des zu bearbeitenden Nutzers.
+        updated_data (schemas.NutzerUpdate): Aktualisierte Daten des Nutzers.
+        db (AsyncSession, optional): Datenbank-Session. Standardmäßig abhängig von get_db_async.
+        current_user (models.Nutzer, optional): Derzeit eingeloggter Nutzer. Standardmäßig abhängig von get_current_user.
+
+    Raises:
+        HTTPException: Wenn der Nutzer nicht gefunden wird oder nicht berechtigt ist, den Mitarbeiter zu bearbeiten.
+
+    Returns:
+        schemas.NutzerResponse: Aktualisierte Daten des Nutzers.
+    """
+    await check_netzbetreiber_role(current_user, "PUT", f"/edit-employee/{nutzer_id}")
+
+    if not await is_employee(nutzer_id, db):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mitarbeiter nicht gefunden")
+
+    result = await db.execute(select(models.Nutzer).where(models.Nutzer.user_id == nutzer_id))
+    existing_user = result.scalar_one_or_none()
+
+    if not existing_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden")
+
+    for var_name, value in vars(updated_data).items():
+        setattr(existing_user, var_name, value) if value else None
+
+    await db.commit()
+    await db.refresh(existing_user)
+
+    return schemas.NutzerResponse(nutzer_id=existing_user.user_id)
+
+
+async def is_employee(nutzer_id: int, db: AsyncSession) -> bool:
+    employee_query = select(models.Employee).where(models.Employee.nutzer_id == nutzer_id)
+    result = await db.execute(employee_query)
+    return result.scalar_one_or_none() is not None
+
+
+@router.put("/deactivate-employee/{employee_id}", status_code=status.HTTP_200_OK)
+async def deactivate_employee(employee_id: int, db: AsyncSession = Depends(database.get_db_async),
+                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Deaktiviert einen Mitarbeiter.
+
+    Args:
+        employee_id (int): ID des Mitarbeiters, der deaktiviert werden soll.
+        db (AsyncSession, optional): Datenbank-Session. Standardmäßig abhängig von get_db_async.
+        current_user (models.Nutzer, optional): Derzeit eingeloggter Nutzer. Standardmäßig abhängig von get_current_user.
+
+    Raises:
+        HTTPException: Wenn der Mitarbeiter nicht gefunden wird oder der aktuelle Nutzer nicht berechtigt ist.
+
+    Returns:
+        EmployeeResponse: Bestätigung der Deaktivierung mit dem Status des Mitarbeiters.
+    """
+    await check_netzbetreiber_role(current_user, "PUT", f"/deactivate-employee/{employee_id}")
+
+    result = await db.execute(select(models.Employee).where(models.Employee.employee_id == employee_id))
+    existing_employee = result.scalar_one_or_none()
+
+    if not existing_employee:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mitarbeiter nicht gefunden")
+
+    existing_employee.is_active = False
+    await db.commit()
+
+    return schemas.EmployeeResponse(
+        nutzer_id=existing_employee.nutzer_id,
+        is_active=existing_employee.is_active
+    )

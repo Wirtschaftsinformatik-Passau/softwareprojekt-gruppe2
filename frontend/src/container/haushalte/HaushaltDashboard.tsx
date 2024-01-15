@@ -5,7 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import {Routes, Route, Navigate} from "react-router-dom";
 import { ColorModeContext, useMode } from "../../utils/theme";
-import Topbar from "../../components/admin/dashboards/Topbar";
+import Topbar from "../../components/all/Topbar"
 import HaushalteSidebar from "../../components/haushalte/dashboard/HaushalteSidebar";
 import HaushalteTarifTable from "../../components/haushalte/dashboard/HaushalteTarifTable";
 import HaushalteVertragCreate from "../../components/haushalte/dashboard/HaushalteVertragCreate";

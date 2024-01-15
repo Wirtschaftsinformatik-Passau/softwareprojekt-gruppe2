@@ -8,6 +8,7 @@ import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
 import { NoRowsOverlay } from "../../utility/NoRows";
+import {ProzessStatus} from "../../../entitities/pv";
 
 
 const EnergieberatendeAnfragenAbgeschlossen = () => {
@@ -18,12 +19,13 @@ const EnergieberatendeAnfragenAbgeschlossen = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=Genehmigt&prozess_status=Abgenommen&prozess_status=InstallationAbgeschlossen&prozess_status=AusweisErstellt",
+    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=Genehmigt&prozess_status=Abgenommen",    
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
-  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>; }; }) => {
-    navigate(`/solarteure/antragTable/${params.row.anlage_id}`);
+  const handleRowClick = (params: { row: { anlage_id: SetStateAction<number>,
+          prozess_status: SetStateAction<ProzessStatus> }; }) => {
+    navigate(`/energieberatende/antragTable/${params.row.anlage_id}?status=${params.row.prozess_status}`);
   }
 
 
@@ -113,7 +115,7 @@ return (
     gridAutoRows="140px"
     gap="0px">
         <Box gridColumn={"span 2"} m="20px">
-         <Header title="Antragübersicht" subtitle="Antrag auswählen zum bearbeiten"/>
+         <Header title="Abgeschlossene Anträge" subtitle="Antrag auswählen zum bearbeiten"/>
          </Box>
 
         
@@ -156,7 +158,7 @@ return (
     }}
   >
     <DataGrid checkboxSelection getRowId={(row) => row.anlage_id} rows={data} 
-      columns={columns} hideFooter={false} sx={{cursor: "pointer"}} 
+      columns={columns} hideFooter={false} sx={{cursor: "pointer"}}  onRowClick={handleRowClick}
       localeText={{
         noRowsOverlay: NoRowsOverlay("Keine Anträge vorhanden")
       

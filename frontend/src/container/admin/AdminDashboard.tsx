@@ -6,7 +6,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import {Routes, Route, Navigate} from "react-router-dom";
 import { ColorModeContext, useMode } from "../../utils/theme";
 
-import Topbar from "../../components/admin/dashboards/Topbar";
+import Topbar from "../../components/all/Topbar"
 import Sidebar from "../../components/admin/dashboards/AdminSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import UserCreation from "../../components/admin/dashboards/AdminCreateUser";
@@ -40,7 +40,7 @@ const  AdminDashboard = () => {
         <div className="flex h-100" style={{marginTop: "64px"}}>
                 <Sidebar/>
                 <div className="flex-1 overflow-y-auto">
-                <Topbar fixed={true}/>
+                <Topbar fixed={true} nutzerrolle={"Admin"}/>
                 <Routes>
                 <Route path="/" element={<AdminHomeDashboard/>}/>
                 <Route path="/faq" element={<FAQ items={faqItems}/>}/>

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { CssBaseline } from "@material-ui/core";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/utility/Header";
-import Topbar from "../../components/admin/dashboards/Topbar";
+import Topbar from "../../components/all/Topbar"
 import { useTheme } from "@mui/material/styles";
 import { tokens } from "../../utils/theme";
 import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../entitities/user"

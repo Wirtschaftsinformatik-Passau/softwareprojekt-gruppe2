@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from datetime import date, timedelta
 from sqlalchemy.exc import SQLAlchemyError
-from typing import List
+from typing import List, Union
 from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
@@ -37,10 +37,9 @@ async def get_anfragen(
         db: AsyncSession = Depends(database.get_db_async)
 ):
     await check_energieberatende_role(current_user, "GET", "/angebote")
-    print(prozess_status)
     try:
         if prozess_status[0] == types.ProzessStatus.AusweisAngefordert and (len(prozess_status) == 1):
-            query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse, None)
                      .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
                      .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
                      .where(models.PVAnlage.prozess_status == models.ProzessStatus.AusweisAngefordert))
@@ -73,7 +72,7 @@ async def get_anfragen(
             "hausnummer": adresse.hausnummer,
             "plz": adresse.plz,
             "stadt": adresse.stadt
-        } for angebot, nutzer, adresse in anfragen]
+        } for angebot, nutzer, adresse, ausweis in anfragen]
 
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
@@ -88,7 +87,9 @@ async def get_anfragen(
                             detail=f"Fehler beim Abrufen der Angebote: {e}")
 
 
-@router.get("/anfragen/{anlage_id}", response_model=schemas.EnergieberatendeAnfrageResponse)
+@router.get("/anfragen/{anlage_id}",
+            #response_model=schemas.EnergieberatendeAnfrageResponseFinal,
+            )
 async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                       db: AsyncSession = Depends(database.get_db_async)):
     await check_energieberatende_role(current_user, "GET", f"/angebote/{anlage_id}")
@@ -114,6 +115,34 @@ async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oaut
             )
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Anfrage {anlage_id} nicht gefunden")
+
+        if angebot[0].prozess_status == models.ProzessStatus.Genehmigt:
+            response = {
+                "anlage_id": angebot[0].anlage_id,
+                "haushalt_id": angebot[0].haushalt_id,
+                "solarteur_id": angebot[0].solarteur_id,
+                "modultyp": angebot[0].modultyp,
+                "kapazitaet": angebot[0].kapazitaet,
+                "installationsflaeche": angebot[0].installationsflaeche,
+                "installationsdatum": str(angebot[0].installationsdatum),
+                "nvpruefung_status": angebot[0].nvpruefung_status,
+                "modulanordnung": angebot[0].modulanordnung,
+                "kabelwegfuehrung": angebot[0].kabelwegfuehrung,
+                "montagesystem": angebot[0].montagesystem,
+                "schattenanalyse": angebot[0].schattenanalyse,
+                "wechselrichterposition": angebot[0].wechselrichterposition,
+                "prozess_status": angebot[0].prozess_status,
+                "vorname": angebot[1].vorname,
+                "nachname": angebot[1].nachname,
+                "email": angebot[1].email,
+                "strasse": angebot[2].strasse,
+                "hausnummer": angebot[2].hausnummer,
+                "plz": angebot[2].plz,
+                "stadt": angebot[2].stadt,
+                "energieausweis_id": angebot[3].energieausweis_id,
+            }
+
+            return response
 
         return {
             "anlage_id": angebot[0].anlage_id,
@@ -584,7 +613,7 @@ async def abnahmebestaetigung_fuer_pvanlagen(anlage_id: int,
             success=False
         )
         logger.error(logging_obj.dict())
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
                             detail=f"Nicht alle erforderlichen Attribute der PV-Anlage sind ausgefüllt: {empty_fields}")
 
     try:

@@ -11,7 +11,7 @@ import { Nutzerrolle, IUser, User } from "../../entitities/user";
 import {CircularProgress} from "@mui/material";
 import axios from "axios";
 import { Iadresse, Adresse } from "../../entitities/adress";
-import Topbar from "../../components/admin/dashboards/Topbar";
+import Topbar from "../../components/all/Topbar"
 import { addSuffixToBackendURL } from "../../utils/networking_utils";
 
 

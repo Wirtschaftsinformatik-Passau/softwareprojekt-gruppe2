@@ -358,6 +358,30 @@ class EnergieberatendeAnfrageResponse(PVSolarteuerResponse):
     energieausweis_id: int
 
 
+class EnergieberatendeAnfrageResponseFinal(BaseModel):
+    anlage_id: int
+    haushalt_id: int
+    solarteur_id: int
+    modultyp: str
+    kapazitaet: float
+    installationsflaeche: float
+    installationsdatum: str
+    modulanordnung: str
+    kabelwegfuehrung: str
+    montagesystem: str
+    schattenanalyse: str
+    wechselrichterposition: str
+    prozess_status: ProzessStatus
+    nvpruefung_status: bool
+    vorname: str
+    nachname: str
+    email: str
+    strasse: str
+    hausnummer: int
+    plz: int
+    stadt: str
+    energieausweis_id: int
+
 
 class TarifLaufzeitResponse(BaseModel):
     laufzeit: int
@@ -620,6 +644,9 @@ class DatenanfrageResponse(BaseModel):
     haushalt_id: int
     anfragestatus: bool
 
+
+class EnergieBeraterAbnahmeResponse(NetzbetreiberEinspeisungDetail):
+    pass
 
 class HaushaltsDatenFreigabe(BaseModel):
     anzahl_bewohner: int

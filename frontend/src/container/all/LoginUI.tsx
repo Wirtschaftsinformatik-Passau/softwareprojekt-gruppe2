@@ -9,7 +9,7 @@ import { alpha } from "@material-ui/core/styles";
 import {makeStyles} from "@material-ui/core/styles";
 import axios from "axios";
 import Header from "../../components/utility/Header";
-import Topbar from "../../components/admin/dashboards/Topbar";
+import Topbar from "../../components/all/Topbar"
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { Paper } from '@mui/material';
 import panelImg from "../../assets/solar_login2.jpg";

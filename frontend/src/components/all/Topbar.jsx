@@ -1,7 +1,10 @@
-import { Box, IconButton, useTheme, Typography } from "@mui/material";
+import { Box, IconButton, useTheme, Typography, TextField} from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+import {makeStyles} from "@material-ui/core/styles";
 import { useContext, useState } from "react";
-import { ColorModeContext, tokens } from "../../utils/theme";
-import {ThemeProvider, CssBaseline } from "@mui/material";
+import {ColorModeContext, tokens} from "../../utils/theme.js";
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useNavigate } from "react-router-dom";
 import InputBase from "@mui/material/InputBase";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
@@ -9,72 +12,132 @@ import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
-import HelpModal from "../utility/HelpModal";
 import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
+import {searchBarItems} from "../../entitities/utils";
+import {Nutzerrolle} from "../../entitities/user";
 
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        border: '1px solid #ddd',
+        backgroundColor: theme.palette.background.default,
+        color: "#386641",
+        borderRadius: 4,
+        boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2)',
+        // Add other styling as needed
+    },
+    option: {
+        '&:hover': {
+            backgroundColor: "#707274", // Styling for hover stater state
+        },
 
-const Topbar = ({fixed}) => {
+    }
+}));
+
+const Topbar = ({fixed, nutzerrolle, search=true}) => {
+    const navigate = useNavigate();
     const isNonMobile = useMediaQuery("(min-width:700px)")
     const [helpModal, setHelpModal] = useState(false);
+    const [inputValue, setInputValue] = useState("");
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+    const classes = useStyles(theme);
     const colorMode = useContext(ColorModeContext);
-  
+
+
+
+    const handleSearchItemSelected = (event, item) => {
+        if (item) navigate(item.link);
+    };
+
+    const handleInputChange = (event, newInputValue) => {
+        setInputValue(newInputValue);
+    };
+
     return (
-      <Box display="flex" justifyContent="space-between" p={2} borderBottom={`2px solid ${colors.color1[200]}`}
-        sx = {fixed ? {
-          position: 'fixed',
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          zIndex: 1100, 
-          backgroundColor: colors.color1[400],        
-        } :  {backgroundColor: colors.color1[400]}}
-      >
-        <Box display="flex" alignItems="center" gap={isNonMobile? "10%" : "2%"}>
-        <Box>
-          <Typography variant="h3" 
-          sx={{
-            color: colors.color1[200],
-            fontWeight: "bold",
-          }}>
-            GreenEcoHub
-          </Typography>
-        </Box>
-        <Box
-          display="flex"
-          backgroundColor={colors.color1[200]}
-          borderRadius="3px"
+        <Box display="flex" justifyContent="space-between" p={2}
+             sx = {fixed ? {
+                 position: 'fixed',
+                 top: 0,
+                 left: 0,
+                 right: 0,
+                 zIndex: 1100,
+                 backgroundColor: colors.color1[400],
+             } :  {backgroundColor: colors.color1[400]}}
         >
-          <InputBase sx={{ ml: 2, flex: 1 }} placeholder="Search" />
-          <IconButton type="button" sx={{ p: 1 }}>
-            <SearchIcon />
-          </IconButton>
+            <Box display="flex" alignItems="center" gap={isNonMobile? "10%" : "2%"}>
+                <Box>
+                    <Typography variant="h3"
+                                sx={{
+                                    color: theme.palette.neutral.background,
+                                    fontWeight: "bold",
+                                }}>
+                        GreenEcoHub
+                    </Typography>
+                </Box>
+                <Box
+                    display="flex"
+                    backgroundColor={theme.palette.background.default}
+
+                    borderRadius="3px"
+                    sx={{
+                        '& .MuiInputBase-input': {
+                            color: `${colors.color1[500]} !important`,
+                        },
+
+                        "& .MuiInputLabel-root": {
+                            color: `${colors.color1[500]} !important`,
+                        },
+
+                        }
+                    }
+
+                >
+                    {search && (
+                        <Autocomplete
+                            freeSolo
+                            onChange={handleSearchItemSelected}
+                            inputValue={inputValue}
+                            onInputChange={handleInputChange}
+                            options={searchBarItems[nutzerrolle]}
+                            classes={{
+                                paper: classes.paper, // Apply your custom styles to the dropdown
+                                option: classes.option, // Apply custom styles to each option
+                            }}
+                            getOptionLabel={(option) => option.label}
+                            renderInput={(params) => <TextField {...params} label={<SearchIcon />} />}
+                            sx={{ width: 200 }}
+                        />
+
+                        )}
+
+                </Box>
+            </Box>
+
+
+            <Box display="flex">
+                <IconButton onClick={colorMode.toggleColorMode}>
+                    {theme.palette.mode === "dark" ? (
+                        <DarkModeOutlinedIcon />
+                    ) : (
+                        <LightModeOutlinedIcon />
+                    )}
+                </IconButton>
+                <IconButton onClick={() => setHelpModal(true)}>
+                    <QuestionMarkIcon />
+                </IconButton>
+                <IconButton>
+                    <PersonOutlinedIcon onClick={() => navigate("/profile")}/>
+                </IconButton>
+                <IconButton>
+                    <LogoutIcon onClick={() => {
+                        navigate("/login")
+
+                    }}/>
+                </IconButton>
+            </Box>
+
         </Box>
-        </Box>
-  
-        
-        <Box display="flex">
-          <IconButton onClick={colorMode.toggleColorMode}>
-            {theme.palette.mode === "dark" ? (
-              <DarkModeOutlinedIcon />
-            ) : (
-              <LightModeOutlinedIcon />
-            )}
-          </IconButton>
-          <IconButton onClick={() => setHelpModal(true)}>
-            <QuestionMarkIcon />
-          </IconButton>
-          <IconButton>
-            <SettingsOutlinedIcon />
-          </IconButton>
-          <IconButton>
-            <PersonOutlinedIcon />
-          </IconButton>
-        </Box>
-        {helpModal && (<HelpModal modalCloserState={setHelpModal}/>)}
-      </Box>
     );
-  };
-  
-  export default Topbar;
+};
+
+export default Topbar;

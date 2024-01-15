@@ -39,7 +39,7 @@ const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) =
          payload, {headers: {Authorization: `Bearer ${token}`}})
         .then((response) => {
             props.sucessModalSetter(true);
-            props.navigateFN("/solarteure/antragTable");
+            props.navigateFN("/energieberatende/antragTable");
         })
         .catch((error) => {
             if (error.response.status === 403 || error.response.status === 401) {

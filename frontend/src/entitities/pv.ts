@@ -85,6 +85,23 @@ export interface SolarteurResponse {
 
 }
 
+
+export interface EnergieberaterResponseFinal extends SolarteurResponse{
+    solarteur_id: Number,
+    modultyp: String,
+    kapazitaet: Number, 
+    installationsflaeche: Number,
+    installationsdatum: Date,
+    installationsstatus: String,
+    modulanordnung: String,
+    kabelwegfuehrung: String,
+    montagesystem: String
+    schattenanalyse: String,
+    wechselrichterposition: String,
+    installationsplan: String,
+    energieausweis_id: Number
+}
+
 export interface NetzbetreiberPVResponse extends SolarteurResponse{
     
 }

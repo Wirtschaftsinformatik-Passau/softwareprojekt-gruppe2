@@ -17,7 +17,7 @@ const EnergieberatendeAnfragenBearbeitet = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=AngebotGemacht&prozess_status=DatenAngefordert&prozess_status=DatenFreigegeben&prozess_status=AngebotAngenommen&prozess_status=AusweisErstellt",
+    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=AusweisErstellt",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 
@@ -111,8 +111,8 @@ return (
     gridTemplateColumns="repeat(2, 1fr)"
     gridAutoRows="140px"
     gap="0px">
-        <Box gridColumn={"span 2"} m="20px">
-         <Header title="Antragübersicht" subtitle="Antrag auswählen zum bearbeiten"/>
+         <Box gridColumn={"span 2"} m="20px">
+         <Header title="Bearbeitete Anträge" subtitle="Antrag auswählen zum bearbeiten"/>
          </Box>
 
         

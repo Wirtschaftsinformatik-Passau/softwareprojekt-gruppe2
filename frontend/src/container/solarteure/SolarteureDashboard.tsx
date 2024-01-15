@@ -5,7 +5,7 @@ import { Box, Typography } from "@mui/material";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import {Routes, Route, Navigate} from "react-router-dom";
 import { ColorModeContext, useMode } from "../../utils/theme";
-import Topbar from "../../components/admin/dashboards/Topbar";
+import Topbar from "../../components/all/Topbar"
 import Sidebar from "../../components/solarteure/dashboard/SolarteureSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import SolarteureAnfragen from "../../components/solarteure/dashboard/SolarteureAnfragen";

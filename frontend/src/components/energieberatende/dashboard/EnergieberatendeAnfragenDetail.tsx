@@ -1,21 +1,22 @@
 import React, { useEffect } from "react";
 import { Box, Button, TextField, Typography, useTheme, LinearProgress } from "@mui/material";
-import { Formik } from "formik";
-import * as yup from "yup";
 import { tokens } from "../../../utils/theme";
 import { useNavigate , useParams, useSearchParams} from "react-router-dom";
 import SuccessModal from "../../utility/SuccessModal";
 import axios from "axios";
-import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import CircularProgress from '@mui/material/CircularProgress';
-import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { IHaushaltData } from "../../../entitities/haushalt";
-import { Angebot, PVAngebotCreate, ProzessStatus } from "../../../entitities/pv";
+import { ProzessStatus } from "../../../entitities/pv";
 import Header from "../../utility/Header";
-import { EnergieausweisCreate, SolarteurResponse, EnergieeffizienzmassnahmenCreate, MassnahmeTyp, } from "../../../entitities/pv";
+import { EnergieausweisCreate,
+    SolarteurResponse,
+    EnergieeffizienzmassnahmenCreate,
+    MassnahmeTyp,
+    EnergieberaterResponseFinal
+} from "../../../entitities/pv";
 import EnergieberatendeAusweisErstellen from "./EnergieberatendeAusweisErstellen";
+import EnergieberaterAbnahme from "./EnergieberaterAbnahme";
 
 export interface EnergieberatendeResponseExtended extends SolarteurResponse {
     haushalt_id: number
@@ -32,12 +33,15 @@ const EnergieberatendeAnfragenDetail = ({}) => {
     const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
     const [datenfreigabe, setDatenfreigabe] = React.useState<boolean>(false);
     const [aufFreigabeWarten, setAufFreigabeWarten] = React.useState<boolean>(false);
-    const [initialFailModelIsOpen, setInitialFailModalIsOpen] = React.useState<boolean>(false);
+    const [genehmigungsModalIsOpen, setGenehmigungsModalIsOpen] = React.useState<boolean>(false);
+    const [genehmigungsFailModalIsOpen, setGenehmigungsFailModalIsOpen] = React.useState<boolean>(false);
     const [planSuccessModalIsOpen, setPlanSuccessModalIsOpen] = React.useState<boolean>(false);
     const [planFailModalIsOpen, setPlanFailModalIsOpen] = React.useState<boolean>(false);
+    const [initialFailModalIsOpen, setInitialFailModalIsOpen] = React.useState<boolean>(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const status = searchParams.get("status");
-    const ausweisErstellen = status === ProzessStatus.AusweisAngefordert.valueOf() ? true : false;
+    const ausweisErstellen = status === ProzessStatus.AusweisAngefordert.valueOf();
+    const genehmigt = status === ProzessStatus.Genehmigt.valueOf();
 
     const {anlageID} = useParams();
     const navigate = useNavigate();
@@ -105,7 +109,7 @@ const EnergieberatendeAnfragenDetail = ({}) => {
         stadt: "Stadt",
     }
 
-
+    console.log(status)
 
     // fetch anfrage and haushalt data and render the text fiedlds
     useEffect(() => {  
@@ -188,6 +192,11 @@ const EnergieberatendeAnfragenDetail = ({}) => {
                 <LinearProgress sx={{ bgcolor: colors.color1[400] }}/>
                 </Box>
             </Box> 
+            : genehmigt ?
+                        <EnergieberaterAbnahme anlageID={Number(anlageID)}
+                                               sucessModalSetter={setGenehmigungsModalIsOpen}
+                                               navigateFN={navigate}
+                                               failModalSetter={setGenehmigungsFailModalIsOpen}/>
             :
             
     <Box mt="30px" display={"grid"} columnGap={"5%"} gridTemplateColumns={"repeat(4, minmax(0, 1fr))"}>
@@ -278,8 +287,13 @@ const EnergieberatendeAnfragenDetail = ({}) => {
    sucessModalSetter={setSuccessModalIsOpen} failModalSetter={setFailModalIsOpen} energieausweisID={antrag.energieausweis_id}/>
    :
    <>
-    nope
-      </>
+       <Box gridColumn={"span 4"} mt={"4%"}>
+    <Header title={"Auf Aktionen der Beteiligten warten"} variant={"h3"}/>
+           </Box>
+       <Box gridColumn={"span 4"}>
+           <LinearProgress sx={{ bgcolor: colors.color1[400] }}/>
+       </Box>
+    </>
         }
 
    </Box>
@@ -293,6 +307,12 @@ const EnergieberatendeAnfragenDetail = ({}) => {
     text="Energieffizienzmaßnahmen konnten nicht eingetragen werden"/>
     <SuccessModal open={planSuccessModalIsOpen} handleClose={() => setPlanSuccessModalIsOpen(false)}
     text="Energieffizienzmaßnahmen wurden eingetragen"/>
+    <SuccessModal open={genehmigungsModalIsOpen} handleClose={() => setGenehmigungsModalIsOpen(false)}
+                  text="Abnahme erfolgreich durchgeführt!"/>
+    <SuccessModal open={genehmigungsFailModalIsOpen} handleClose={() => setGenehmigungsFailModalIsOpen(false)}
+                  text="Abnahme fehlgeschlagen!"/>
+    <SuccessModal open={initialFailModalIsOpen} handleClose={() => setInitialFailModalIsOpen(false)}
+                  text="Fehler bei der Datenabfrage!"/>
     
 
         </Box>

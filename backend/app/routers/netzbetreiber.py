@@ -1153,3 +1153,4 @@ async def get_vertrag(vertrag_id: int,
         return response
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
+

@@ -272,17 +272,17 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
 
         changes = {}
-        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle",
-                      "passwort"]:
-            new_value = getattr(updated_user, field)
-            old_value = getattr(db_user, field)
-            if new_value != old_value:
-                if field == "passwort":
-                    new_value = hashing.Hashing.hash_password(new_value)
-                if field == "geburtsdatum":
-                    new_value = datetime.strptime(updated_user.geburtsdatum, "%Y-%m-%d").date()
-                changes[field] = {"old": old_value, "new": new_value}
-                setattr(db_user, field, new_value)
+        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle", "passwort"]:
+            if hasattr(updated_user, field) and getattr(updated_user, field) is not None:
+                new_value = getattr(updated_user, field)
+                old_value = getattr(db_user, field)
+                if new_value != old_value:
+                    if field == "passwort":
+                        new_value = hashing.Hashing.hash_password(new_value)
+                    if field == "geburtsdatum":
+                        new_value = datetime.datetime.strptime(new_value, "%Y-%m-%d").date()
+                    changes[field] = {"old": old_value, "new": new_value}
+                    setattr(db_user, field, new_value)
 
 
         try:

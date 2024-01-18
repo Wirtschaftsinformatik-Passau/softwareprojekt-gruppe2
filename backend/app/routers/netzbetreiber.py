@@ -1158,17 +1158,29 @@ async def get_vertrag(vertrag_id: int,
 
 @router.post("/mitarbeiter", status_code=status.HTTP_201_CREATED)
 async def create_mitarbeiter(nutzer: schemas.NutzerCreate,
-                       db: AsyncSession = Depends(database.get_db_async),
-                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                             db: AsyncSession = Depends(database.get_db_async),
+                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
 
     await check_netzbetreiber_role(current_user, "POST", "/mitarbeiter")
-    if nutzer.rolle != models.Rolle.Netzbetreiber:
-        raise HTTPException(status_code=403, detail="Netzbetreiber kann nur Netzbeitreiber erstellen")
+    if nutzer.rolle != models.Rolle.Netzbetreiber.value:
+        raise HTTPException(status_code=403, detail="Netzbetreiber kann nur Netzbetreiber erstellen")
+
+    netzbetreiber = await db.get(models.Netzbetreiber, current_user.user_id)
+    if not netzbetreiber.arbeitgeber:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/mitarbeiter",
+            method="POST",
+            message=f"Netzbetreiber {netzbetreiber.user_id} ist kein Arbeitgeber",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=403, detail=f"Netzbetreiber {netzbetreiber.user_id} ist kein Arbeitgeber")
 
     user_id = await register_user(nutzer, db)
 
     try:
-        mitarbeiter = models.Arbeitsverhältnis(arbeitgeber_id=current_user.user_id, mitarbeiter_id=user_id)
+        mitarbeiter = models.Arbeitsverhältnis(arbeitgeber_id=current_user.user_id, arbeitnehmer_id=user_id)
         db.add(mitarbeiter)
         await db.commit()
         await db.refresh(mitarbeiter)
@@ -1214,7 +1226,7 @@ async def get_mitarbeiter(db: AsyncSession = Depends(database.get_db_async),
             "vorname": user.vorname,
             "rolle": user.rolle if user.rolle is not None else "unknown",
             "adresse_id": user.adresse_id,
-            "geburtsdatum": user.geburtsdatum,
+            "geburtsdatum": str(user.geburtsdatum),
             "telefonnummer": user.telefonnummer,
             "strasse": adresse.strasse,
             "stadt": adresse.stadt,
@@ -1234,3 +1246,25 @@ async def get_mitarbeiter(db: AsyncSession = Depends(database.get_db_async),
                                             message=logging_msg, success=False)
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+
+
+@router.get("/check-arbeitgeber", status_code=status.HTTP_200_OK)
+async def check_arbeitgeber(db: AsyncSession = Depends(database.get_db_async),
+                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    try:
+        netzbetreiber = await db.get(models.Netzbetreiber, current_user.user_id)
+        if not netzbetreiber.arbeitgeber:
+            return {"is_arbeitgeber": False}
+
+        return {"is_arbeitgeber": True}
+
+    except Exception as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/check-arbeitgeber",
+            method="GET",
+            message=f"Fehler beim Überprüfen des Arbeitgebers {e}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"Fehler beim Überprüfen des Arbeitgebers {e}")

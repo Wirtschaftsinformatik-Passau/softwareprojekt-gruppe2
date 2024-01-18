@@ -3,7 +3,7 @@ import random
 import uuid
 
 # The endpoint URL
-url = 'http://132.231.36.102:8000/users/registration'
+url = 'http://localhost:8000/users/registration'
 
 # List of possible roles
 roles = ['Solarteure', 'Energieberatende', 'Haushalte', 'Netzbetreiber']

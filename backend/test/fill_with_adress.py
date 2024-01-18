@@ -60,7 +60,7 @@ adresses = [{
     }
 ]
 
-url = 'http://132.231.36.102:8000/users/adresse'
+url = 'http://localhost:8000/users/adresse'
 def send_post_request(request_number):
 
 

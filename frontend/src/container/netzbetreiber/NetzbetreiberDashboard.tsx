@@ -26,7 +26,8 @@ import NetzbetreiberLaufendeVertraege from "../../components/netzbetreiber/dashb
 import NetzbetreiberKuendigungsAnfragen from "../../components/netzbetreiber/dashboard/NetzbetreiberKuendigungsAnfragen"
 import NetzbetreiberVertragDetail from"../../components/netzbetreiber/dashboard/NetzbetreiberVertragDetail"
 import NetzbertreiberEinspeisungenDetail from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenDetail";
-
+import NetzbetreiberMitarbeiterTable from "../../components/netzbetreiber/dashboard/NetzbetreiberMitarbeiterTable";
+import NetzbetreiberMitarbeiterCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberMitarbeiterCreate";
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -68,6 +69,8 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="/vertraege" element={<NetzbetreiberLaufendeVertraege/>}/>
                 <Route path="/vertraegeKuendigung" element={<NetzbetreiberKuendigungsAnfragen/>}/>
                 <Route path="vertraege/:vertragID" element={<NetzbetreiberVertragDetail/>}/>
+                <Route path="/mitarbeiterTable" element={<NetzbetreiberMitarbeiterTable/>}/>
+                <Route path="/mitarbeiterCreate" element={<NetzbetreiberMitarbeiterCreate/>}/>
                 </Routes>
                 </div>
                 

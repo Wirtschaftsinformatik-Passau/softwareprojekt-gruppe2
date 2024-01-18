@@ -90,6 +90,15 @@ async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
+
+        user_id = db_user.user_id
+
+        if nutzer.rolle == models.Rolle.Netzbetreiber:
+            rollen_table = models.Netzbetreiber(user_id=user_id)
+            db.add(rollen_table)
+            await db.commit()
+            await db.refresh(rollen_table)
+
         logging_msg = schemas.RegistrationLogging(user_id=db_user.user_id, role=db_user.rolle.value,
                                                   msg="User registriert")
         logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/users/registration", method="POST",
@@ -118,7 +127,7 @@ async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
 async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
     user_id: int = await register_user(nutzer, db)
 
-    return {"user_id": user_id}
+    return {"nutzer_id": user_id}
 
 @router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):

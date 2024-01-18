@@ -414,7 +414,6 @@ class InstallationsplanCreate(BaseModel):
     installationsdatum: date
 
 
-
 class InstallationsplanResponse(BaseModel):
     installationsplan: str
 
@@ -603,6 +602,7 @@ class AngebotAnnahmeResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AgebotVorschlagResponseHaushalt(BaseModel):
     anlage_id: int
     haushalt_id: int
@@ -612,6 +612,7 @@ class AgebotVorschlagResponseHaushalt(BaseModel):
     installationsflaeche: float
     modulanordnung: Orientierung
     kosten: float
+
 
 class AngebotVorschlag(BaseModel):
     anlage_id: int = None
@@ -685,7 +686,6 @@ class PVAnlageHaushaltResponse(BaseModel):
     nvpruefung_status: Optional[bool] | str = "Noch nicht geprüft"
 
 
-
 class EnergieeffizienzmassnahmenCreate(BaseModel):
     massnahmetyp: MassnahmeTyp
     einsparpotenzial: float
@@ -708,13 +708,34 @@ class PVAnlageAbnahmeResponse(BaseModel):
     anlage_id: int
     prozess_status: str
 
+
 class KündigungsanfrageCreate(BaseModel):
     vertrag_id: int
+
 
 class KündigungsanfrageResponse(BaseModel):
     anfrage_id: int
     vertrag_id: int
     bestätigt: bool
 
+
 class VertragUpdateStatus(BaseModel):
     vertragstatus: Vertragsstatus
+
+
+class NutzerEmployeeResponse(BaseModel):
+    nutzer_id: int
+    netzbetreiber_id: int
+
+
+class NutzerUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    vorname: Optional[str] = None
+    nachname: Optional[str] = None
+    passwort: Optional[str] = None
+    telefonnummer: Optional[str] = None
+
+
+class EmployeeResponse(BaseModel):
+    nutzer_id: int
+    is_active: bool

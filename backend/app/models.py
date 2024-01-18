@@ -184,14 +184,14 @@ class Haushalte(Base):
 class Rechnungen(Base):
     __tablename__ = 'rechnungen' if settings.OS == 'Linux' else 'Rechnungen'
     rechnung_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    empfaenger_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     rechnungsbetrag = Column(Float)
     rechnungsdatum = Column(Date)
     faelligkeitsdatum = Column(Date)
     rechnungsart = Column(Enum(Rechnungsart), ENUM(*[r.value for r in Rechnungsart],
                                                    name='rechnungsart' if settings.OS == 'Linux' else "Rechnungsart",
                                                    create_type=False))
-    zeitraum = Column(Date)
+    steller_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
 
 
 class Vertrag(Base):
@@ -210,9 +210,6 @@ class Vertrag(Base):
         UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc'),
     )
 
-    # Beziehung zu Kündigungsanfrage, falls verwendet
-    kündigungsanfrage = relationship("Kündigungsanfrage", uselist=False, back_populates="vertrag")
-
 
 class Energieeffizienzmassnahmen(Base):
     __tablename__ = 'energieeffizienzmassnahmen' if settings.OS == 'Linux' else "Energieeffizienzmassnahmen"
@@ -224,6 +221,8 @@ class Energieeffizienzmassnahmen(Base):
                                                    create_type=False))
     einsparpotenzial = Column(Float)
     kosten = Column(Float)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
 
 
 class Kündigungsanfrage(Base):
@@ -231,8 +230,6 @@ class Kündigungsanfrage(Base):
     anfrage_id = Column(Integer, primary_key=True)
     vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id'))
     bestätigt = Column(Boolean, default=False)
-
-    vertrag = relationship("Vertrag", back_populates="kündigungsanfrage")
 
 
 class Arbeitsverhältnis(Base):

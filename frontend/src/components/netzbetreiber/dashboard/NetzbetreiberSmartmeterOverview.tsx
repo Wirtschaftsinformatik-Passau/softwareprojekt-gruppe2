@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTheme } from "@material-ui/core";
 import {CircularProgress} from "@mui/material";
 import { DateRangePicker, DateRange } from "mui-daterange-picker";
-import React, { Dispatch } from "react";
+import React, {Dispatch, useEffect} from "react";
 import {Grow} from "@mui/material";
 import axios from "axios";
 
@@ -13,7 +13,8 @@ import Header from "../../utility/Header";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { tokens } from "../../../utils/theme";
 import SuccessModal from "../../utility/SuccessModal";
-import { convertToDateOnly, convertToTimeOnly, formatDate } from "../../../utils/dateUtils";
+import {convertToDateOnly, convertToTimeOnly, dateFormater, formatDate} from "../../../utils/dateUtils";
+import {DataGrid} from "@mui/x-data-grid";
 
 
 interface SmartmeterData {
@@ -84,6 +85,7 @@ const NetzbetreiberSmartmeterOverview = () => {
     const [pvData, setPvData] = React.useState<ExtractedFieldData[]>([])
     const [socData, setSocData] = React.useState<ExtractedFieldData[]>([])
     const [batterieData, setBatterieData] = React.useState<ExtractedFieldData[]>([])
+    const [smartMeterData, setSmartMeterData] = React.useState<SmartmeterData[]>([])
     const [lastData, setLastData] = React.useState<ExtractedFieldData[]>([])
     const [pvPeriod, setPvPeriod] = React.useState<string>("DAY")
     const [loading, setLoading] = React.useState<boolean>(false)
@@ -117,6 +119,67 @@ const NetzbetreiberSmartmeterOverview = () => {
         "MINUTE": convertToTimeOnly  
     }
 
+    const columns = [
+        {
+            field: "datum",
+            headerName: "Datum",
+            flex: 1,
+            align: "left",
+            headerAlign: "left",
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                dateFormater(params.value, true)
+            ),
+        },
+        {
+            field: "gesamt_pv_erzeugung",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt PV Erzeugung Watt",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+            ),
+        },
+
+        {
+            field: "gesamt_soc",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt SOC % ",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+            ),
+
+        },
+        {
+            field: "gesamt_batterie_leistung",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt Batterieleistung Watt",
+            type: "number",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+            ),
+        },
+        {
+            field: "gesamt_last",
+            headerAlign: "left",
+            align: "left",
+            headerName: "Gesamt Last Watt",
+            flex: 1,
+            cellClassName: "name-column--cell",
+            renderCell: (params: any) => (
+                Math.round(params.value * 100) / 100
+            ),
+
+        },
+    ];
     
     const handlePeriodChange = (event) => {
         setPvPeriod(enumPeriodMapping[event.target.value]); // Assuming you want to set pvPeriod here
@@ -157,13 +220,18 @@ const NetzbetreiberSmartmeterOverview = () => {
 
     }
 
-   
+    useEffect(() => {
+        const token = localStorage.getItem("accessToken");
+        setStateOtherwiseRedirect(setSmartMeterData, `netzbetreiber/dashboard/${haushaltID}?field=all&period=${pvPeriod}&start=${formatDate(dateRange.startDate)}&end=${formatDate(dateRange.endDate)}`,
+            navigate, {Authorization: `Bearer ${token}`})
+    }, [pvData, dateRange])
 
     const handleEditButton = () => {
         getDashboardData("pv", setPvData, setLoading)
         getDashboardData("soc", setSocData, setLoading1)
         getDashboardData("batterie", setBatterieData, setLoading2)
         getDashboardData("last", setLastData, setLoading3)
+
     }
 
     return (
@@ -326,9 +394,34 @@ const NetzbetreiberSmartmeterOverview = () => {
                 tickInterval={intervalMapping[pvPeriod]} enablePoints={false} marginRight={10} legendOffset={-60} ylabel="Watt Gesamtlast"/>
                  </Box>
         </Grow>
-        
+
             
                 </Box>)}
+
+            <Box
+                m="20px 0 0 0"
+                gridColumn={"span-4"}
+                sx={{
+                    "& .MuiDataGrid-cell": {
+                        color: colors.grey[400],
+                        borderBottom: "none",
+                    },
+                    "& .name-column--cell": {
+                        color: colors.grey[400]
+                    },
+                    "& .MuiDataGrid-columnHeaders": {
+                        backgroundColor: "",
+                        color: colors.grey[400],
+                        borderBottom: "none",
+                    }
+                }}
+
+            >
+                {console.log(smartMeterData)}
+                <DataGrid  getRowId={(row) => row.datum} rows={smartMeterData}
+                           columns={columns} hideFooter={false}/>
+            </Box>
+
 
             <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
              text="Keine Daten für diesen Haushalt für diese Zeitangabe gefunden" />

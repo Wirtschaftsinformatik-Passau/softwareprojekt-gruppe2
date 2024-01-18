@@ -58,10 +58,7 @@ async def geocode_entries(current_user: models.Nutzer = Depends(oauth.get_curren
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
 
-
-
-@router.post("/registration", status_code=status.HTTP_201_CREATED, response_model=schemas.NutzerResponse)
-async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
     try:
         nutzer.geburtsdatum = datetime.strptime(nutzer.geburtsdatum, "%Y-%m-%d").date()
         try:
@@ -114,8 +111,14 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
-    return {"nutzer_id": db_user.user_id}
+    return db_user.user_id
 
+
+@router.post("/registration", status_code=status.HTTP_201_CREATED, response_model=schemas.NutzerResponse)
+async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+    user_id: int = await register_user(nutzer, db)
+
+    return {"user_id": user_id}
 
 @router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):

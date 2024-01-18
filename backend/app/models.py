@@ -232,3 +232,10 @@ class Kündigungsanfrage(Base):
     bestätigt = Column(Boolean, default=False)
     
     vertrag = relationship("Vertrag", back_populates="kündigungsanfrage")
+
+
+class Arbeitsverhältnis(Base):
+    __tablename__ = 'arbeitsverhältnis' if settings.OS == 'Linux' else "Arbeitsverhältnis"
+    arbeitsverhältnis_id = Column(Integer, Identity(), primary_key=True)
+    arbeitgeber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    arbeitnehmer_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))

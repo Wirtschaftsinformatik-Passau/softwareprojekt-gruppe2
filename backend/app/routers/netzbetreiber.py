@@ -9,8 +9,9 @@ from typing import Union, List
 from pydantic import ValidationError
 import logging
 from logging.config import dictConfig
+
 from app.logger import LogConfig
-from app.config import Settings
+from app.routers.users import register_user
 from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, TarifResponse
 from app import types
 from app import config
@@ -1154,3 +1155,82 @@ async def get_vertrag(vertrag_id: int,
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error: {e}")
 
+
+@router.post("/mitarbeiter", status_code=status.HTTP_201_CREATED)
+async def create_mitarbeiter(nutzer: schemas.NutzerCreate,
+                       db: AsyncSession = Depends(database.get_db_async),
+                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
+
+    await check_netzbetreiber_role(current_user, "POST", "/mitarbeiter")
+    if nutzer.rolle != models.Rolle.Netzbetreiber:
+        raise HTTPException(status_code=403, detail="Netzbetreiber kann nur Netzbeitreiber erstellen")
+
+    user_id = await register_user(nutzer, db)
+
+    try:
+        mitarbeiter = models.Arbeitsverhältnis(arbeitgeber_id=current_user.user_id, mitarbeiter_id=user_id)
+        db.add(mitarbeiter)
+        await db.commit()
+        await db.refresh(mitarbeiter)
+
+        logging_info = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/mitarbeiter",
+            method="POST",
+            message=f"Mitarbeiter {user_id} erfolgreich erstellt",
+            success=True
+        )
+        logger.info(logging_info.dict())
+        return {"arbeitnehmer_id": user_id, "arbeitgeber_id": current_user.user_id}
+
+    except Exception as e:
+        logging_error = LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/mitarbeiter",
+            method="POST",
+            message=f"Fehler beim Erstelln der Mitarbeiter {e}",
+            success=False
+        )
+        logger.error(logging_error.dict())
+        raise HTTPException(status_code=409, detail=f"Fehler beim Erstelln der Mitarbeiter {e}")
+
+
+@router.get("/mitarbeiter", response_model=List[schemas.UserOut])
+async def get_mitarbeiter(db: AsyncSession = Depends(database.get_db_async),
+                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    stmt = (
+        select(models.Nutzer, models.Adresse)
+        .join(models.Arbeitsverhältnis, models.Nutzer.user_id == models.Arbeitsverhältnis.arbeitnehmer_id)
+        .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id, isouter=True)
+        .where(models.Arbeitsverhältnis.arbeitgeber_id == current_user.user_id)
+    )
+    try:
+        result = await db.execute(stmt)
+        user_adresse_pairs = result.all()
+        users_out = [{
+            "nachname": user.nachname,
+            "email": user.email,
+            "user_id": user.user_id,
+            "vorname": user.vorname,
+            "rolle": user.rolle if user.rolle is not None else "unknown",
+            "adresse_id": user.adresse_id,
+            "geburtsdatum": user.geburtsdatum,
+            "telefonnummer": user.telefonnummer,
+            "strasse": adresse.strasse,
+            "stadt": adresse.stadt,
+            "hausnr": adresse.hausnummer,
+            "plz": adresse.plz,
+
+        } for user, adresse in user_adresse_pairs]
+        return users_out
+    except exc.IntegrityError as e:
+        if config.settings.DEV:
+            msg = f"Error beim User Abfragen: {e.orig}"
+            logging_msg = msg
+        else:
+            logging_msg = f"Error beim User Abfragen: {e.orig}"
+            msg = "Es gab einen Fehler bei der user Abfrage."
+        logging_obj = schemas.LoggingSchema(user_id=0, endpoint="/users/", method="GET",
+                                            message=logging_msg, success=False)
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)

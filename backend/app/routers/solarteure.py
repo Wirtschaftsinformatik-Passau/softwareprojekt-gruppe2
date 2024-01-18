@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from typing import List
 from app import models, schemas, database, oauth, types
 import logging
@@ -321,11 +321,34 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
 
 
 async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt eine Rechnung für eine PV-Anlage.
+
+    Parameter:
+    - anlage_id (int): Die ID der PV-Anlage.
+    - steller_id (int): Die ID des Rechnungsausstellers (Solarteur).
+    - db (AsyncSession): Die Datenbank-Session-Abhängigkeit.
+
+    Returns:
+    - Rechnungen: Das erstellte Rechnungsobjekt.
+
+    Raises:
+    - HTTPException: Wenn die PV-Anlage oder das entsprechende Angebot nicht gefunden wird,
+                     oder im Falle eines Datenbankfehlers.
+    """
     try:
         pv_anlage_result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id))
         pv_anlage = pv_anlage_result.scalar_one_or_none()
 
         if not pv_anlage:
+            logging_obj = schemas.LoggingSchema(
+                user_id=steller_id,
+                endpoint=f"/installationsplan/",
+                method="POST",
+                message=f"PV-Anlage mit ID {anlage_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
             raise HTTPException(status_code=404, detail="PV-Anlage nicht gefunden")
 
         empfaenger_id = pv_anlage.haushalt_id
@@ -340,6 +363,14 @@ async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = De
         angebot = angebot_result.scalar_one_or_none()
 
         if not angebot:
+            logging_obj = schemas.LoggingSchema(
+                user_id=steller_id,
+                endpoint=f"/installationsplan/",
+                method="POST",
+                message=f"Kein akzeptiertes Angebot für PV-Anlagen-ID {anlage_id} gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
             raise HTTPException(status_code=404, detail="Angebot nicht gefunden oder nicht angenommen")
 
         rechnungsdaten = {
@@ -354,13 +385,50 @@ async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = De
         db.add(neue_rechnung)
         await db.commit()
         await db.refresh(neue_rechnung)
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Rechnung erfolgreich erstellt für PV-Anlage-ID {anlage_id}",
+            success=True
+        )
+        logger.error(logging_obj.dict())
+
         return neue_rechnung
+
+    except NoResultFound:
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Kein Ergebnis bei der Abfrage des Angebots für die PV-Anlagen-ID {anlage_id} gefunden",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Keine Daten zum Angebot gefunden")
+
     except SQLAlchemyError as e:
-        logger.error(f"SQLAlchemy Error: {e}")
-        raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Datenbankfehler in create_rechnung: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Datenbank-Fehler: {e}")
     except Exception as e:
-        logger.error(f"Unexpected Error: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected error occurred")
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Unerwarteter Fehler in create_rechnung: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unerwarteter Fehler: {e}")
 
 
 @router.get("/offene_pv_anlagen", status_code=status.HTTP_200_OK, response_model=list[schemas.PVAnlageResponse])

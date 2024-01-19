@@ -1,7 +1,9 @@
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from typing import List
 from app import models, schemas, database, oauth, types
 import logging
@@ -51,16 +53,17 @@ async def get_anfragen(
 ):
     await check_solarteur_role(current_user, "GET", "/angebote")
     try:
-        if prozess_status[0] == types.ProzessStatus.AnfrageGestellt and (len(prozess_status) == 2 or len(prozess_status) == 1):
-             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
-                 .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                 .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
-                 .where(models.PVAnlage.prozess_status == models.ProzessStatus.AnfrageGestellt))
+        if prozess_status[0] == types.ProzessStatus.AnfrageGestellt and (
+                len(prozess_status) == 2 or len(prozess_status) == 1):
+            query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                     .where(models.PVAnlage.prozess_status == models.ProzessStatus.AnfrageGestellt))
 
         else:
             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
-                    .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                    .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id))
+                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id))
 
             print(prozess_status)
             if prozess_status:
@@ -71,7 +74,6 @@ async def get_anfragen(
 
         if not anfragen:
             return []
-
 
         return [{
             "anlage_id": angebot.anlage_id,
@@ -101,7 +103,7 @@ async def get_anfragen(
 
 @router.get("/anfragen/{anlage_id}", response_model=schemas.PVSolarteuerResponse)
 async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
-                        db: AsyncSession = Depends(database.get_db_async)):
+                      db: AsyncSession = Depends(database.get_db_async)):
     await check_solarteur_role_and_berater_role(current_user, "GET", f"/angebote/{anlage_id}")
 
     try:
@@ -164,7 +166,6 @@ async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oaut
                             detail=f"Fehler beim Abrufen des Angebots: {e}")
 
 
-
 #  TODO:  Check funktion hier
 @router.post("/angebote", status_code=status.HTTP_201_CREATED, response_model=schemas.AngebotResponse)
 async def create_angebot(angebot_data: schemas.AngebotCreate,
@@ -187,7 +188,7 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
             detail="PV-Anlage nicht gefunden "
         )
 
-    if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt and pv_anlage.prozess_status\
+    if pv_anlage.prozess_status != models.ProzessStatus.AnfrageGestellt and pv_anlage.prozess_status \
             != models.ProzessStatus.DatenFreigegeben:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -314,20 +315,120 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
 
     await db.commit()
 
+    await create_rechnung(anlage_id=anlage_id, steller_id=current_user.user_id, db=db)
+
     return schemas.InstallationsplanResponse(installationsplan=pv_anlage.installationsplan)
 
 
-@router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
-async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt eine Rechnung für eine PV-Anlage.
+
+    Parameter:
+    - anlage_id (int): Die ID der PV-Anlage.
+    - steller_id (int): Die ID des Rechnungsausstellers (Solarteur).
+    - db (AsyncSession): Die Datenbank-Session-Abhängigkeit.
+
+    Returns:
+    - Rechnungen: Das erstellte Rechnungsobjekt.
+
+    Raises:
+    - HTTPException: Wenn die PV-Anlage oder das entsprechende Angebot nicht gefunden wird,
+                     oder im Falle eines Datenbankfehlers.
+    """
     try:
-        neue_rechnung = models.Rechnungen(**rechnung.dict())
+        pv_anlage_result = await db.execute(select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id))
+        pv_anlage = pv_anlage_result.scalar_one_or_none()
+
+        if not pv_anlage:
+            logging_obj = schemas.LoggingSchema(
+                user_id=steller_id,
+                endpoint=f"/installationsplan/",
+                method="POST",
+                message=f"PV-Anlage mit ID {anlage_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=404, detail="PV-Anlage nicht gefunden")
+
+        empfaenger_id = pv_anlage.haushalt_id
+
+        angebot_result = await db.execute(
+            select(models.Angebot)
+            .join(models.PVAnlage, models.Angebot.anlage_id == models.PVAnlage.anlage_id)
+            .where(models.PVAnlage.anlage_id == anlage_id,
+                   models.PVAnlage.prozess_status == models.ProzessStatus.PlanErstellt)
+            .order_by(models.Angebot.created_at.desc())
+        )
+        angebot = angebot_result.scalar_one_or_none()
+
+        if not angebot:
+            logging_obj = schemas.LoggingSchema(
+                user_id=steller_id,
+                endpoint=f"/installationsplan/",
+                method="POST",
+                message=f"Kein akzeptiertes Angebot für PV-Anlagen-ID {anlage_id} gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=404, detail="Angebot nicht gefunden oder nicht angenommen")
+
+        rechnungsdaten = {
+            "empfaenger_id": empfaenger_id,
+            "steller_id": steller_id,
+            "rechnungsbetrag": angebot.kosten,
+            "rechnungsdatum": date.today(),
+            "faelligkeitsdatum": date.today() + timedelta(days=30),
+            "rechnungsart": models.Rechnungsart.Solarteur_Rechnung
+        }
+        neue_rechnung = models.Rechnungen(**rechnungsdaten)
         db.add(neue_rechnung)
         await db.commit()
         await db.refresh(neue_rechnung)
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Rechnung erfolgreich erstellt für PV-Anlage-ID {anlage_id}",
+            success=True
+        )
+        logger.error(logging_obj.dict())
+
         return neue_rechnung
+
+    except NoResultFound:
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Kein Ergebnis bei der Abfrage des Angebots für die PV-Anlagen-ID {anlage_id} gefunden",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Keine Daten zum Angebot gefunden")
+
     except SQLAlchemyError as e:
-        logger.error(f"Rechnung konnte nicht erstellt werden: {e}")
-        raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Datenbankfehler in create_rechnung: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Datenbank-Fehler: {e}")
+    except Exception as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=steller_id,
+            endpoint=f"/installationsplan/",
+            method="POST",
+            message=f"Unerwarteter Fehler in create_rechnung: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Unerwarteter Fehler: {e}")
 
 
 @router.get("/offene_pv_anlagen", status_code=status.HTTP_200_OK, response_model=list[schemas.PVAnlageResponse])
@@ -408,7 +509,7 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
         haushaltsdaten_existieren = await db.execute(
             select(models.Haushalte).where(models.Haushalte.user_id == pv_anlage.haushalt_id))
         haushaltsdaten_existieren = haushaltsdaten_existieren.scalars().first()
-        if haushaltsdaten_existieren and haushaltsdaten_existieren.baujahr is not None:
+        if haushaltsdaten_existieren is not None:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint=f"/datenanfrage/{anlage_id}",
@@ -420,7 +521,7 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt")
 
-        elif haushaltsdaten_existieren and haushaltsdaten_existieren.baujahr is None:
+        elif haushaltsdaten_existieren is None:
             pv_anlage.prozess_status = models.ProzessStatus.DatenAngefordert
             haushaltsdaten_existieren.anfragestatus = True
             await db.commit()
@@ -485,4 +586,3 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
         message="Datenanfrage erfolgreich gestellt",
         haushalt_id=pv_anlage.haushalt_id,
         anfragestatus=neue_haushaltsdaten.anfragestatus)
-

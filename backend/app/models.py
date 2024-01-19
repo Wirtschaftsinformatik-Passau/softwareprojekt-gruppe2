@@ -88,7 +88,8 @@ class PVAnlage(Base):
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"),
                               nullable=True)
     modultyp = Column(String, nullable=True)
-    energieausweis_id = Column(Integer, ForeignKey('energieausweise.energieausweis_id' if settings.OS == 'Linux' else "Energieausweise.energieausweis_id"))
+    energieausweis_id = Column(Integer, ForeignKey(
+        'energieausweise.energieausweis_id' if settings.OS == 'Linux' else "Energieausweise.energieausweis_id"))
     kapazitaet = Column(Float, nullable=True)
     installationsflaeche = Column(Float, nullable=True)
     installationsdatum = Column(Date, nullable=True)
@@ -184,14 +185,14 @@ class Haushalte(Base):
 class Rechnungen(Base):
     __tablename__ = 'rechnungen' if settings.OS == 'Linux' else 'Rechnungen'
     rechnung_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    empfaenger_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     rechnungsbetrag = Column(Float)
     rechnungsdatum = Column(Date)
     faelligkeitsdatum = Column(Date)
     rechnungsart = Column(Enum(Rechnungsart), ENUM(*[r.value for r in Rechnungsart],
                                                    name='rechnungsart' if settings.OS == 'Linux' else "Rechnungsart",
                                                    create_type=False))
-    zeitraum = Column(Date)
+    steller_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
 
 
 class Vertrag(Base):
@@ -203,16 +204,12 @@ class Vertrag(Base):
     end_datum = Column(Date)
     netzbetreiber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     jahresabschlag = Column(Float)
-    vertragstatus = Column(Enum(Vertragsstatus), 
+    vertragstatus = Column(Enum(Vertragsstatus),
                            default=Vertragsstatus.Laufend.value,  # default-Wert
                            name='vertragsstatus' if settings.OS == 'Linux' else "Vertragsstatus")
     __table_args__ = (
         UniqueConstraint('user_id', 'tarif_id', name='_user_id_tarif_id_uc'),
     )
-
-    # Beziehung zu Kündigungsanfrage, falls verwendet
-    kündigungsanfrage = relationship("Kündigungsanfrage", uselist=False, back_populates="vertrag")
-
 
 
 class Energieeffizienzmassnahmen(Base):
@@ -225,14 +222,15 @@ class Energieeffizienzmassnahmen(Base):
                                                    create_type=False))
     einsparpotenzial = Column(Float)
     kosten = Column(Float)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+
 
 class Kündigungsanfrage(Base):
     __tablename__ = 'kündigungsanfrage' if settings.OS == 'Linux' else "Kündigungsanfrage"
     anfrage_id = Column(Integer, primary_key=True)
     vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id' if settings.OS == 'Linux' else 'Vertrag.vertrag_id'))
     bestätigt = Column(Boolean, default=False)
-    
-    vertrag = relationship("Vertrag", back_populates="kündigungsanfrage")
 
 
 class Arbeitsverhältnis(Base):

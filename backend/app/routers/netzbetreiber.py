@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy import exc, update, text
-from app import models, schemas, database, oauth
+from app import models, schemas, database, oauth, hashing
 from collections import Counter
 from typing import Union, List
 from pydantic import ValidationError
@@ -18,6 +18,7 @@ from app import config
 import pandas as pd
 import io
 from datetime import datetime, timedelta, date
+import re
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -50,6 +51,7 @@ async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, meth
         logger.error(logging_error.dict())
         raise HTTPException(status_code=403, detail="Nur Netzbetreiber und Haushalte haben Zugriff auf diese Daten")
 
+
 def is_haushalt(user: models.Nutzer) -> bool:
     return user.rolle == models.Rolle.Haushalte
 
@@ -77,7 +79,13 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
             is_valid_schattenanalyse
         ])
     except TypeError as e:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED,
+                            detail=f"Fehlende Daten zur Berechnung. Angebot muss erst erstellt werden")
+
+
+def validate_email(email: str) -> bool:
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pattern, email) is not None
 
 
 # Tarif erstellen
@@ -100,7 +108,9 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 
 # Tarif aktualisieren
 @router.put("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
-async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
@@ -152,7 +162,7 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    #TODO: nur tarife von netzbetreiber ausgeben
+    # TODO: nur tarife von netzbetreiber ausgeben
     await check_netzbetreiber_role(current_user, "GET", "/tarife")
     user_id = current_user.user_id
     result = await db.execute(select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id))
@@ -721,8 +731,6 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
     return {"anlage_id": anlage_id, "nvpruefung_status": is_compatible}
 
 
-
-
 @router.put("/einspeisezusage/{anlage_id}", status_code=status.HTTP_200_OK,
             response_model=schemas.EinspeisezusageResponse)
 async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
@@ -779,7 +787,7 @@ async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = D
     try:
         # Hier holen wir den aktiven Vertrag des Nutzers, um den Jahresabschlag zu erhalten.
         vertrag_query = select(models.Vertrag).where(
-            (models.Vertrag.user_id == rechnung.user_id) & 
+            (models.Vertrag.user_id == rechnung.user_id) &
             (models.Vertrag.vertragstatus == models.Vertragsstatus.Laufend)
         )
         vertrag_result = await db.execute(vertrag_query)
@@ -838,9 +846,10 @@ async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db)
 
 
 @router.get("/einspeisezusagen", response_model=List[schemas.PVSolarteuerResponse])
-async def get_einspeisezusagen_vorschlag(prozess_status: List[types.ProzessStatus] =  Query(types.ProzessStatus.PlanErstellt, alias="prozess_status"),
-                                         db: AsyncSession = Depends(database.get_db_async),
-                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+async def get_einspeisezusagen_vorschlag(
+        prozess_status: List[types.ProzessStatus] = Query(types.ProzessStatus.PlanErstellt, alias="prozess_status"),
+        db: AsyncSession = Depends(database.get_db_async),
+        current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
         if prozess_status[0] == types.ProzessStatus.PlanErstellt and (
@@ -898,8 +907,8 @@ async def get_einspeisezusagen_vorschlag(anlage_id: int,
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
         stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
-                     .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
-                     .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
+                .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
+                .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
                 .where((models.PVAnlage.anlage_id == anlage_id)))
         result = await db.execute(stmt)
         pv_anlage = result.first()
@@ -975,7 +984,8 @@ async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_asy
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
-                                              (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
+                                             (
+                                                         models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
         result = await db.execute(query)
         kuendigungsanfragen = result.scalars().all()
         return kuendigungsanfragen
@@ -998,7 +1008,8 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
     try:
         # Abrufen der Kündigungsanfrage
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
-                                            (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt) &
+                                             (
+                                                         models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt) &
                                              (models.Vertrag.vertrag_id == vertrag_id))
         result = await db.execute(query)
         anfrage = result.scalar_one_or_none()
@@ -1010,7 +1021,7 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
             # Kündigung bestätigen und den Vertragstatus aktualisieren
             anfrage.bestätigt = True
             anfrage.vertragstatus = models.Vertragsstatus.Gekuendigt
-         
+
             # Berechne den zeitanteiligen Jahresabschlag
             jahresanfang = date(date.today().year, 1, 1)
             tage_seit_jahresanfang = (date.today() - jahresanfang).days
@@ -1160,7 +1171,6 @@ async def get_vertrag(vertrag_id: int,
 async def create_mitarbeiter(nutzer: schemas.NutzerCreate,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
-
     await check_netzbetreiber_role(current_user, "POST", "/mitarbeiter")
     if nutzer.rolle != models.Rolle.Netzbetreiber.value:
         raise HTTPException(status_code=403, detail="Netzbetreiber kann nur Netzbetreiber erstellen")

@@ -1,7 +1,7 @@
 import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
 from datetime import date
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from app.types import *
 
 from app.types import ProzessStatus, Montagesystem, Schatten, Orientierung, AusweisStatus, Vertragsstatus
@@ -43,7 +43,7 @@ class AdresseResponseLongLat(BaseModel):
 
 class NutzerCreate(BaseModel):
     email: EmailStr
-    adresse_id: int
+    adresse_id: Union[int, str]
     vorname: str
     nachname: str
     passwort: str
@@ -51,8 +51,13 @@ class NutzerCreate(BaseModel):
 
     @field_validator('geburtsdatum')
     def check_geburtsdatum(cls, v):
-        if datetime.datetime.strptime(v, "%Y-%m-%d").date() > date.today():
-            raise ValueError('geburtsdatum darf nicht in der Zukunft liegen')
+        if v:  # Überprüfen, ob das Feld nicht leer ist
+            try:
+                parsed_date = datetime.datetime.strptime(v, "%Y-%m-%d").date()
+                if parsed_date > date.today():
+                    raise ValueError('geburtsdatum darf nicht in der Zukunft liegen')
+            except ValueError:
+                raise ValueError('Ungültiges Datum oder leeres Feld')
         return v
 
     telefonnummer: str

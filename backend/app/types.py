@@ -79,3 +79,11 @@ class Vertragsstatus(enum.Enum):
     Gekuendigt = "Gekuendigt"
     Laufend = "Laufend"
     Gekuendigt_Unbestaetigt = "Gekuendigt_Unbestaetigt"
+
+
+class Zahlungsstatus(enum.Enum):
+    Bezahlt = "Bezahlt",
+    Offen = "Offen",
+    Teilweise_Bezahlt = "Teilweise_Bezahlt"
+    Storniert = "Storniert"
+    Ueberfaellig = "Ueberfaellig"

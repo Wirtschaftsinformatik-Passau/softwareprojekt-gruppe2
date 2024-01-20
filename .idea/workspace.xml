@@ -4,7 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c1d94c30-e70f-40e5-8df8-97af9ec59b41" name="Changes" comment="" />
+    <list default="true" id="c1d94c30-e70f-40e5-8df8-97af9ec59b41" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/haushalte/dashboard/HaushalteRechnungenDetail.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/haushalte/dashboard/HaushalteRechnungenOverview.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/routers/haushalte.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/routers/haushalte.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/schemas.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/app/types.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/app/types.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/haushalte/dashboard/HaushalteSidebar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/haushalte/dashboard/HaushalteSidebar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/container/haushalte/HaushaltDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/container/haushalte/HaushaltDashboard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/entitities/pv.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/entitities/pv.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,8 +24,8 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="TypeScript File" />
         <option value="TypeScript JSX File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -44,7 +55,7 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "/snap/webstorm/351/plugins/javascript-impl/jsLanguageServicesImpl/external",
+    "ts.external.directory.path": "/home/lubi/Documents/Projects/ToSe/GreenEcoHub/frontend_repo/frontend/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -58,7 +69,8 @@
       <updated>1705329174266</updated>
       <workItem from="1705329176502" duration="65000" />
       <workItem from="1705329275039" duration="14741000" />
-      <workItem from="1705571143147" duration="7971000" />
+      <workItem from="1705571143147" duration="8697000" />
+      <workItem from="1705675219800" duration="5111000" />
     </task>
     <servers />
   </component>

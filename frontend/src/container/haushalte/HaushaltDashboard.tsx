@@ -22,6 +22,8 @@ import HaushalteHome from "../../components/haushalte/dashboard/HaushalteHome";
 import HaushalteVertragWechselnOverview from "../../components/haushalte/dashboard/HaushalteVertragWechselnOverview";
 import HaushalteVertragWechselnDetail from "../../components/haushalte/dashboard/HaushalteVertragWechselnDetail";
 import HaushalteEnergieAusweisOverview from "../../components/haushalte/dashboard/HaushaltEnergieAusweisOverview";
+import HaushalteRechnungenOverview from "../../components/haushalte/dashboard/HaushalteRechnungenOverview";
+import HaushalteRechnungenDetail from "../../components/haushalte/dashboard/HaushalteRechnungenDetail";
 
 const  HaushaltDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -59,6 +61,8 @@ const  HaushaltDashboard = () => {
                     <Route path="/vertragChange/:tarifID" element={<HaushalteVertragWechselnDetail/>}/>
                     <Route path="/vertragChangeOverview/:oldTarifID" element={<HaushalteVertragWechselnOverview/>}/>
                     <Route path="/energieausweisOverview" element={<HaushalteEnergieAusweisOverview/>}/>
+                    <Route path="/rechnungenOverview" element={<HaushalteRechnungenOverview/>}/>
+                    <Route path="/rechnungenDetail/:rechnungID" element={<HaushalteRechnungenDetail/>}/>
                 </Routes>
                 </div>
                 

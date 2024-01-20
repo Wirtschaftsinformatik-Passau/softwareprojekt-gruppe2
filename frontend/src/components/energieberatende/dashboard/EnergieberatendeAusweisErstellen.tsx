@@ -15,6 +15,21 @@ interface RequestPayloadAuweis {
     verbrauchskennwerte: number | "";
 }
 
+interface RequestPayloadMassnahme {
+    massnahmetyp: MassnahmeTyp;
+    kosten: number | "";
+    einsparpotential: number | "";
+}
+
+interface MergedPayload {
+    energieeffizienzklasse: string;
+    gueltigkeit_monate: number | "";
+    verbrauchskennwerte: number | "";
+    massnahmetyp: MassnahmeTyp;
+    kosten: number | "";
+    einsparpotential: number | "";
+}
+
 interface SolarteurePlanErstellenProps {
     ausweis: EnergieausweisCreate;
     massnahmen: EnergieeffizienzmassnahmenCreate;
@@ -27,19 +42,50 @@ interface SolarteurePlanErstellenProps {
 const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
+    
+    const mergedItems: MergedPayload =  {
+      ...props.ausweis,
+      ...props.massnahmen
+  }
+    console.log(mergedItems)
 
     const ausweisErstellen = (values: EnergieausweisCreate) => {
         const token = localStorage.getItem("accessToken");
-        const payload: RequestPayloadAuweis = {
+        const payloadAusweis: RequestPayloadAuweis = {
           energieeffizienzklasse: values.energieeffizienzklasse,
           gueltigkeit_monate: Number(values.gueltigkeit),
           verbrauchskennwerte: Number(values.verbrauchskennwerte),
         }
-        axios.post(addSuffixToBackendURL("energieberatende/energieausweis-erstellen/" + props.energieausweisID),
-         payload, {headers: {Authorization: `Bearer ${token}`}})
+        const payloadMassnahme: RequestPayloadMassnahme = {
+          massnahmetyp: values.massnahmetyp,
+          kosten: Number(values.kosten),
+          einsparpotenzial: Number(values.einsparpotenzial),
+        }
+
+        axios.post(addSuffixToBackendURL("energieberatende/zusatzdaten-eingeben/" + props.energieausweisID), payloadMassnahme
+        , {headers: {Authorization: `Bearer ${token}`}})
         .then((response) => {
-            props.sucessModalSetter(true);
-            props.navigateFN("/energieberatende/antragTable");
+            if (response.status === 200) {
+              axios.post(addSuffixToBackendURL("energieberatende/energieausweis-erstellen/" + props.energieausweisID),
+              payloadAusweis, {headers: {Authorization: `Bearer ${token}`}})
+             .then((response) => {
+                 props.sucessModalSetter(true);
+                 props.navigateFN("/energieberatende/antragTable");
+             })
+             .catch((error) => {
+                 if (error.response.status === 403 || error.response.status === 401) {
+                     props.navigateFN("/login");
+                 }
+                 else {
+                     props.failModalSetter(true);
+                 }
+                 console.log(error);
+             })
+         
+            }
+            else {
+                props.failModalSetter(true);
+            }
         })
         .catch((error) => {
             if (error.response.status === 403 || error.response.status === 401) {
@@ -50,19 +96,19 @@ const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) =
             }
             console.log(error);
         })
-    }
+      }
 
-    const keyMappingAusweis = {
+        
+
+    const keyMapping = {
       energieeffizienzklasse: "Energieeffizienzklasse",
       gueltigkeit: "Gültigkeit in Monaten",
       verbrauchskennwerte: "Verbrauchskennwerte",
-    }
-
-    const keyMappingMassnahmen = {
       massnahmetyp: "Energieeffizienzmaßnahme",
       kosten: "Kosten",
-      einsparpotential: "Einsparpotenzial",
+      einsparpotenzial: "Einsparpotenzial",
     }
+
 
 
     return (
@@ -73,8 +119,8 @@ const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) =
    <Box mt={2} ml={1} gridColumn={"span 4"}>
    <Formik
         onSubmit={ausweisErstellen}
-        initialValues={props.ausweis}
-        validationSchema={ausweisSchema}
+        initialValues={mergedItems}
+        validationSchema={objectSchema}
         style={{
           display:"flex",
           flexDirection:"column",
@@ -98,19 +144,19 @@ const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) =
                 "& > div": {gridColumn: "span 2"} 
               }}
             >
-               {Object.entries({...props.ausweis, empty:""}).map(([key, value]) => {
+               {Object.entries(mergedItems).map(([key, value]) => {
+
                 return (
                   <TextField
                     fullWidth
-                    
                     variant="outlined"
                     type="text"
-                    label={key === "empty" ? undefined : keyMappingAusweis[key]}
-                    disabled={key === "empty"}
+                    label={keyMapping[key]}
+                    disabled={false}
                     onBlur={handleBlur}
                     onChange={handleChange}
-                    value={key === "empty" ? undefined : values[key]}
-                    name={key === "empty" ? undefined : key}
+                    value={values[key]}
+                    name={key}
                     error={!!touched[key] && !!errors[key]}
                     helperText={touched[key] && errors[key]}
                     InputLabelProps={{
@@ -162,14 +208,14 @@ const EnergieberatendeAusweisErstellen = (props: SolarteurePlanErstellenProps) =
 
 export default EnergieberatendeAusweisErstellen;
 
-const ausweisSchema = yup.object({
-    energieeffizienzklasse: yup.string().required("Energieeffizienzklasse ist erforderlich"),
+
+
+const objectSchema = yup.object({
+  energieeffizienzklasse: yup.string().required("Energieeffizienzklasse ist erforderlich"),
     gueltigkeit: yup.number().typeError("Monate als Zahl eingeben").required("Gültigkeit ist erforderlich"),
     verbrauchskennwerte: yup.number().typeError("Nur Dezimalzahlen erlaubt").required("Verbraucherkennwerte sind erforderlich"),
-  });
-
-  const massnahmenSchema = yup.object({
     massnahmetyp: yup.string().oneOf(Object.values(MassnahmeTyp)).required("Maßnahmentyp ist erforderlich"),
     kosten: yup.number().required("Kosten sind erforderlich"),
     einsparpotenzial: yup.number().required("Einsparpotenzial ist erforderlich"),
-  });
+})
+ 

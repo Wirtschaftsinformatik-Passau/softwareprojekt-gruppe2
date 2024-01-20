@@ -148,3 +148,31 @@ export interface NetzbetreiberDetailPV {
     stadt: string | ""
 
 }
+
+
+
+export enum Rechnungsart {
+    Netzbetreiber_Rechnung = 'Netzbetreiber_Rechnung',
+    Energieberater_Rechnung = 'Energieberater_Rechnung',
+    Solarteur_Rechnung = 'Solarteur_Rechnung'
+
+}
+
+export interface Rechnung {
+    rechnung_id: number | "",
+    empfaenger_id: number | "",
+    steller_id: number | "",
+    rechnungsbetrag: number | "",
+    rechnungsdatum: Date | "",
+    faelligkeitsdatum: Date | "",
+    rechnungsart: Rechnungsart | "",
+
+}
+
+export enum Zahlungsstatus {
+    Bezahlt = "Bezahlt",
+    Offen = "Offen",
+    Teilweise_Bezahlt = "Teilweise_Bezahlt",
+    Storniert = "Storniert",
+    Überfällig = "Überfällig"
+}

@@ -19,6 +19,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 @router.post("/login", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.TokenResponse)
 async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(database.get_db_async)):
     try:
+
         stmt = select(models.Nutzer).where(models.Nutzer.email == user_creds.email)
         res = await db.execute(stmt)
         db_user = res.scalars().first()

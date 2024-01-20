@@ -237,7 +237,7 @@ const Sidebar1 = () => {
             />
             <Item
             title="Rechnungen"
-            to="/rechnungen"
+            to="/rechnungenOverview"
             icon={<AttachMoneyIcon/>}
             selected={selected}
             setSelected={setSelected}

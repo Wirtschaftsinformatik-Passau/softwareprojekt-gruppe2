@@ -5,7 +5,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
 from app.config import settings
 from app.types import (Rolle, Orientierung, ProzessStatus, Montagesystem, Schatten, AusweisStatus,
-                       Isolierungsqualitaet, Rechnungsart, MassnahmeTyp, Vertragsstatus)
+                       Isolierungsqualitaet, Rechnungsart, MassnahmeTyp, Vertragsstatus,
+                       Zahlungsstatus)
 
 
 class Adresse(Base):
@@ -193,6 +194,9 @@ class Rechnungen(Base):
                                                    name='rechnungsart' if settings.OS == 'Linux' else "Rechnungsart",
                                                    create_type=False))
     steller_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    zahlungsstatus = Column(Enum(Zahlungsstatus), ENUM(*[r.value for r in Zahlungsstatus],
+                                                       name='zahlungsstatus' if settings.OS == 'Linux' else "Zahlungsstatus",
+                                                       create_type=False), default=Zahlungsstatus.Offen)
 
 
 class Vertrag(Base):

@@ -53,12 +53,17 @@ async def get_anfragen(
 ):
     await check_solarteur_role(current_user, "GET", "/angebote")
     try:
-        if prozess_status[0] == types.ProzessStatus.AnfrageGestellt and (
-                len(prozess_status) == 2 or len(prozess_status) == 1):
+        if (prozess_status[0] == types.ProzessStatus.AnfrageGestellt and
+            (prozess_status[1] == types.ProzessStatus.DatenAngefordert) and
+                (prozess_status[2] == types.ProzessStatus.DatenFreigegeben)):
             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
                      .join(models.Nutzer, models.Nutzer.user_id == models.PVAnlage.haushalt_id)
                      .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
-                     .where(models.PVAnlage.prozess_status == models.ProzessStatus.AnfrageGestellt))
+                     .where(models.PVAnlage.prozess_status.in_([models.ProzessStatus.AnfrageGestellt,
+                                                                models.ProzessStatus.DatenFreigegeben,
+                                                                models.ProzessStatus.DatenAngefordert,
+                                                                models.ProzessStatus.AngebotAbgelehnt]
+                             )))
 
         else:
             query = (select(models.PVAnlage, models.Nutzer, models.Adresse)
@@ -521,6 +526,7 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt")
 
+        """
         elif haushaltsdaten_existieren is None:
             pv_anlage.prozess_status = models.ProzessStatus.DatenAngefordert
             haushaltsdaten_existieren.anfragestatus = True
@@ -539,8 +545,7 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
                 message="Anfragestatus wurde bearbeitet",
                 haushalt_id=pv_anlage.haushalt_id,
                 anfragestatus=haushaltsdaten_existieren.anfragestatus)
-
-
+        """
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

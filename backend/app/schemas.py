@@ -489,12 +489,13 @@ class VertragPreview(BaseModel):
 
 class RechnungResponse(BaseModel):
     rechnung_id: int
-    user_id: int
+    empfaenger_id: int
+    steller_id: int
     rechnungsbetrag: float
     rechnungsdatum: date
     faelligkeitsdatum: date
     rechnungsart: Rechnungsart
-    zeitraum: Optional[date] = None
+    zahlungsstatus: Zahlungsstatus
 
     class Config:
         extra = Extra.allow

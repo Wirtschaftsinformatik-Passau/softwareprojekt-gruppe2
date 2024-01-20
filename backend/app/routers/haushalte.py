@@ -1008,12 +1008,26 @@ async def angebot_ablehnen(anlage_id: int = Path(..., description="Die ID der PV
 
 
 @router.get("/rechnungen", response_model=List[schemas.RechnungResponse])
-async def get_rechnungen(current_user: models.Nutzer = Depends(oauth.get_current_user),
+async def get_rechnungen(rolle: str = Query(None, description="Zahlungsteller oder Empfänger"),
+                         current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
     try:
-        await check_haushalt_role(current_user, "GET", "/rechnungen")
+        if rolle not in ["steller", "empfaenger"]:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint="/rechnungen",
+                method="GET",
+                message="Ungültige Rolle",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Rolle")
 
-        query = select(models.Rechnungen).where(models.Rechnungen.user_id == current_user.user_id)
+        if rolle == "steller":
+            query = select(models.Rechnungen).where(models.Rechnungen.steller_id == current_user.user_id)
+        else:
+            query = select(models.Rechnungen).where(models.Rechnungen.empfaenger_id == current_user.user_id)
+
         result = await db.execute(query)
         rechnungen_list = result.scalars().all()
 
@@ -1042,6 +1056,10 @@ async def get_rechnungen(current_user: models.Nutzer = Depends(oauth.get_current
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Rechnungen")
 
     except Exception as e:
+
+        if isinstance(e, HTTPException):
+            raise e
+
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
             endpoint="/rechnungen",
@@ -1052,6 +1070,60 @@ async def get_rechnungen(current_user: models.Nutzer = Depends(oauth.get_current
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
+@router.get("/rechnungen/{rechnung_id}", response_model=schemas.RechnungResponse)
+async def get_rechnung(rechnung_id: int,
+                       current_user: models.Nutzer = Depends(oauth.get_current_user),
+                       db: AsyncSession = Depends(database.get_db_async)):
+    try:
+        await check_haushalt_role(current_user, "GET", f"/rechnungen/{rechnung_id}")
+
+        query = select(models.Rechnungen).where(
+            and_(
+                models.Rechnungen.rechnung_id == rechnung_id,
+                models.Rechnungen.empfaenger_id == current_user.user_id
+            )
+        )
+        result = await db.execute(query)
+        rechnung = result.scalar_one_or_none()
+
+        if not rechnung:
+            logging_obj = schemas.LoggingSchema(
+                user_id=current_user.user_id,
+                endpoint=f"/rechnungen/{rechnung_id}",
+                method="GET",
+                message=f"Rechnung {rechnung_id} nicht gefunden",
+                success=False
+            )
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Rechnung {rechnung_id} nicht gefunden")
+
+        return rechnung
+
+    except SQLAlchemyError as e:
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/rechnungen/{rechnung_id}",
+            method="GET",
+            message=f"SQLAlchemy Fehler beim Abrufen der Rechnung: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Rechnung")
+
+    except Exception as e:
+
+        if isinstance(e, HTTPException):
+            raise e
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/rechnungen/{rechnung_id}",
+            method="GET",
+            message=f"Allgemeiner Fehler beim Abrufen der Rechnung: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
 
 
 @router.put("/rechnungen/{rechnung_id}/bezahlen", status_code=status.HTTP_200_OK)
@@ -1076,7 +1148,7 @@ async def rechnung_bezahlen(rechnung_id: int,
     try:
         stmt = select(models.Rechnungen).where(
             (models.Rechnungen.rechnung_id == rechnung_id) & 
-            (models.Rechnungen.user_id == current_user.user_id))
+            (models.Rechnungen.empfaenger_id == current_user.user_id))
         result = await db.execute(stmt)
         rechnung = result.scalar_one_or_none()
 
@@ -1084,11 +1156,11 @@ async def rechnung_bezahlen(rechnung_id: int,
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                 detail="Rechnung nicht gefunden oder gehört nicht zum Nutzer")
 
-        if rechnung.zahlungsstatus:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+        if rechnung.zahlungsstatus == models.Zahlungsstatus.Bezahlt:
+            raise HTTPException(status_code=status.HTTP_412_PRECONDITION_FAILED,
                                 detail="Rechnung bereits bezahlt")
 
-        rechnung.zahlungsstatus = True
+        rechnung.zahlungsstatus = models.Zahlungsstatus.Bezahlt
         await db.commit()
         
         logging_obj = schemas.LoggingSchema(

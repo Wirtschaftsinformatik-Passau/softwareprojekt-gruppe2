@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams, Link } from "react-router-dom";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
+import axios from "axios";
 import "react-pro-sidebar/dist/css/styles.css";
 import { tokens } from "../../../utils/theme";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
@@ -9,6 +10,8 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import TableViewIcon from '@mui/icons-material/TableView';
+import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import HolidayVillageIcon from '@mui/icons-material/HolidayVillage';
 import DashboardIcon from '@mui/icons-material/Dashboard';import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
 import ClearIcon from '@mui/icons-material/Clear';
@@ -20,8 +23,10 @@ import FileUploadIcon from '@mui/icons-material/FileUpload';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
+import {addSuffixToBackendURL} from "../../../utils/networking_utils.js";
 
 import user from "../../../assets/admin_icon.png"
+
 
 
 
@@ -53,11 +58,24 @@ const Sidebar1 = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
+  const [isArbeitgeber, setIsArbeitgeber] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     setStateOtherwiseRedirect(setCurrentUser, "users/current/single", navigate,  {Authorization: `Bearer ${token}`})
     console.log(currentUser)
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    axios.get(addSuffixToBackendURL("netzbetreiber/check-arbeitgeber"),
+        {headers: {Authorization: `Bearer ${token}`}})
+        .then((res) => {
+          setIsArbeitgeber(res.data.is_arbeitgeber)
+        })
+        .catch((err) => {
+          console.log(err.response.data)
+        })
   }, [])
 
 
@@ -156,6 +174,32 @@ const Sidebar1 = () => {
               setSelected={setSelected}
           
             />
+
+            {isArbeitgeber && (
+                <>
+                <Typography
+                    variant="h6"
+                    color={colors.white[200]}
+                    sx={{ m: "15px 0 5px 20px" }}
+                >
+                  Mitarbeiter
+                </Typography>
+              <Item
+              title="Mitarbeiterübersicht"
+              to="/mitarbeiterTable"
+              icon={<PeopleOutlinedIcon/>}
+            selected={selected}
+            setSelected={setSelected}
+          />
+          <Item
+              title="Mitarbeiter erstellen"
+              to="/mitarbeiterCreate"
+              icon={<PersonAddIcon />}
+              selected={selected}
+              setSelected={setSelected}
+          />
+                </>
+                )}
 
             <Typography
               variant="h6"

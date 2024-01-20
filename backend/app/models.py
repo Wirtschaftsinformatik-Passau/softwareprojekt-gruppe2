@@ -41,6 +41,7 @@ class Nutzer(Base):
 class Netzbetreiber(Base):
     __tablename__ = 'netzbetreiber' if settings.OS == 'Linux' else "Netzbetreiber"
     user_id = Column(Integer, Identity(), primary_key=True)
+    arbeitgeber = Column(Boolean, default=False)
 
 
 class Tarif(Base):
@@ -232,12 +233,12 @@ class Energieeffizienzmassnahmen(Base):
 class Kündigungsanfrage(Base):
     __tablename__ = 'kündigungsanfrage' if settings.OS == 'Linux' else "Kündigungsanfrage"
     anfrage_id = Column(Integer, primary_key=True)
-    vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id'))
+    vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id' if settings.OS == 'Linux' else 'Vertrag.vertrag_id'))
     bestätigt = Column(Boolean, default=False)
 
 
 class Arbeitsverhältnis(Base):
     __tablename__ = 'arbeitsverhältnis' if settings.OS == 'Linux' else "Arbeitsverhältnis"
-    arbeitsverhältnis_id = Column(Integer, Identity(), primary_key=True)
+    arbeitsverhältnis_id = Column(Integer, primary_key=True)
     arbeitgeber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     arbeitnehmer_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))

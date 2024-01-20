@@ -8,6 +8,7 @@ from logging.config import dictConfig
 import logging
 from typing import List, Union
 from time import sleep
+from datetime import datetime
 
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
@@ -90,6 +91,15 @@ async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
+
+        user_id = db_user.user_id
+
+        if nutzer.rolle == models.Rolle.Netzbetreiber:
+            rollen_table = models.Netzbetreiber(user_id=user_id)
+            db.add(rollen_table)
+            await db.commit()
+            await db.refresh(rollen_table)
+
         logging_msg = schemas.RegistrationLogging(user_id=db_user.user_id, role=db_user.rolle.value,
                                                   msg="User registriert")
         logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/users/registration", method="POST",
@@ -118,7 +128,7 @@ async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
 async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
     user_id: int = await register_user(nutzer, db)
 
-    return {"user_id": user_id}
+    return {"nutzer_id": user_id}
 
 @router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
@@ -275,35 +285,34 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
 
         changes = {}
-        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle",
-                      "passwort"]:
-            new_value = getattr(updated_user, field)
-            old_value = getattr(db_user, field)
-            if new_value != old_value:
-                if field == "passwort":
-                    new_value = hashing.Hashing.hash_password(new_value)
-                if field == "geburtsdatum":
-                    new_value = datetime.strptime(updated_user.geburtsdatum, "%Y-%m-%d").date()
-                changes[field] = {"old": old_value, "new": new_value}
-                setattr(db_user, field, new_value)
+        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle", "passwort"]:
+            new_value = getattr(updated_user, field, None)
+            if new_value is not None and new_value != "":  # Überprüfen, ob das Feld vorhanden ist und nicht leer
+                old_value = getattr(db_user, field)
+                if new_value != old_value:
+                    if field == "passwort" and new_value:
+                        new_value = hashing.Hashing.hash_password(new_value)
+                    if field == "geburtsdatum":
+                        if new_value:
+                            try:
+                                new_value = datetime.strptime(new_value, "%Y-%m-%d").date()
+                            except ValueError:
+                                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiges Datum")
+                        else:
+                            continue  # Überspringen der Aktualisierung für leere Geburtsdaten
+                    changes[field] = {"old": old_value, "new": new_value}
+                    setattr(db_user, field, new_value)
 
-
-        try:
-            db_user.rolle = models.Rolle(updated_user.rolle)
-        except ValueError as e:
-            if config.settings.DEV:
-                msg = f"Error beim User Update {e}"
-                logging_msg = msg
-            else:
-                logging_msg = f"Error beim User Update: {e}"
-                msg = "Es gab einen Fehler bei der Registrierung."
-            logging_obj = schemas.LoggingSchema(user_id=id, endpoint="/users/{id}", method="PUT",
-                                                message=logging_msg, success=False)
-            logger.error(logging_obj.dict())
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+        # Update Rolle, falls sie geändert wurde und nicht leer ist
+        if updated_user.rolle and updated_user.rolle != db_user.rolle:
+            try:
+                db_user.rolle = models.Rolle(updated_user.rolle)
+            except ValueError as e:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
         await db.commit()
         await db.refresh(db_user)
+
         if changes:
             logging_info = schemas.LoggingSchema(
                 user_id=id,

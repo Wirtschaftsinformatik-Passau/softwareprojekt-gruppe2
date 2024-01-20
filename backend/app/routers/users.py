@@ -272,7 +272,7 @@ async def read_current_user(include_adresse: str = "yes",
 
 
 @router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSession = Depends(database.get_db_async)):
     stmt = select(models.Nutzer).where(models.Nutzer.user_id == id)
     try:
         result = await db.execute(stmt)
@@ -287,6 +287,10 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
         changes = {}
         for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle", "passwort"]:
             new_value = getattr(updated_user, field, None)
+
+            if field == "email" and new_value == "":
+                updated_user.email = db_user.email
+
             if new_value is not None and new_value != "":  # Überprüfen, ob das Feld vorhanden ist und nicht leer
                 old_value = getattr(db_user, field)
                 if new_value != old_value:
@@ -309,7 +313,7 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
                 db_user.rolle = models.Rolle(updated_user.rolle)
             except ValueError as e:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
+            
         await db.commit()
         await db.refresh(db_user)
 

@@ -734,7 +734,7 @@ class NutzerEmployeeResponse(BaseModel):
 
 
 class NutzerUpdate(BaseModel):
-    email: Optional[EmailStr] = None
+    email: Optional[Union[EmailStr, str]] = None
     adresse_id: Optional[Union[int, str]] = None
     vorname: Optional[str] = None
     nachname: Optional[str] = None

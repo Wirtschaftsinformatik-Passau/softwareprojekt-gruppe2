@@ -288,24 +288,27 @@ async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSess
         for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle", "passwort"]:
             new_value = getattr(updated_user, field, None)
 
-            if field == "email" and new_value == "":
-                updated_user.email = db_user.email
+            # Setzen Sie den Wert auf None, wenn er leer ist, außer für das E-Mail-Feld
+            if field != "email" and new_value == "":
+                new_value = None
 
-            if new_value is not None and new_value != "":  # Überprüfen, ob das Feld vorhanden ist und nicht leer
-                old_value = getattr(db_user, field)
-                if new_value != old_value:
-                    if field == "passwort" and new_value:
-                        new_value = hashing.Hashing.hash_password(new_value)
-                    if field == "geburtsdatum":
-                        if new_value:
-                            try:
-                                new_value = datetime.strptime(new_value, "%Y-%m-%d").date()
-                            except ValueError:
-                                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiges Datum")
-                        else:
-                            continue  # Überspringen der Aktualisierung für leere Geburtsdaten
-                    changes[field] = {"old": old_value, "new": new_value}
-                    setattr(db_user, field, new_value)
+            # Behandeln Sie leere E-Mail-Strings speziell
+            if field == "email" and new_value == "":
+                new_value = db_user.email
+
+            if new_value is not None and new_value != getattr(db_user, field):
+                if field == "passwort" and new_value:
+                    new_value = hashing.Hashing.hash_password(new_value)
+                if field == "geburtsdatum" and new_value:
+                    try:
+                        new_value = datetime.strptime(new_value, "%Y-%m-%d").date()
+                    except ValueError:
+                        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiges Datum")
+
+                changes[field] = {"old": getattr(db_user, field), "new": new_value}
+                setattr(db_user, field, new_value)
+
+
 
         # Update Rolle, falls sie geändert wurde und nicht leer ist
         if updated_user.rolle and updated_user.rolle != db_user.rolle:

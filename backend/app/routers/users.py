@@ -272,7 +272,7 @@ async def read_current_user(include_adresse: str = "yes",
 
 
 @router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSession = Depends(database.get_db_async)):
     stmt = select(models.Nutzer).where(models.Nutzer.user_id == id)
     try:
         result = await db.execute(stmt)
@@ -287,21 +287,28 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
         changes = {}
         for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle", "passwort"]:
             new_value = getattr(updated_user, field, None)
-            if new_value is not None and new_value != "":  # Überprüfen, ob das Feld vorhanden ist und nicht leer
-                old_value = getattr(db_user, field)
-                if new_value != old_value:
-                    if field == "passwort" and new_value:
-                        new_value = hashing.Hashing.hash_password(new_value)
-                    if field == "geburtsdatum":
-                        if new_value:
-                            try:
-                                new_value = datetime.strptime(new_value, "%Y-%m-%d").date()
-                            except ValueError:
-                                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiges Datum")
-                        else:
-                            continue  # Überspringen der Aktualisierung für leere Geburtsdaten
-                    changes[field] = {"old": old_value, "new": new_value}
-                    setattr(db_user, field, new_value)
+
+            # Setzen Sie den Wert auf None, wenn er leer ist, außer für das E-Mail-Feld
+            if field != "email" and new_value == "":
+                new_value = None
+
+            # Behandeln Sie leere E-Mail-Strings speziell
+            if field == "email" and new_value == "":
+                new_value = db_user.email
+
+            if new_value is not None and new_value != getattr(db_user, field):
+                if field == "passwort" and new_value:
+                    new_value = hashing.Hashing.hash_password(new_value)
+                if field == "geburtsdatum" and new_value:
+                    try:
+                        new_value = datetime.strptime(new_value, "%Y-%m-%d").date()
+                    except ValueError:
+                        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiges Datum")
+
+                changes[field] = {"old": getattr(db_user, field), "new": new_value}
+                setattr(db_user, field, new_value)
+
+
 
         # Update Rolle, falls sie geändert wurde und nicht leer ist
         if updated_user.rolle and updated_user.rolle != db_user.rolle:
@@ -309,7 +316,7 @@ async def update_user(id: int, updated_user: schemas.NutzerCreate, db: AsyncSess
                 db_user.rolle = models.Rolle(updated_user.rolle)
             except ValueError as e:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
+            
         await db.commit()
         await db.refresh(db_user)
 

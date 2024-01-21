@@ -82,8 +82,8 @@ class Vertragsstatus(enum.Enum):
 
 
 class Zahlungsstatus(enum.Enum):
-    Bezahlt = "Bezahlt"
-    Offen = "Offen"
+    Bezahlt = "Bezahlt",
+    Offen = "Offen",
     Teilweise_Bezahlt = "Teilweise_Bezahlt"
     Storniert = "Storniert"
-    Überfällig = "Überfällig"
+    Ueberfaellig = "Ueberfaellig"

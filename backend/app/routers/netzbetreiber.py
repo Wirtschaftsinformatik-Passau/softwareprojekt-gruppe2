@@ -9,16 +9,17 @@ from typing import Union, List
 from pydantic import ValidationError
 import logging
 from logging.config import dictConfig
-
 from app.logger import LogConfig
 from app.routers.users import register_user
 from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, TarifResponse
 from app import types
 from app import config
+from app.database import get_db_async
 import pandas as pd
 import io
 from datetime import datetime, timedelta, date
 import re
+import calendar
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 
@@ -782,32 +783,104 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
     return {"message": "Einspeisezusage erfolgreich erteilt", "anlage_id": anlage_id}
 
 
-@router.post("/rechnungen", response_model=schemas.RechnungResponse, status_code=status.HTTP_201_CREATED)
-async def create_rechnung(rechnung: schemas.RechnungCreate, db: AsyncSession = Depends(database.get_db_async)):
+async def check_and_create_rechnung():
+    async for db in get_db_async():
+        try:
+            today = datetime.today().date()
+            result = await db.execute(select(models.Vertrag))
+            vertraege = result.scalars().all()
+
+            for vertrag in vertraege:
+                vertragsjahrestag = berechnen_jahrestag(vertrag, today)
+
+                if today == vertragsjahrestag or (today > vertragsjahrestag
+                                                  and not await check_rechnung_exists (vertrag, vertragsjahrestag, vertragsjahrestag + timedelta(days=364), db)):
+                    await create_rechnung_bei_bedarf(vertrag, vertragsjahrestag, db)
+                    if today > vertragsjahrestag:
+                        logger.info(f"Nachholrechnung für Vertrags-ID {vertrag.id} für verpassten Zeitraum erstellt.")
+
+        except SQLAlchemyError as e:
+            logger.error(f"Datenbankfehler in check_and_create_rechnungen: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unerwarteter Fehler in check_and_create_rechnungen: {e}")
+            raise
+        break
+
+
+def berechnen_jahrestag(vertrag, today):
     try:
-        # Hier holen wir den aktiven Vertrag des Nutzers, um den Jahresabschlag zu erhalten.
-        vertrag_query = select(models.Vertrag).where(
-            (models.Vertrag.user_id == rechnung.user_id) &
-            (models.Vertrag.vertragstatus == models.Vertragsstatus.Laufend)
+        if vertrag.beginn_datum.month == 2 and vertrag.beginn_datum.day == 29:
+            if not calendar.isleap(today.year):
+                return datetime.date(today.year, 2, 28)
+            else:
+                return vertrag.beginn_datum.replace(year=today.year)
+        else:
+            return vertrag.beginn_datum.replace(year=today.year)
+    except Exception as e:
+        logger.error(f"Fehler bei der Berechnung des Vertragsjahrestags: {e}")
+        return today + timedelta(days=1)
+
+
+async def create_rechnung_bei_bedarf(vertrag, today, db):
+    try:
+        next_period_start = today
+        next_period_end = today + timedelta(days=365)
+
+        # Check for existing invoice
+        rechnung_exists = await check_rechnung_exists(vertrag, next_period_start, next_period_end, db)
+
+        if not rechnung_exists:
+            await create_new_rechnung(vertrag, today, next_period_start, next_period_end, db)
+    except SQLAlchemyError as e:
+        raise
+    except ValueError as ve:
+        logger.warning(f"Datenüberprüfungsfehler für Vertrags-ID {vertrag.vertrag_id}: {ve}")
+        return  # Vertrag überspringen
+    except Exception as e:
+        logger.error(f"Unerwarteter Fehler für Vertrags-ID {vertrag.vertrag_id}: {e}")
+        raise
+
+
+async def check_rechnung_exists(vertrag, start_date, end_date, db):
+    try:
+        result = await db.execute(
+            select(models.Rechnungen).where(
+                models.Rechnungen.empfaenger_id == vertrag.user_id,
+                models.Rechnungen.rechnungsperiode_start == start_date,
+                models.Rechnungen.rechnungsperiode_ende == end_date,
+                models.Rechnungen.rechnungsart == models.Rechnungsart.Netzbetreiber_Rechnung
+            )
         )
-        vertrag_result = await db.execute(vertrag_query)
-        aktiver_vertrag = vertrag_result.scalar_one_or_none()
+        return result.scalars().first()
+    except Exception as e:
+        logger.error(f"Fehler bei der Prüfung auf vorhandene Rechnung: {e}")
+        return False
 
-        if aktiver_vertrag is None:
-            raise HTTPException(status_code=404, detail="Aktiver Vertrag nicht gefunden")
 
-        # Setzen des Jahresabschlags als Rechnungsbetrag
-        rechnung_dict = rechnung.dict()
-        rechnung_dict["rechnungsbetrag"] = aktiver_vertrag.jahresabschlag
-
-        neue_rechnung = models.Rechnungen(**rechnung_dict)
+async def create_new_rechnung(vertrag, today, start_date, end_date, db):
+    try:
+        neue_rechnung = models.Rechnungen(
+            empfaenger_id=vertrag.user_id,
+            rechnungsbetrag=vertrag.jahresabschlag,
+            rechnungsdatum=today,
+            faelligkeitsdatum=today + timedelta(days=30),
+            rechnungsart=models.Rechnungsart.Netzbetreiber_Rechnung,
+            steller_id=vertrag.netzbetreiber_id,
+            rechnungsperiode_start=start_date,
+            rechnungsperiode_ende=end_date,
+            zahlungsstatus=models.Zahlungsstatus.Offen
+        )
         db.add(neue_rechnung)
         await db.commit()
-        await db.refresh(neue_rechnung)
-        return neue_rechnung
     except SQLAlchemyError as e:
-        logger.error(f"Rechnung konnte nicht erstellt werden: {e}")
-        raise HTTPException(status_code=500, detail=f"Rechnung konnte nicht erstellt werden: {e}")
+        logger.error(f"SQLAlchemy-Fehler in create_new_rechnung für Vertrags-ID {vertrag.id}: {e}")
+        await db.rollback()
+        raise
+    except Exception as e:
+        logger.error(f"Unerwarteter Fehler in create_new_rechnung für Vertrags-ID {vertrag.id}: {e}")
+        await db.rollback()
+        raise
 
 
 @router.get("/pv-angenommen", response_model=List[schemas.NetzbetreiberEinspeisungDetail])
@@ -984,8 +1057,7 @@ async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_asy
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
-                                             (
-                                                         models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
+                                             (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
         result = await db.execute(query)
         kuendigungsanfragen = result.scalars().all()
         return kuendigungsanfragen
@@ -1008,8 +1080,7 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
     try:
         # Abrufen der Kündigungsanfrage
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
-                                             (
-                                                         models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt) &
+                                             (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt) &
                                              (models.Vertrag.vertrag_id == vertrag_id))
         result = await db.execute(query)
         anfrage = result.scalar_one_or_none()

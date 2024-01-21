@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, \
-    Identity, TIMESTAMP, func, UniqueConstraint
+    Identity, TIMESTAMP, func, UniqueConstraint, Numeric
 from app.database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import ENUM
@@ -127,7 +127,9 @@ class Kalendereintrag(Base):
     __tablename__ = "kalendereintraege" if settings.OS == 'Linux' else 'Kalendereintraege'
 
     kalender_id = Column(Integer, Identity(), primary_key=True)
-    zeitpunkt = Column(Date)
+    start = Column(DateTime)
+    ende = Column(DateTime)
+    allDay = Column(Boolean)
     user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     beschreibung = Column(String)
 
@@ -187,7 +189,7 @@ class Rechnungen(Base):
     __tablename__ = 'rechnungen' if settings.OS == 'Linux' else 'Rechnungen'
     rechnung_id = Column(Integer, primary_key=True)
     empfaenger_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
-    rechnungsbetrag = Column(Float)
+    rechnungsbetrag = Column(Numeric(precision=11, scale=2))
     rechnungsdatum = Column(Date)
     faelligkeitsdatum = Column(Date)
     rechnungsart = Column(Enum(Rechnungsart), ENUM(*[r.value for r in Rechnungsart],

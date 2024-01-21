@@ -12,6 +12,7 @@ import SolarteureAnfragen from "../../components/solarteure/dashboard/Solarteure
 import SolarteureAnfragenDetail from "../../components/solarteure/dashboard/SolarteureAnfragenDetail";
 import SolarteuereAnfragenAbgeschlossen from "../../components/solarteure/dashboard/SolarteureAnfragenAbgeschlossen";
 import SolarteureAnfragenBearbeitet from "../../components/solarteure/dashboard/SolarteureAnfragenBearbeitet";
+import EnergieberaterRechnungsTable from "../../components/energieberatende/dashboard/EnergieberatendeRechnungenOverview";
 
 
 
@@ -40,6 +41,7 @@ const  NetzbetreiberDashboard = () => {
                     <Route path="/antragTable/:anlageID" element={<SolarteureAnfragenDetail/>}/>
                     <Route path="/antragTableAbgeschlossen" element={<SolarteuereAnfragenAbgeschlossen/>}/>
                     <Route path="/antragTableBearbeitet" element={<SolarteureAnfragenBearbeitet/>}/>
+                    <Route path="/rechnungenOverview" element={<EnergieberaterRechnungsTable/>}/>
                     <Route path="/faq" element={<FAQ faqItems={faqItems}/>}/>
                 </Routes>
                 </div>

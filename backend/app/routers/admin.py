@@ -392,15 +392,24 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fehler beim Abrufen der Logs")
 
 
-@router.post("/kalendereintrag", status_code=status.HTTP_201_CREATED, response_model=schemas.KalenderEintrag)
+@router.post("/kalendereintrag", status_code=status.HTTP_201_CREATED)
 async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
                                   db: AsyncSession = Depends(database.get_db_async),
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_admin_role(current_user, "POST", "/kalendereintrag/")
     try:
-        if isinstance(eintrag.zeitpunkt, str):
-            eintrag.zeitpunkt = datetime.strptime(eintrag.zeitpunkt, '%Y-%m-%d').date()
+        if isinstance(eintrag.start, str):
+            if "T" in eintrag.start:
+                eintrag.start = (datetime.strptime(eintrag.start, "%Y-%m-%dT%H:%M:%S%z")).replace(tzinfo=None)
+            else:
+                eintrag.start = datetime.strptime(eintrag.start, '%Y-%m-%d').date()
+
+        if isinstance(eintrag.ende, str):
+            if "T" in eintrag.ende:
+                eintrag.ende = datetime.strptime(eintrag.ende, "%Y-%m-%dT%H:%M:%S%z").replace(tzinfo=None)
+            else:
+                eintrag.ende = datetime.strptime(eintrag.ende, '%Y-%m-%d').date()
         db_eintrag = models.Kalendereintrag(**eintrag.dict())
+        db_eintrag.user_id = current_user.user_id
         db.add(db_eintrag)
         await db.commit()
         await db.refresh(db_eintrag)
@@ -427,12 +436,12 @@ async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/kalendereintrag", status_code=status.HTTP_200_OK, response_model=List[schemas.KalenderEintrag])
+@router.get("/kalendereintrag", status_code=status.HTTP_200_OK, response_model=List[schemas.KalenderEintragResponse])
 async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async),
                                 current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_admin_role(current_user, "GET", "/kalendereintrag")
+
     try:
-        stmt = select(models.Kalendereintrag)
+        stmt = select(models.Kalendereintrag).where(models.Kalendereintrag.user_id == current_user.user_id)
         result = await db.execute(stmt)
         eintraege = result.scalars().all()
 
@@ -445,7 +454,13 @@ async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async
         )
         logger.info(logging_obj.dict())
 
-        return eintraege
+        return [{
+            "beschreibung": eintrag.beschreibung,
+            "start": str(eintrag.start),
+            "ende": str(eintrag.ende),
+            "allDay": eintrag.allDay,
+        } for eintrag in eintraege]
+
     except Exception as e:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -462,7 +477,6 @@ async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async
             response_model=schemas.KalenderEintrag)
 async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async),
                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_admin_role(current_user, "GET", f"/kalendereintrag/{eintrag_id}")
     try:
         db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
         if db_eintrag is None:

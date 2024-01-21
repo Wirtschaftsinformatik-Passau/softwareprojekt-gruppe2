@@ -87,7 +87,7 @@ async def get_anfragen(
                             detail=f"Fehler beim Abrufen der Angebote: {e}")
 
 
-@router.get("/anfragen/{anlage_id}", response_model=schemas.EnergieberatendeAnfrageResponseFinal)
+@router.get("/anfragen/{anlage_id}")
 async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                       db: AsyncSession = Depends(database.get_db_async)):
     await check_energieberatende_role(current_user, "GET", f"/angebote/{anlage_id}")
@@ -387,7 +387,7 @@ async def zusatzdaten_eingeben(energieausweis_id: int,
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültige Energieausweis-ID angegeben")
 
         energieausweis = await db.get(models.Energieausweise, energieausweis_id)
-        user_id = energieausweis.energieberater_id
+
         if not energieausweis:
             logging_obj = schemas.LoggingSchema(
                 user_id=current_user.user_id,

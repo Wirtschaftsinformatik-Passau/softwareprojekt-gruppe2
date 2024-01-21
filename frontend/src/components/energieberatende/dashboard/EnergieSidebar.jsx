@@ -9,11 +9,7 @@ import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
-import ReceiptIcon from '@mui/icons-material/Receipt';
-import HouseIcon from '@mui/icons-material/House';
-import FilePresentIcon from '@mui/icons-material/FilePresent';
-import SolarPowerIcon from '@mui/icons-material/SolarPower';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
@@ -184,6 +180,13 @@ const EnergieSidebar = () => {
               icon={<CheckBoxIcon/>}
               selected={selected}
               setSelected={setSelected}
+            />
+             <Item
+            title="Rechnungen"
+            to="/rechnungenOverview"
+            icon={<AttachMoneyIcon/>}
+            selected={selected}
+            setSelected={setSelected}
             />
              <Typography
               variant="h6"

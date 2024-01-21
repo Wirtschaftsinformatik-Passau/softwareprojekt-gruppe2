@@ -8,6 +8,7 @@ from app.types import (Rolle, Orientierung, ProzessStatus, Montagesystem, Schatt
                        Isolierungsqualitaet, Rechnungsart, MassnahmeTyp, Vertragsstatus, Zahlungsstatus)
 
 
+
 class Adresse(Base):
     __tablename__ = 'adresse' if settings.OS == 'Linux' else "Adresse"
 
@@ -198,6 +199,7 @@ class Rechnungen(Base):
                                                        else "Zahlungsstatus", create_type=False))
     rechnungsperiode_start = Column(Date)
     rechnungsperiode_ende = Column(Date)
+
 
 
 class Vertrag(Base):

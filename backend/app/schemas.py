@@ -489,12 +489,13 @@ class VertragPreview(BaseModel):
 
 class RechnungResponse(BaseModel):
     rechnung_id: int
-    user_id: int
+    empfaenger_id: int
+    steller_id: int
     rechnungsbetrag: float
     rechnungsdatum: date
     faelligkeitsdatum: date
     rechnungsart: Rechnungsart
-    zeitraum: Optional[date] = None
+    zahlungsstatus: Zahlungsstatus
 
     class Config:
         extra = Extra.allow
@@ -734,11 +735,14 @@ class NutzerEmployeeResponse(BaseModel):
 
 
 class NutzerUpdate(BaseModel):
-    email: Optional[EmailStr] = None
+    email: Optional[Union[EmailStr, str]] = None
+    adresse_id: Optional[Union[int, str]] = None
     vorname: Optional[str] = None
     nachname: Optional[str] = None
     passwort: Optional[str] = None
+    geburtsdatum: Optional[str] = None
     telefonnummer: Optional[str] = None
+    rolle: Optional[str] = None
 
 
 class EmployeeResponse(BaseModel):

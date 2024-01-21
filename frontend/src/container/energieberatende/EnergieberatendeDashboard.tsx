@@ -6,13 +6,13 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import {Routes, Route, Navigate} from "react-router-dom";
 import { ColorModeContext, useMode } from "../../utils/theme";
 import Topbar from "../../components/all/Topbar"
-import Sidebar from "../../components/solarteure/dashboard/SolarteureSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import EnergieSidebar from "../../components/energieberatende/dashboard/EnergieSidebar";
 import EnergieberatendeAnfragen from "../../components/energieberatende/dashboard/EnergieberatendeAnfragen";
 import EnergieberatendeAnfragenBearbeitet from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenBearbeitet";
 import EnergieberatendeAnfragenAbgeschlossen from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenAbgeschlossen";
 import EnergieberatendeAnfragenDetail from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenDetail";
+import EnergieberaterRechnungsTable from "../../components/energieberatende/dashboard/EnergieberatendeRechnungenOverview";
 
 const  EnergieberatendeDashboard = () => {
 
@@ -39,6 +39,7 @@ const  EnergieberatendeDashboard = () => {
                 <Route path="/antragTableAbgeschlossen" element={<EnergieberatendeAnfragenAbgeschlossen/>}/>
                 <Route path="/antragTableBearbeitet" element={<EnergieberatendeAnfragenBearbeitet/>}/>
                 <Route path="/antragTable" element={<EnergieberatendeAnfragen/>}/>
+                <Route path="/rechnungenOverview" element={<EnergieberaterRechnungsTable/>}/>
                 <Route path="/faq" element={<FAQ faqItems={faqItems}/>}/>
                 </Routes>
                 </div>

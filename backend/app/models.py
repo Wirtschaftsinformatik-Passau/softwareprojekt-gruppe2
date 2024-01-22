@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Date, DateTime, Enum, ForeignKey, \
     Identity, TIMESTAMP, func, UniqueConstraint
 from app.database import Base
@@ -244,3 +245,11 @@ class Arbeitsverhältnis(Base):
     arbeitsverhältnis_id = Column(Integer, primary_key=True)
     arbeitgeber_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     arbeitnehmer_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+
+
+class PasswortResetToken(Base):
+    __tablename__ = 'passwort_reset_tokens' if settings.OS == 'Linux' else "Passwort_reset_tokens"
+    token_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    token = Column(String, unique=True, index=True)
+    expiration = Column(DateTime, default=datetime.utcnow)

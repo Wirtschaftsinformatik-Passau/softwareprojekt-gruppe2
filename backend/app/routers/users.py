@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, status, HTTPException
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
@@ -7,13 +8,11 @@ from sqlalchemy.future import select
 from logging.config import dictConfig
 import logging
 from typing import List, Union
-from time import sleep
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
-from app.geo_utils import geocode_address
+import uuid
 from app.email_sender import EmailSender
-
 
 dictConfig(LogConfigRegistration().dict())
 logger_registration = logging.getLogger("GreenEcoHubRegistration")
@@ -141,6 +140,7 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
 
     return {"nutzer_id": user_id}
 
+
 @router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
     try:
@@ -164,8 +164,9 @@ async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depe
 
 
 @router.get("/adresse", status_code=status.HTTP_200_OK,
-            response_model=Union[List[schemas.AdresseResponse],List[schemas.AdresseResponseLongLat]])
-async def get_adressen(skip: int = 0, limit: int = 100, type: str = "geo", db: AsyncSession = Depends(database.get_db_async)):
+            response_model=Union[List[schemas.AdresseResponse], List[schemas.AdresseResponseLongLat]])
+async def get_adressen(skip: int = 0, limit: int = 100, type: str = "geo",
+                       db: AsyncSession = Depends(database.get_db_async)):
     # TODO nur die adressen die im vertrag auch sind!!
     stmt = select(models.Adresse).offset(skip).limit(limit)
     result = await db.execute(stmt)
@@ -296,7 +297,8 @@ async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSess
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User nicht gefunden")
 
         changes = {}
-        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle", "passwort"]:
+        for field in ["email", "adresse_id", "vorname", "nachname", "geburtsdatum", "telefonnummer", "rolle",
+                      "passwort"]:
             new_value = getattr(updated_user, field, None)
 
             # Setzen Sie den Wert auf None, wenn er leer ist, außer für das E-Mail-Feld
@@ -319,15 +321,13 @@ async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSess
                 changes[field] = {"old": getattr(db_user, field), "new": new_value}
                 setattr(db_user, field, new_value)
 
-
-
         # Update Rolle, falls sie geändert wurde und nicht leer ist
         if updated_user.rolle and updated_user.rolle != db_user.rolle:
             try:
                 db_user.rolle = models.Rolle(updated_user.rolle)
             except ValueError as e:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-            
+
         await db.commit()
         await db.refresh(db_user)
 
@@ -356,7 +356,8 @@ async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSess
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-async def get_users(skip: int = 0, limit: int | None = None, current_user: models.Nutzer = Depends(oauth.get_current_user),
+async def get_users(skip: int = 0, limit: int | None = None,
+                    current_user: models.Nutzer = Depends(oauth.get_current_user),
                     db: AsyncSession = Depends(database.get_db_async)):
     stmt = (
         select(models.Nutzer, models.Adresse)
@@ -457,3 +458,119 @@ async def delete_user(id: int, db: AsyncSession = Depends(database.get_db_async)
         )
         logger.error(logging_error.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
+
+
+@router.post("/request-password-reset")
+async def request_password_reset(request: schemas.PasswortReqReset, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Sendet einen Link zum Zurücksetzen des Passworts an die E-Mail des Benutzers, wenn die angegebene E-Mail
+    registriert ist.
+
+    Parameters:
+    - email (str): Die E-Mail-Adresse des Benutzers, der eine Kennwortrücksetzung beantragt.
+    - db (AsyncSession): Die Datenbanksitzung zur Durchführung asynchroner Datenbankoperationen.
+
+    Returns:
+    - str: Eine Meldung, die angibt, ob ein Link zum Zurücksetzen des Passworts gesendet wurde.
+    """
+    email = request.email
+    try:
+        result = await db.execute(select(models.Nutzer).filter(models.Nutzer.email == email))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            return "Wenn Ihre E-Mail registriert ist, wird ein Wiederherstellungslink gesendet."
+
+        reset_token = await generate_password_reset_token()
+        await store_reset_token(user.user_id, reset_token, db)
+
+        await send_password_recovery_email(email, reset_token)
+
+        return "Wenn Ihre E-Mail registriert ist, wird ein Wiederherstellungslink gesendet."
+
+    except Exception as e:
+        logger.error(f"Fehler in request_password_reset: {e}")
+        raise HTTPException(status_code=500, detail="Interner Serverfehler")
+
+
+async def generate_password_reset_token():
+    return str(uuid.uuid4())
+
+
+async def store_reset_token(user_id, token, db):
+    try:
+        expiration_time = datetime.now() + timedelta(hours=24)
+        reset_token = models.PasswortResetToken(user_id=user_id, token=token, expiration=expiration_time)
+        db.add(reset_token)
+        await db.commit()
+    except SQLAlchemyError as e:
+        logger.error(f"Fehler beim Speichern des Reset-Tokens: {e}")
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Interner Serverfehler")
+
+
+async def send_password_recovery_email(user_email, token):
+    subject = "Passwort-Wiederherstellung"
+    recovery_link = f"132.231.36.102/reset-password?token={token}"
+    body = f"Bitte klicken Sie auf den Link, um Ihr Passwort zurückzusetzen: {recovery_link}"
+
+    try:
+        await email_sender.send_email(user_email, subject, body)
+    except Exception as e:
+        logger.error(f"Fehler beim Senden einer Wiederherstellungs-E-Mail: {e}")
+
+
+@router.post("/reset-passwort/{token}")
+async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Setzt das Passwort des Benutzers zurück, wenn das angegebene Token gültig und nicht abgelaufen ist.
+
+    Parameters:
+    - token (str): Das Token zum Zurücksetzen des Passworts, das dem Benutzer zur Verfügung gestellt wurde.
+    - neu_passwort (str): Das neue Kennwort, das der Benutzer festlegen möchte.
+    - db (AsyncSession): Die Datenbanksitzung für die Durchführung asynchroner Datenbankoperationen.
+
+    Returns:
+    - str: Eine Nachricht, die das Ergebnis des Vorgangs zum Zurücksetzen des Kennworts angibt.
+
+    Raises:
+    - ValueError: Wenn das Token ungültig oder abgelaufen ist, oder wenn der mit dem Token verknüpfte Benutzer
+                  nicht gefunden wird.
+    - SQLAlchemyError: Wenn während des Vorgangs ein datenbankbezogener Fehler auftritt.
+    - Exception: Für alle anderen unerwarteten Fehler, die auftreten können.
+    """
+    try:
+        result = await db.execute(select(models.PasswortResetToken).filter(models.PasswortResetToken.token == token))
+        token_data = result.scalar_one_or_none()
+        if not token_data:
+            raise ValueError("Ungültiger Token")
+
+        if token_data.expiration < datetime.utcnow():
+            raise ValueError("Token abgelaufen")
+
+        hashed_passwort = hashing.Hashing.hash_password(reset_data.neu_passwort)
+
+        result = await db.execute(select(models.Nutzer).filter(models.Nutzer.user_id == token_data.user_id))
+        nutzer = result.scalar_one_or_none()
+
+        if not nutzer:
+            raise ValueError("Benutzer nicht gefunden")
+
+        nutzer.password = hashed_passwort
+        await db.commit()
+
+        await db.delete(token_data)
+        await db.commit()
+
+        return "Passwort erfolgreich zurückgesetzt"
+
+    except ValueError as ve:
+        return str(ve)
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        return f"Datenbankfehler aufgetreten: {e}"
+
+    except Exception as e:
+        await db.rollback()
+        return f"Ein unerwarteter Fehler ist aufgetreten: {e}"

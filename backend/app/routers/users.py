@@ -511,7 +511,7 @@ async def store_reset_token(user_id, token, db):
 
 async def send_password_recovery_email(user_email, token):
     subject = "Passwort-Wiederherstellung"
-    recovery_link = f"132.231.36.102/reset-password?token={token}"
+    recovery_link = f"132.231.36.102/reset-password/{token}"
     body = f"Bitte klicken Sie auf den Link, um Ihr Passwort zurückzusetzen: {recovery_link}"
 
     try:

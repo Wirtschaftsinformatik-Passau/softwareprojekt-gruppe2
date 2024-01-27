@@ -1,6 +1,7 @@
+import traceback
 from fastapi import APIRouter, Depends, status, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select, func, exc
 from sqlalchemy import exc
 from datetime import datetime, date, timedelta
 from app import models, schemas, database, oauth
@@ -12,6 +13,10 @@ import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
 from app.config import Settings
+import csv
+import io
+from fastapi.responses import StreamingResponse
+
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -599,3 +604,57 @@ async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(dat
         )
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/download_reports", status_code=status.HTTP_200_OK)
+async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+                                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "GET", "/download_reports")
+    try:
+        # Gesamtanzahl Nutzer
+        total_users = await db.execute(select(func.count(models.Nutzer.user_id)))
+        
+        # Anzahl Backend Aufrufe 
+        backend_calls = 0
+        with open("logs/server.log", "r") as file:
+            for line in file:
+                log_entry = json.loads(line)
+                if log_entry.get("level") == "INFO":
+                    backend_calls += 1
+        # Neue Kontaktanfragen für Energieausweise und PVAnlagen
+        new_energy_requests = await db.execute(select(func.count(models.Energieausweise.energieausweis_id)).where(models.Energieausweise.ausweis_status == "AnfrageGestellt"))
+        new_pv_requests = await db.execute(select(func.count(models.PVAnlage.anlage_id)).where(models.PVAnlage.prozess_status == "AnfrageGestellt"))
+
+        # Anzahl der Nutzer nach Rollen
+        admin_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Admin"))
+        solarteure_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Solarteure"))
+        energieberatende_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Energieberatende"))
+        netzbetreiber_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Netzbetreiber"))
+        haushalte_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Haushalte"))
+
+        # Erstellen der CSV-Datei
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Schreiben der Kopfzeilen
+        header = ["Kategorie", "Anzahl"]
+        writer.writerow(header)
+
+        # Schreiben der Daten
+        writer.writerow(["Gesamtanzahl Nutzer", total_users.scalar()])
+        writer.writerow(["Backend Aufrufe", backend_calls])  
+        writer.writerow(["Neue Energieanfragen", new_energy_requests.scalar()])
+        writer.writerow(["Neue PV Anfragen", new_pv_requests.scalar()])
+        writer.writerow(["Anzahl Admins", admin_count.scalar()])
+        writer.writerow(["Anzahl Solarteure", solarteure_count.scalar()])
+        writer.writerow(["Anzahl Energieberatende", energieberatende_count.scalar()])
+        writer.writerow(["Anzahl Netzbetreiber", netzbetreiber_count.scalar()])
+        writer.writerow(["Anzahl Haushalte", haushalte_count.scalar()])
+
+        output.seek(0)  # Zurück zum Anfang der Datei
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=report.csv"})
+
+    except Exception as e:
+        logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=logging_error)

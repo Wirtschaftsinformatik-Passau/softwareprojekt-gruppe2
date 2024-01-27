@@ -1,3 +1,4 @@
+import traceback
 from datetime import MAXYEAR, date, timedelta
 from datetime import date, datetime
 from uuid import uuid4
@@ -9,14 +10,15 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from  pydantic_core._pydantic_core import ValidationError
 from sqlalchemy.orm import selectinload
-
 from sqlalchemy.orm import selectinload
-
 from app import models, schemas, database, oauth, types
 import logging
 from logging.config import dictConfig
 from app.logger import LogConfig
 from app.schemas import *
+import csv
+import io
+from fastapi.responses import StreamingResponse
 
 KWH_VERBRAUCH_JAHR = 1500
 
@@ -1185,3 +1187,39 @@ async def rechnung_bezahlen(rechnung_id: int,
         logger.error(logging_obj.dict())
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Fehler beim Aktualisieren der Rechnung")
+
+
+@router.get("/download_reports", status_code=status.HTTP_200_OK)
+async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+                                current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_haushalt_role(current_user, "GET", "/download_reports")
+    try:
+        # Anzahl der laufenden PV-Anträge
+        pv_anfragen_count = await db.execute(
+            select(func.count(models.PVAnlage.anlage_id)).where(models.PVAnlage.prozess_status == "AnfrageGestellt")
+        )
+
+        # Anzahl der laufenden Verträge für den Haushalt
+        vertraege_count = await db.execute(
+            select(func.count(models.Vertrag.vertrag_id)).where(models.Vertrag.user_id == current_user.user_id)
+        )
+
+        # Erstellen der CSV-Datei
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Schreiben der Kopfzeilen
+        header = ["Kategorie", "Anzahl"]
+        writer.writerow(header)
+
+        # Schreiben der Daten
+        writer.writerow(["Anzahl der laufenden PV-Anträge", pv_anfragen_count.scalar()])
+        writer.writerow(["Anzahl der laufenden Verträge", vertraege_count.scalar()])
+
+        output.seek(0)  # Zurück zum Anfang der Datei
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=haushalt_report.csv"})
+
+    except Exception as e:
+        logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=logging_error)

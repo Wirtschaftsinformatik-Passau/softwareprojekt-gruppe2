@@ -573,9 +573,17 @@ class VertragTarifNBResponse(BaseModel):
 
 
 class KalenderEintragCreate(BaseModel):
-    zeitpunkt: date
-    user_id: int
     beschreibung: str
+    start: str
+    ende: str
+    allDay: bool
+
+
+class KalenderEintragResponse(BaseModel):
+    beschreibung: str
+    start: str
+    ende: str
+    allDay: bool
 
 
 class KalenderEintrag(KalenderEintragCreate):

@@ -326,7 +326,15 @@ const Sidebar1 = () => {
               sx={{ m: "15px 0 5px 20px" }}
             >
               Pages
+              
             </Typography>
+            <Item
+            title="Rechnungen"
+            to="/rechnungenOverview"
+            icon={<AttachMoneyIcon/>}
+            selected={selected}
+            setSelected={setSelected}
+            />
             <Item
               title="Calendar"
               to="/calendar"

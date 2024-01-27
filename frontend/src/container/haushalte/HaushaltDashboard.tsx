@@ -24,6 +24,7 @@ import HaushalteVertragWechselnDetail from "../../components/haushalte/dashboard
 import HaushalteEnergieAusweisOverview from "../../components/haushalte/dashboard/HaushaltEnergieAusweisOverview";
 import HaushalteRechnungenOverview from "../../components/haushalte/dashboard/HaushalteRechnungenOverview";
 import HaushalteRechnungenDetail from "../../components/haushalte/dashboard/HaushalteRechnungenDetail";
+import Calendar from "../../components/all/dashboards/Calendar";
 
 const  HaushaltDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -63,6 +64,7 @@ const  HaushaltDashboard = () => {
                     <Route path="/energieausweisOverview" element={<HaushalteEnergieAusweisOverview/>}/>
                     <Route path="/rechnungenOverview" element={<HaushalteRechnungenOverview/>}/>
                     <Route path="/rechnungenDetail/:rechnungID" element={<HaushalteRechnungenDetail/>}/>
+                    <Route path="/calendar" element={<Calendar/>}/>
                 </Routes>
                 </div>
                 

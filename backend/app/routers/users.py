@@ -40,6 +40,22 @@ async def geocode_entries(current_user: models.Nutzer = Depends(oauth.get_curren
         stmt = select(models.Adresse)
         result = await db.execute(stmt)
         adressen = result.all()
+        for adresse in adressen:
+            if not adresse[0].latitude or not adresse[0].longitude:
+                latitude, longitude = geocode_address(adresse[0].strasse, adresse[0].hausnummer, adresse[0].plz,
+                                                      adresse[0].stadt)
+                if latitude and longitude:
+                    adresse[0].latitude = latitude
+                    adresse[0].longitude = longitude
+                    await db.commit()
+                    await db.refresh(adresse[0])
+                    logging_msg = f"Adresse {adresse[0].adresse_id} erfolgreich geocodiert"
+                    logging_obj = schemas.LoggingSchema(user_id=current_user.user_id, endpoint="/geocode", method="POST",
+                                                        message=logging_msg, success=True)
+                    logger_adresse.info(logging_obj.dict())
+                    sleep(0.5)
+                else:
+                    continue
         return {"msg": "Geocodierung erfolgreich"}
 
     except exc.IntegrityError as e:

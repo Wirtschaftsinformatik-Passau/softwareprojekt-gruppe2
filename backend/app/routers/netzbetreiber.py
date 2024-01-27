@@ -1073,6 +1073,7 @@ async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_asy
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Kuendigungsanfragen: {e}")
 
 
+#Todo: hier muss angepasst werden, stimmt nicht mit dem richtigen models.Rechnung überein
 @router.put("/kuendigungsanfragenbearbeitung/{vertrag_id}")
 async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
                                          db: AsyncSession = Depends(database.get_db_async),
@@ -1100,12 +1101,14 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
 
             # Erstelle eine Rechnung für den gekündigten Vertrag
             rechnung = models.Rechnungen(
-                user_id=anfrage.user_id,
+                steller_id=current_user.user_id,
+                empfaenger_id=anfrage.user_id,
                 rechnungsbetrag=zeitanteiliger_jahresabschlag,
                 rechnungsdatum=datetime.now(),
                 faelligkeitsdatum=datetime.now() + timedelta(days=30),
                 rechnungsart=models.Rechnungsart.Netzbetreiber_Rechnung,
-                zeitraum=datetime.now()
+                zahlungsstatus=models.Zahlungsstatus.Offen,
+
             )
             db.add(rechnung)
             logging_msg = LoggingSchema(

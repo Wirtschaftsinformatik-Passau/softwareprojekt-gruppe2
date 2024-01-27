@@ -112,7 +112,7 @@ const EnergieberaterRechnungsTable = () => {
             gridAutoRows="140px"
             gap="0px">
             <Box gridColumn={"span 2"} m="20px">
-                <Header title="Rechnungsübersicht" subtitle="Zum bezahlen auf Rechnung klicken"/>
+                <Header title="Rechnungsübersicht" subtitle="Übersicht über alle gestellten Rechnungen"/>
             </Box>
 
 

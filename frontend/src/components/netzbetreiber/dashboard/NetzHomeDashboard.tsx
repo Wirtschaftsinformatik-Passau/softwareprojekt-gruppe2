@@ -15,7 +15,10 @@ import HomeIcon from '@mui/icons-material/Home';
 import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import BarChart from "../../utility/visualization/BarChart";
 import LeafletGeo   from "../../utility/visualization/LeafletGeo";
-import { addSuffixToBackendURL } from "../../../utils/networking_utils";
+import PublicIcon from '@mui/icons-material/Public';
+import { addSuffixToBackendURL } from "../../../utils/networking_utils"
+import SuccessModal from "../../utility/SuccessModal";
+import FullLoadingSpinner from "../../utility/FullLoadingSpinner";
 
 
 const NetzHome = () => {
@@ -26,7 +29,10 @@ const NetzHome = () => {
     const [tarifData, setTarifData] = React.useState([]);
     const [preisData, setPreisData] = React.useState([]);
     const [laufzeitData, setLaufzeitData] = React.useState([]);
+    const [isLoading2, setIsLoading2] = React.useState(false);
     const [haushalte, setHaushalte] = React.useState([]);
+    const [geocodeFail, setGeocodeFail] = React.useState(false);
+    const [geoCodeSuccess, setGeoCodeSuccess] = React.useState(false);
     const [geoData, setGeoData] = React.useState([
       { id: '1', position: [48.57408564310167, 13.463277360121875], name: '1' }]);
    
@@ -40,7 +46,7 @@ const NetzHome = () => {
       const token = localStorage.getItem("accessToken");
       setStateOtherwiseRedirect(setGeoData, "users/adresse", navigate,  {Authorization: `Bearer ${token}`})
       setIsLoading1(false);
-    }, [])
+    }, [geoCodeSuccess])
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
@@ -60,6 +66,21 @@ const NetzHome = () => {
       setIsLoading1(false);
     }, [])
 
+    const geocodieren = () => {
+      const token = localStorage.getItem("accessToken");
+      setIsLoading2(true);
+      axios.post(addSuffixToBackendURL("users/geocode"),{}, {headers: {Authorization: `Bearer ${token}`}})
+      .then((response) => {
+       setIsLoading2(false);
+        setGeoCodeSuccess(true);
+
+      })
+      .catch((error) => {
+        setIsLoading2(false);
+        setGeocodeFail(true);
+      });
+    }
+
 
     if (isLoading1) {
       return (
@@ -69,10 +90,33 @@ const NetzHome = () => {
       );
     }
 
+    if (isLoading2) {
+      return (
+        <FullLoadingSpinner />
+      );
+    }
+
     return (
         <Box m="20px">
             <Header title="Netzbetreiber Dashboard" subtitle="Für Details die Reiter in der Sidebar auswählen"/>
-            <Box display="flex" justifyContent="end" alignItems="center" >
+            <Box display="flex" justifyContent="space-between" alignItems="center" >
+            <Button
+            onClick={() => geocodieren()}
+            sx={{
+              backgroundColor: colors.color1[400],
+              color: theme.palette.background.default,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              ":hover" : {
+                backgroundColor: colors.grey[500],
+              
+              }
+            }}
+          >
+            <PublicIcon sx={{ mr: "10px" }} />
+            Adressen geocodieren
+          </Button>
           <Button
             sx={{
               backgroundColor: colors.color1[400],
@@ -220,6 +264,10 @@ const NetzHome = () => {
         </Grow>
 
         </Box>
+        <SuccessModal open={geoCodeSuccess} handleClose={() => setGeoCodeSuccess(false)} 
+    text="Geokodierung erfolgreich!"/>
+     <SuccessModal open={geocodeFail} handleClose={() => setGeocodeFail(false)} 
+    text="Geokodierung fehlgeschlagen!"/>
         </Box>
     
     )

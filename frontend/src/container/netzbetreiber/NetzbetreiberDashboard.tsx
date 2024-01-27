@@ -28,6 +28,8 @@ import NetzbetreiberVertragDetail from"../../components/netzbetreiber/dashboard/
 import NetzbertreiberEinspeisungenDetail from "../../components/netzbetreiber/dashboard/NetzbetreiberEinspeisungenDetail";
 import NetzbetreiberMitarbeiterTable from "../../components/netzbetreiber/dashboard/NetzbetreiberMitarbeiterTable";
 import NetzbetreiberMitarbeiterCreate from "../../components/netzbetreiber/dashboard/NetzbetreiberMitarbeiterCreate";
+import EnergieberaterRechnungsTable from "../../components/energieberatende/dashboard/EnergieberatendeRechnungenOverview";
+import Calendar from "../../components/all/dashboards/Calendar";
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
@@ -71,6 +73,8 @@ const  NetzbetreiberDashboard = () => {
                 <Route path="vertraege/:vertragID" element={<NetzbetreiberVertragDetail/>}/>
                 <Route path="/mitarbeiterTable" element={<NetzbetreiberMitarbeiterTable/>}/>
                 <Route path="/mitarbeiterCreate" element={<NetzbetreiberMitarbeiterCreate/>}/>
+                <Route path="/rechnungenOverview" element={<EnergieberaterRechnungsTable/>}/>
+                <Route path="/calendar" element={<Calendar/>}/>
                 </Routes>
                 </div>
                 

@@ -35,7 +35,7 @@ const  NetzbetreiberDashboard = () => {
         <div className="flex h-100" style={{marginTop: "64px"}}>
                 <Sidebar/>
                 <div className="flex-1 overflow-y-auto">
-                <Topbar fixed={true}/>
+                <Topbar fixed={true} nutzerrolle={"Solarteure"}/>
                 <Routes>
                     <Route path="/antragTable" element={<SolarteureAnfragen/>}/>
                     <Route path="/antragTable/:anlageID" element={<SolarteureAnfragenDetail/>}/>

@@ -1,12 +1,16 @@
 import { type } from "os";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { navigateToHome } from "../../utils/navigateUtils";
+import { Nutzerrolle, User } from "../../entitities/user";
 
 type HelpModalProps = {
     modalCloserState: (arg: boolean) => void,
+    nutzerrolle: User | null,
+    navigateFN: () => void
 }
 
-const HelpModal: React.FC<HelpModalProps> = ({modalCloserState}) => {
+const HelpModal: React.FC<HelpModalProps> = ({modalCloserState, nutzerrolle=null, navigateFN=null}) => {
     const itemStyle = "text-md border-b-2 cursor:pointer"
     const navigate = useNavigate()
 
@@ -19,12 +23,16 @@ const HelpModal: React.FC<HelpModalProps> = ({modalCloserState}) => {
                      Hilfe
                 </h3>
                 </button>
+                {nutzerrolle != undefined &&
                 <button>
                 <h3 className={itemStyle}
-                onClick={() => navigate("/registration")}>
+                onClick={
+                    nutzerrolle === undefined ? () => navigate("/login") :
+                    () => navigateToHome(nutzerrolle, navigateFN)}>
                     Home
                 </h3>
                 </button>
+}
                 <button>
                 <h3 className={itemStyle}>
                     Kontakt

@@ -45,7 +45,7 @@ const  HaushaltDashboard = () => {
         <div className="flex h-100" style={{marginTop: "64px"}}>
                 <HaushalteSidebar/>
                 <div className="flex-1 overflow-y-auto">
-                <Topbar fixed={true}/>
+                <Topbar fixed={true} nutzerrolle={"Solarteure"}/>
                 <Routes>
                     <Route path="/tarifTable" element={<HaushalteTarifTable/>}/>
                     <Route path="/" element={<HaushalteHome/>}/>

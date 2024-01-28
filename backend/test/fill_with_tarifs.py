@@ -19,7 +19,7 @@ def send_post_request(request_number):
     data = {
         "tarifname": unique_name,
         "preis_kwh": round(np.random.rand(),2),
-        "grundgebuehr": np.random.randint(0,10),
+        "grundgebuehr": np.random.randint(0, 10),
         "laufzeit":np.random.randint(0, 20),
         "spezielle_konditionen": "Keine"
         }

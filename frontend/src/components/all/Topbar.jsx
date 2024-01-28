@@ -1,7 +1,7 @@
 import { Box, IconButton, useTheme, Typography, TextField} from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import {makeStyles} from "@material-ui/core/styles";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import {ColorModeContext, tokens} from "../../utils/theme.js";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,7 @@ import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
 import {searchBarItems} from "../../entitities/utils";
-import {Nutzerrolle} from "../../entitities/user";
+import HelpModal from "../utility/HelpModal";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -37,12 +37,12 @@ const Topbar = ({fixed, nutzerrolle, search=true}) => {
     const navigate = useNavigate();
     const isNonMobile = useMediaQuery("(min-width:700px)")
     const [helpModal, setHelpModal] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
     const [inputValue, setInputValue] = useState("");
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const classes = useStyles(theme);
     const colorMode = useContext(ColorModeContext);
-
 
 
     const handleSearchItemSelected = (event, item) => {
@@ -114,20 +114,26 @@ const Topbar = ({fixed, nutzerrolle, search=true}) => {
             </Box>
 
 
-            <Box display="flex">
+           <Box display="flex">
+           {search && (
                 <IconButton onClick={colorMode.toggleColorMode}>
                     {theme.palette.mode === "dark" ? (
                         <DarkModeOutlinedIcon />
                     ) : (
                         <LightModeOutlinedIcon />
                     )}
+        
                 </IconButton>
+           )}
                 <IconButton onClick={() => setHelpModal(true)}>
                     <QuestionMarkIcon />
                 </IconButton>
-                <IconButton>
+                {search && (
+                    <IconButton>
                     <PersonOutlinedIcon onClick={() => navigate("/profile")}/>
                 </IconButton>
+                )
+}
                 <IconButton>
                     <LogoutIcon onClick={() => {
                         navigate("/login")
@@ -135,7 +141,7 @@ const Topbar = ({fixed, nutzerrolle, search=true}) => {
                     }}/>
                 </IconButton>
             </Box>
-
+            {helpModal && (<HelpModal modalCloserState={setHelpModal} nutzerrolle={nutzerrolle} navigateFN={navigate}/>)}
         </Box>
     );
 };

@@ -17,7 +17,7 @@ const AntragTable = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=AngebotGemacht&prozess_status=DatenAngefordert&prozess_status=DatenFreigegeben&prozess_status=AngebotAngenommen&prozess_status=AusweisErstellt",
+    setStateOtherwiseRedirect(setData, "solarteure/anfragen?prozess_status=AngebotGemacht&prozess_status=DatenAngefordert&prozess_status=DatenFreigegeben&prozess_status=AngebotAngenommen&prozess_status=AusweisErstellt&prozess_status=AusweisAngefordert",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 

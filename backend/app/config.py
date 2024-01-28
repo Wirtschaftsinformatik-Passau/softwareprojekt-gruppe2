@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     OS: str
+    SMTP_SERVER: str
+    SMTP_PORT: int
+    USERNAME: str
+    PASSWORD: str
 
 
 settings = Settings()

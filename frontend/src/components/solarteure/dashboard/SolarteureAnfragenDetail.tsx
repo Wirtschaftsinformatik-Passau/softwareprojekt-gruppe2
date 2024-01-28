@@ -40,7 +40,7 @@ const SolarteureAnfragenDetail = ({}) => {
     const [datenfreigabe, setDatenfreigabe] = React.useState<boolean>(false);
     const [aufFreigabeWarten, setAufFreigabeWarten] = React.useState<boolean>(false);
     const aufAngebotAnnahmeWarten = status === "AngebotGemacht" ? true : false;
-    const aufEnergieberaterWarten = status === "AngebotAngenommen" ? true : false;
+    const aufEnergieberaterWarten = status === "AngebotAngenommen" || status ===  "AusweisAngefordert"? true : false;
     const planErstellen = status === "AusweisErstellt" ? true : false;
     const {anlageID} = useParams();
     const [antrag, setAntrag] = React.useState<SolarteurResponseExtended>({

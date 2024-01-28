@@ -71,7 +71,7 @@ const Form = () => {
 
   return (
     <div>
-    <Topbar fixed={true}/>
+    <Topbar fixed={true} search={false}/>
     <div className="flex justify-start items-center flex-col h-screen" style={{marginTop: "70px"}}>
     <div className={`w-full h-full bg-${theme.palette.background} `}>
        
@@ -402,7 +402,11 @@ const Form = () => {
               }}
               />
             </Box>
-            <Box display="flex" justifyContent="end" mt="20px">
+            
+            <Box display="flex" justifyContent="space-between" mt="20px">
+            <Button onClick={() => navigate("/login")} color="neutral" variant="contained">
+                Abbrechen
+              </Button>
               <Button type="submit" color="secondary" variant="contained">
                 Profil erstellen
               </Button>

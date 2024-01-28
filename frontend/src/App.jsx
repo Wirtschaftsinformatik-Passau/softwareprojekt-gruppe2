@@ -12,6 +12,7 @@ import EnergieberatendeDashboard from "./container/energieberatende/Energieberat
 import LoginUI from "./container/all/LoginUI.tsx"
 import RegistrationUI from "./container/all/RegistrationUI.tsx";
 import Profile from "./container/all/Profile.tsx";
+import PasswordReset from "./container/all/PasswordReset.tsx";
 import { ColorModeContext, useMode } from "./utils/theme.js";
 import { addSuffixToBackendURL } from "./utils/networking_utils.js";
 
@@ -52,6 +53,7 @@ const App = () => {
             <Route path="/solarteure/*" element={<SolarteureDashboard/>}/>
             <Route path="/energieberatende/*" element={<EnergieberatendeDashboard/>}/>
             <Route path="/profile"  element={<Profile/>}/>
+            <Route path="/reset-password/:token" element={<PasswordReset/>}/>
             <Route path="*" element={<LoginUI isAlreadyLoggedIn={isLoggedIn}/>}/>
         </Routes>
         </ThemeProvider>

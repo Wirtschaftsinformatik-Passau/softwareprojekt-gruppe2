@@ -18,6 +18,7 @@ from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
 from app.geo_utils import geocode_address
 from app.email_sender import EmailSender
+from app.config import settings
 
 
 
@@ -33,10 +34,10 @@ logger = logging.getLogger("GreenEcoHub")
 router = APIRouter(prefix="/users", tags=["Users"])
 
 email_sender = EmailSender(
-    smtp_server="132.231.36.210",
-    smtp_port=1102,
-    username="mailhog_grup2",
-    password="connect19my41UP"
+    smtp_server=settings.SMTP_SERVER,
+    smtp_port=settings.SMTP_PORT,
+    username=settings.USERNAME,
+    password=settings.PASSWORD,
 )
 
 
@@ -484,7 +485,8 @@ async def delete_user(id: int, db: AsyncSession = Depends(database.get_db_async)
 
 
 @router.post("/request-password-reset")
-async def request_password_reset(request: schemas.PasswortReqReset, db: AsyncSession = Depends(database.get_db_async)):
+async def request_password_reset(request: schemas.PasswortReqReset,
+                                 db: AsyncSession = Depends(database.get_db_async)):
     """
     Sendet einen Link zum Zurücksetzen des Passworts an die E-Mail des Benutzers, wenn die angegebene E-Mail
     registriert ist.
@@ -544,7 +546,8 @@ async def send_password_recovery_email(user_email, token):
 
 
 @router.post("/reset-passwort/{token}")
-async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: AsyncSession = Depends(database.get_db_async)):
+async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
+                         db: AsyncSession = Depends(database.get_db_async)):
     """
     Setzt das Passwort des Benutzers zurück, wenn das angegebene Token gültig und nicht abgelaufen ist.
 
@@ -566,10 +569,28 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: Asyn
         result = await db.execute(select(models.PasswortResetToken).filter(models.PasswortResetToken.token == token))
         token_data = result.scalar_one_or_none()
         if not token_data:
-            raise ValueError("Ungültiger Token")
+            await db.rollback()
+            logging_error = schemas.LoggingSchema(
+                user_id=0,
+                endpoint="/users/reset-passwort/" + token,
+                method="POST",
+                message=f"Ungültiger Token: {token}",
+                success=False
+            )
+            logger.error(logging_error.dict())
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ungültiger Token")
 
         if token_data.expiration < datetime.utcnow():
-            raise ValueError("Token abgelaufen")
+            await db.rollback()
+            logging_error = schemas.LoggingSchema(
+                user_id=0,
+                endpoint="/users/reset-passwort/" + token,
+                method="POST",
+                message=f"Token abgelaufen: {token}",
+                success=False
+            )
+            logger.error(logging_error.dict())
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token abgelaufen")
 
         hashed_passwort = hashing.Hashing.hash_password(reset_data.neu_passwort)
 
@@ -577,23 +598,42 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: Asyn
         nutzer = result.scalar_one_or_none()
 
         if not nutzer:
-            raise ValueError("Benutzer nicht gefunden")
+            await db.rollback()
+            logging_error = schemas.LoggingSchema(
+                user_id=0,
+                endpoint="/users/reset-passwort/" + token,
+                method="POST",
+                message=f"Nutzer nicht gefunden: {token_data.user_id}",
+                success=False
+            )
+            logger.error(logging_error.dict())
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden")
 
         nutzer.password = hashed_passwort
         await db.commit()
+        await db.refresh(nutzer)
 
         await db.delete(token_data)
         await db.commit()
 
+        logging_info = schemas.LoggingSchema(
+            user_id=nutzer.user_id,
+            endpoint="/users/reset-passwort/" + token,
+            method="POST",
+            message="Passwort erfolgreich zurückgesetzt",
+            success=True
+        )
+        logger.info(logging_info.dict())
         return "Passwort erfolgreich zurückgesetzt"
 
-    except ValueError as ve:
-        return str(ve)
 
     except SQLAlchemyError as e:
         await db.rollback()
         return f"Datenbankfehler aufgetreten: {e}"
 
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+
         await db.rollback()
         return f"Ein unerwarteter Fehler ist aufgetreten: {e}"

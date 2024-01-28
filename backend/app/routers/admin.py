@@ -606,10 +606,10 @@ async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(dat
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/download_reports", status_code=status.HTTP_200_OK)
+@router.get("/download_reports_dashboard", status_code=status.HTTP_200_OK)
 async def download_reports(db: AsyncSession = Depends(database.get_db_async),
                                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    await check_admin_role(current_user, "GET", "/download_reports")
+    await check_admin_role(current_user, "GET", "/download_reports_dashboard")
     try:
         # Gesamtanzahl Nutzer
         total_users = await db.execute(select(func.count(models.Nutzer.user_id)))
@@ -653,6 +653,132 @@ async def download_reports(db: AsyncSession = Depends(database.get_db_async),
 
         output.seek(0)  # Zurück zum Anfang der Datei
         return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=report.csv"})
+
+    except Exception as e:
+        logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=logging_error)
+    
+
+@router.get("/download_reports_vertrag", status_code=status.HTTP_200_OK)
+async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "GET", "/download_reports_vertrag")
+
+    try:
+        vertraege = await db.execute(select(models.Vertrag))
+
+        # Erstellen der CSV-Datei
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Schreiben der Kopfzeilen entsprechend der Tabelle Vertrag
+        header = ["vertrag_id", "user_id", "tarif_id", "beginn_datum", "end_datum", "netzbetreiber_id", "jahresabschlag", "vertragstatus"]
+        writer.writerow(header)
+
+        # Schreiben der Daten aus der Vertrag-Tabelle
+        for vertrag in vertraege.scalars().all():
+            writer.writerow([
+                vertrag.vertrag_id,
+                vertrag.user_id,
+                vertrag.tarif_id,
+                vertrag.beginn_datum.isoformat() if vertrag.beginn_datum else None,
+                vertrag.end_datum.isoformat() if vertrag.end_datum else None,
+                vertrag.netzbetreiber_id,
+                vertrag.jahresabschlag,
+                vertrag.vertragstatus.value  
+            ])
+
+        output.seek(0)  # Zurück zum Anfang der Datei
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=vertrag_report.csv"})
+
+    except Exception as e:
+        logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=logging_error)
+
+
+@router.get("/download_reports_rechnungen", status_code=status.HTTP_200_OK)
+async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    await check_admin_role(current_user, "GET", "/download_reports_rechnungen")
+
+    try:
+        rechnungen = await db.execute(select(models.Rechnungen))
+
+        # Erstellen der CSV-Datei
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Schreiben der Kopfzeilen entsprechend der Tabelle Rechnungen
+        header = [
+            "rechnung_id", "empfaenger_id", "steller_id", "rechnungsbetrag", "rechnungsdatum",
+            "faelligkeitsdatum", "rechnungsart", "zahlungsstatus", "rechnungsperiode_start", "rechnungsperiode_ende"
+        ]
+        writer.writerow(header)
+
+        # Schreiben der Daten aus der Rechnungen-Tabelle
+        for rechnung in rechnungen.scalars().all():
+            writer.writerow([
+                rechnung.rechnung_id,
+                rechnung.empfaenger_id,
+                rechnung.steller_id,
+                float(rechnung.rechnungsbetrag),
+                rechnung.rechnungsdatum.isoformat() if rechnung.rechnungsdatum else None,
+                rechnung.faelligkeitsdatum.isoformat() if rechnung.faelligkeitsdatum else None,
+                rechnung.rechnungsart.value if rechnung.rechnungsart else None,  # Enum-Wert
+                rechnung.zahlungsstatus.value if rechnung.zahlungsstatus else None,  # Enum-Wert
+                rechnung.rechnungsperiode_start.isoformat() if rechnung.rechnungsperiode_start else None,
+                rechnung.rechnungsperiode_ende.isoformat() if rechnung.rechnungsperiode_ende else None,
+            ])
+
+        output.seek(0)  # Zurück zum Anfang der Datei
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=rechnungen_report.csv"})
+
+    except Exception as e:
+        logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=logging_error)
+    
+
+@router.get("/download_reports_energieausweise", status_code=status.HTTP_200_OK)
+async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+
+    await check_admin_role(current_user, "GET", "/download_reports_energieausweise")
+    
+    try:
+        # Wählen Sie alle Energieausweise aus, wenn der Nutzer Admin ist
+        energieausweise = await db.execute(select(models.Energieausweise))
+
+        # Erstellen der CSV-Datei
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Schreiben der Kopfzeilen entsprechend der Tabelle Energieausweise
+        header = [
+            "energieausweis_id", "haushalt_id", "massnahmen_id", "energieberater_id",
+            "energieeffizienzklasse", "verbrauchskennwerte", "ausstellungsdatum", "gueltigkeit",
+            "ausweis_status"
+        ]
+        writer.writerow(header)
+
+        # Schreiben der Daten aus der Energieausweise-Tabelle
+        for ausweis in energieausweise.scalars().all():
+            writer.writerow([
+                ausweis.energieausweis_id,
+                ausweis.haushalt_id,
+                ausweis.massnahmen_id,
+                ausweis.energieberater_id,
+                ausweis.energieeffizienzklasse,
+                ausweis.verbrauchskennwerte,
+                ausweis.ausstellungsdatum.isoformat() if ausweis.ausstellungsdatum else None,
+                ausweis.gueltigkeit.isoformat() if ausweis.gueltigkeit else None,
+                ausweis.ausweis_status.value  # Achten Sie auf den Enum-Typ hier
+            ])
+
+        output.seek(0)  # Zurück zum Anfang der Datei
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=energieausweise_report.csv"})
 
     except Exception as e:
         logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}

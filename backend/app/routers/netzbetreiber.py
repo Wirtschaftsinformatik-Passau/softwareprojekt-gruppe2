@@ -1,9 +1,8 @@
-import traceback
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from sqlalchemy import exc, update, text, func
+from sqlalchemy import exc, update, text
 from app import models, schemas, database, oauth, hashing
 from collections import Counter
 from typing import Union, List
@@ -21,8 +20,6 @@ import io
 from datetime import datetime, timedelta, date
 import re
 import calendar
-import csv
-from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/netzbetreiber", tags=["Netzbetreiber"])
 

@@ -20,6 +20,17 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 async def check_admin_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Benutzer die Rolle des Administrators hat.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+        method (str): Die HTTP-Methode der aktuellen Anfrage.
+        endpoint (str): Der Endpunkt, auf den zugegriffen wird.
+
+    Raises:
+        HTTPException: Wenn der Benutzer kein Administrator ist.
+    """
     if current_user.rolle != models.Rolle.Admin:
         logging_error = schemas.LoggingSchema(
             user_id=current_user.user_id,
@@ -33,6 +44,17 @@ async def check_admin_role(current_user: models.Nutzer, method: str, endpoint: s
 
 
 async def check_log_file_existence(log_file_path: Path, current_user_id: int, endpoint: str) -> None:
+    """
+    Überprüft, ob die Protokolldatei unter dem angegebenen Pfad existiert.
+
+    Args:
+        log_file_path (Path): Der Pfad der Protokolldatei.
+        current_user_id (int): Die ID des aktuellen Benutzers.
+        endpoint (str): Der Endpunkt, auf den zugegriffen wird.
+
+    Raises:
+        HTTPException: Wenn die Protokolldatei nicht existiert.
+    """
     if not log_file_path.exists():
         logging_error = schemas.LoggingSchema(
             user_id=current_user_id,
@@ -46,6 +68,14 @@ async def check_log_file_existence(log_file_path: Path, current_user_id: int, en
 
 
 def handle_json_decode_error(e: Exception, current_user_id: int, endpoint: str) -> None:
+    """
+    Behandelt JSON-Dekodierungsfehler.
+
+    Args:
+        e (Exception): Die Ausnahme, die ausgelöst wurde.
+        current_user_id (int): Die ID des aktuellen Benutzers.
+        endpoint (str): Der Endpunkt, auf den zugegriffen wird.
+    """
     logging_error = schemas.LoggingSchema(
         user_id=current_user_id,
         endpoint=endpoint,
@@ -59,6 +89,19 @@ def handle_json_decode_error(e: Exception, current_user_id: int, endpoint: str) 
 @router.get("/dateUserOverview", status_code=status.HTTP_200_OK)
 async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user),
                     db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Liefert eine Zusammenfassung der gestern und heute registrierten Benutzer.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        dict: Ein Wörterbuch mit der Anzahl der gestern und heute registrierten Benutzer, aufgeschlüsselt nach Rollen.
+
+    Raises:
+        HTTPException: Wenn es ein Problem beim Abrufen der Daten gibt.
+    """
     try:
         await check_admin_role(current_user, method="GET", endpoint="/dateUserOverview")
         today = date.today()
@@ -122,6 +165,19 @@ async def get_users(current_user: models.Nutzer = Depends(oauth.get_current_user
             response_model=List[schemas.BarChartData])
 async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.BarChartData]:
+    """
+    Gibt einen Überblick über die Protokollaktivitäten nach Datum.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+
+    Returns:
+        List[schemas.BarChartData]: Eine nach Datum zusammengefasste Liste von Protokollaktivitäten.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Zugriff auf die Protokolldatei oder der Verarbeitung
+                       ihres Inhalts gibt.
+    """
     await check_admin_role(current_user, method="GET", endpoint="/logOverview")
 
     log_file_path = Path("logs/server.log")
@@ -152,6 +208,19 @@ async def get_log_overview(current_user: models.Nutzer = Depends(oauth.get_curre
 
 @router.get("/endpointOverview", status_code=status.HTTP_200_OK, response_model=List[Dict[str, Any]])
 async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[Dict[str, Any]]:
+    """
+    Gibt einen Überblick über die Endpunktaktivitäten, zusammengefasst nach Datum.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+
+    Returns:
+        List[Dict[str, Any]]: Eine Liste von Endpunktaktivitäten, die jeweils die Endpunkt-ID und Datenpunkte für
+        die Aktivität nach Datum enthalten.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Zugriff auf die Protokolldatei oder der Verarbeitung ihres Inhalts gibt.
+    """
     await check_admin_role(current_user, method="GET", endpoint="/endpointOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/endpointOverview")
@@ -186,6 +255,19 @@ async def get_endpoint_overview(current_user: models.Nutzer = Depends(oauth.get_
             response_model=Dict[str, List[Dict[str, Union[str, int]]]])
 async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> Dict[str, List[Dict[str, Union[str, int]]]]:
+    """
+    Verschafft einen Überblick über erfolgreiche und fehlgeschlagene Anfragen.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+
+    Returns:
+        Dict[str, List[Dict[str, Union[str, int]]]]: Ein Wörterbuch mit separaten Listen von erfolgreichen
+                                                     und fehlgeschlagenen Anfragen, zusammengefasst nach Datum.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Zugriff auf die Protokolldatei oder der Verarbeitung ihres Inhalts gibt.
+    """
     await check_admin_role(current_user, method="GET", endpoint="/successOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/successOverview")
@@ -224,6 +306,19 @@ async def get_success_overview(current_user: models.Nutzer = Depends(oauth.get_c
 @router.get("/registrationOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.BarChartData])
 async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
+    """
+    Gibt einen Überblick über die Benutzerregistrierungen nach Datum.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+
+    Returns:
+        List[schemas.ChartData]: Eine Liste der Anzahl der Benutzerregistrierungen, zusammengefasst nach Datum.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Zugriff auf die Protokolldatei oder der Verarbeitung
+                       ihres Inhalts gibt.
+    """
     await check_admin_role(current_user, method="GET", endpoint="/registrationOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/registrationOverview")
@@ -258,6 +353,18 @@ async def get_registration_overview(current_user: models.Nutzer = Depends(oauth.
             response_model=List[schemas.BarChartData])
 async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_current_user)) \
         -> List[schemas.ChartData]:
+    """
+    Übersicht der Benutzeranmeldungen nach Datum.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+
+    Returns:
+        List[schemas.ChartData]: Eine Liste der Anzahl der Benutzeranmeldungen, zusammengefasst nach Datum.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Zugriff auf die Protokolldatei oder der Verarbeitung ihres Inhalts gibt.
+    """
     await check_admin_role(current_user, method="GET", endpoint="/loginOverview")
     log_file_path = Path("logs/server.log")
     await check_log_file_existence(log_file_path, current_user.user_id, "/admin/loginOverview")
@@ -290,6 +397,19 @@ async def get_login_overview(current_user: models.Nutzer = Depends(oauth.get_cur
 @router.get("/userOverview", status_code=status.HTTP_200_OK, response_model=List[schemas.PieChartData])
 async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)) -> List[schemas.PieChartData]:
+    """
+    Verschafft einen Überblick über die Benutzer, kategorisiert nach Rolle.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext stammt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        List[schemas.PieChartData]: Eine Liste von Benutzerrollen und deren Anzahl.
+
+    Raises:
+        HTTPException: Wenn es ein Problem bei der Abfrage der Datenbank oder der Verarbeitung der Daten gibt.
+    """
     try:
         await check_admin_role(current_user, method="GET", endpoint="/userOverview")
         stmt = (
@@ -342,6 +462,18 @@ async def get_user_overview(current_user: models.Nutzer = Depends(oauth.get_curr
 
 @router.get("/logs", status_code=status.HTTP_200_OK, response_model=List[schemas.LogEntry])
 async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)) -> List[schemas.LogEntry]:
+    """
+    Alle Protokolleinträge abrufen.
+
+    Args:
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext bezogen wird.
+
+    Returns:
+        List[schemas.LogEntry]: Eine Liste von Protokolleinträgen.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Zugriff oder der Verarbeitung der Protokolldatei gibt.
+    """
     await check_admin_role(current_user, method="GET", endpoint="/logs")
     try:
         log_file_path = Path("logs/server.log")
@@ -396,6 +528,21 @@ async def get_logs(current_user: models.Nutzer = Depends(oauth.get_current_user)
 async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
                                   db: AsyncSession = Depends(database.get_db_async),
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Erstellt einen neuen Kalendereintrag.
+
+    Args:
+        eintrag (schemas.KalenderEintragCreate): Die Daten für den neuen Kalendereintrag.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext bezogen wird.
+
+    Returns:
+        schemas.KalenderEintrag: Der neu erstellte Kalendereintrag.
+
+    Raises:
+        HTTPException: Wenn es ein Problem bei der Erstellung des Eintrags in der Datenbank gibt.
+    """
+    await check_admin_role(current_user, "POST", "/kalendereintrag/")
     try:
         if isinstance(eintrag.start, str):
             if "T" in eintrag.start:
@@ -439,7 +586,20 @@ async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
 @router.get("/kalendereintrag", status_code=status.HTTP_200_OK, response_model=List[schemas.KalenderEintragResponse])
 async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async),
                                 current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft alle Kalendereinträge ab.
 
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aus dem aktuellen Anfragekontext erhaltene Benutzerobjekt.
+
+    Returns:
+        List[schemas.KalenderEintrag]: Eine Liste von Kalendereinträgen.
+
+    Raises:
+        HTTPException: Wenn es ein Problem beim Abrufen von Daten aus der Datenbank gibt.
+    """
+    await check_admin_role(current_user, "GET", "/kalendereintrag")
     try:
         stmt = select(models.Kalendereintrag).where(models.Kalendereintrag.user_id == current_user.user_id)
         result = await db.execute(stmt)
@@ -477,6 +637,21 @@ async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async
             response_model=schemas.KalenderEintrag)
 async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async),
                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft einen bestimmten Kalendereintrag anhand seiner ID ab.
+
+    Args:
+        eintrag_id (int): Die ID des abzurufenden Kalendereintrags.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext bezogen wird.
+
+    Returns:
+        schemas.KalenderEintrag: Der angeforderte Kalendereintrag.
+
+    Raises:
+        HTTPException: Wenn der Eintrag nicht gefunden wird oder es ein Problem mit der Datenbankabfrage gibt.
+    """
+    await check_admin_role(current_user, "GET", f"/kalendereintrag/{eintrag_id}")
     try:
         db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
         if db_eintrag is None:
@@ -517,6 +692,21 @@ async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(databa
 async def update_kalendereintrag(eintrag_id: int, eintrag_data: schemas.KalenderEintragCreate,
                                  db: AsyncSession = Depends(database.get_db_async),
                                  current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Aktualisiert einen bestimmten Kalendereintrag anhand seiner ID.
+
+    Args:
+        eintrag_id (int): Die ID des zu aktualisierenden Kalendereintrags.
+        eintrag_data (schemas.KalenderEintragCreate): Die aktualisierten Daten für den Kalendereintrag.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext bezogen wird.
+
+    Returns:
+        schemas.KalenderEintrag: Der aktualisierte Kalendereintrag.
+
+    Raises:
+        HTTPException: Wenn der Eintrag nicht gefunden wird oder es ein Problem mit der Aktualisierung des Datenbankeintrags gibt.
+    """
     await check_admin_role(current_user, "PUT", f"/kalendereintrag/{eintrag_id}")
     try:
         db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
@@ -562,6 +752,20 @@ async def update_kalendereintrag(eintrag_id: int, eintrag_data: schemas.Kalender
 @router.delete("/kalendereintrag/{eintrag_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(database.get_db_async),
                                  current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Löscht einen bestimmten Kalendereintrag anhand seiner ID.
+
+    Args:
+        eintrag_id (int): Die ID des zu löschenden Kalendereintrags.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anfragekontext bezogen wird.
+
+    Returns:
+        Antwort: Eine leere Antwort mit dem HTTP-Statuscode 204 als Hinweis auf eine erfolgreiche Löschung.
+
+    Raises:
+        HTTPException: Wenn der Eintrag nicht gefunden wird oder es ein Problem beim Löschen des Datenbankeintrags gibt.
+    """
     await check_admin_role(current_user, "DELETE", f"/kalendereintrag/{eintrag_id}")
     try:
         db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)

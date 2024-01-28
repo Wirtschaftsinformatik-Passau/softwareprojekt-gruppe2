@@ -756,3 +756,11 @@ class NutzerUpdate(BaseModel):
 class EmployeeResponse(BaseModel):
     nutzer_id: int
     is_active: bool
+
+
+class PasswortReqReset(BaseModel):
+    email: str
+
+
+class PasswortReset(BaseModel):
+    neu_passwort: str

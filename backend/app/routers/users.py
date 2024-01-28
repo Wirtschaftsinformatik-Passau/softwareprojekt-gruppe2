@@ -9,10 +9,10 @@ import logging
 from typing import List, Union
 from time import sleep
 from datetime import datetime
-
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
 from app.geo_utils import geocode_address
+from app.email_sender import EmailSender
 
 
 dictConfig(LogConfigRegistration().dict())
@@ -25,6 +25,13 @@ dictConfig(LogConfig().dict())
 logger = logging.getLogger("GreenEcoHub")
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+email_sender = EmailSender(
+    smtp_server="132.231.36.210",
+    smtp_port=1102,
+    username="mailhog_grup2",
+    password="connect19my41UP"
+)
 
 
 @router.post("/geocode", status_code=status.HTTP_200_OK)
@@ -107,6 +114,10 @@ async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
         db.add(db_user)
         await db.commit()
         await db.refresh(db_user)
+
+        subject = "Willkommen bei GreenEcoHub!"
+        body = f"Hallo {nutzer.vorname},\n\nVielen Dank für Ihre Anmeldung bei GreenEcoHub."
+        await email_sender.send_email(nutzer.email, subject, body)
 
         user_id = db_user.user_id
 

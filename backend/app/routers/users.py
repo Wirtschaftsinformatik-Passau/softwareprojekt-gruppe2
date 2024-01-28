@@ -7,12 +7,19 @@ from sqlalchemy import exc
 from sqlalchemy.future import select
 from logging.config import dictConfig
 import logging
+from time import sleep
 from typing import List, Union
+import uuid
 from datetime import datetime, timedelta
+
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
-import uuid
+from app import models, schemas, database, config, hashing, oauth
+from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
+from app.geo_utils import geocode_address
 from app.email_sender import EmailSender
+
+
 
 dictConfig(LogConfigRegistration().dict())
 logger_registration = logging.getLogger("GreenEcoHubRegistration")

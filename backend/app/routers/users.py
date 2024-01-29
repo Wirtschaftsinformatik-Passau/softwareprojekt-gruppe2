@@ -521,7 +521,8 @@ async def send_password_recovery_email(user_email, token):
 
 
 @router.post("/reset-passwort/{token}")
-async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: AsyncSession = Depends(database.get_db_async)):
+async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
+                         db: AsyncSession = Depends(database.get_db_async)):
     """
     Setzt das Passwort des Benutzers zurück, wenn das angegebene Token gültig und nicht abgelaufen ist.
 

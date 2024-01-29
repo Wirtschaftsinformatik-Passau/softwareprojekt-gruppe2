@@ -14,6 +14,7 @@ from app.routers.users import register_user
 from app.schemas import LoggingSchema, TarifCreate, TarifResponse, TarifCreate, TarifResponse
 from app import types
 from app import config
+from app.routers.haushalte import KWH_VERBRAUCH_JAHR
 from app.database import get_db_async
 import pandas as pd
 import io
@@ -114,24 +115,28 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
                        db: AsyncSession = Depends(database.get_db_async)):
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
-
+        vertrag_query = select(models.Vertrag).where(models.Vertrag.tarif_id == tarif_id)
         await check_netzbetreiber_role(current_user, "PUT", "/tarife")
-        user_id = current_user.user_id
-        query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                           (models.Tarif.user_id == user_id))
 
         result = await db.execute(query)
+        result_vertrag = await db.execute(vertrag_query)
+        vertrag = result_vertrag.scalar_one_or_none()
         existing_tarif = result.scalar_one_or_none()
 
         if existing_tarif is None:
             raise HTTPException(status_code=404, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
 
-        for key, value in tarif.dict().items():
-            setattr(existing_tarif, key, value)
+        if vertrag is None or vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt:
+            for key, value in tarif.dict().items():
+                setattr(existing_tarif, key, value)
+            await db.commit()
+            await db.refresh(existing_tarif)
+            return existing_tarif
+        else:
+            raise HTTPException(status_code=409,
+                                detail=f"Tarif mit ID {tarif_id} kann nicht geändert werden, da er bereits in einem Vertrag verwendet wird")
 
-        await db.commit()
-        await db.refresh(existing_tarif)
-        return existing_tarif
+
     except exc.IntegrityError as e:
         logger.error(f"Tarif konnte nicht aktualisiert werden: {e}")
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Tarif konnte nicht aktualisiert werden: {e}")
@@ -1083,6 +1088,9 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
                                              (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt) &
                                              (models.Vertrag.vertrag_id == vertrag_id))
+        query_anfrage = select(models.Kündigungsanfrage).where((models.Kündigungsanfrage.vertrag_id == vertrag_id))
+        result_anfrage = await db.execute(query_anfrage)
+        k_anfrage = result_anfrage.scalar_one_or_none()
         result = await db.execute(query)
         anfrage = result.scalar_one_or_none()
 
@@ -1111,6 +1119,26 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
 
             )
             db.add(rechnung)
+
+            if k_anfrage.neuer_tarif_id is not None:
+                tarif_result = await db.execute(select(models.Tarif).
+                                                where(models.Tarif.tarif_id == k_anfrage.neuer_tarif_id))
+                tarif = tarif_result.scalar_one_or_none()
+                beginn_datum = date.today()
+                end_datum = timedelta(days=int(365 * tarif.laufzeit)) + beginn_datum
+                jahresabschlag = tarif.grundgebuehr + tarif.preis_kwh * KWH_VERBRAUCH_JAHR
+
+                neuer_vertrag = models.Vertrag(
+                    user_id=anfrage.user_id,
+                    tarif_id=tarif.tarif_id,
+                    beginn_datum=beginn_datum,
+                    end_datum=end_datum,
+                    jahresabschlag=jahresabschlag,
+                    vertragstatus=models.Vertragsstatus.Laufend,
+                    netzbetreiber_id=current_user.user_id
+                )
+                db.add(neuer_vertrag)
+
             logging_msg = LoggingSchema(
                 user_id=current_user.user_id,
                 endpoint=f"/kuendigungsanfragenbearbeitung/{vertrag_id}/{aktion}",

@@ -59,8 +59,8 @@ const  HaushaltDashboard = () => {
                     <Route path="/einspeisungsanfrage" element={<HaushalteEinspeisungsAnfrage/>}/>
                     <Route path="/angebote/:anlageID" element={<HaushalteAngebote/>}/>
                     <Route path="/dataOverview" element={<HaushalteDataOverview/>}/>
-                    <Route path="/vertragChange/:tarifID" element={<HaushalteVertragWechselnDetail/>}/>
-                    <Route path="/vertragChangeOverview/:oldTarifID" element={<HaushalteVertragWechselnOverview/>}/>
+                    <Route path="/vertragChange/:vertragID" element={<HaushalteVertragWechselnDetail/>}/>
+                    <Route path="/vertragChangeOverview/:vertragID" element={<HaushalteVertragWechselnOverview/>}/>
                     <Route path="/energieausweisOverview" element={<HaushalteEnergieAusweisOverview/>}/>
                     <Route path="/rechnungenOverview" element={<HaushalteRechnungenOverview/>}/>
                     <Route path="/rechnungenDetail/:rechnungID" element={<HaushalteRechnungenDetail/>}/>

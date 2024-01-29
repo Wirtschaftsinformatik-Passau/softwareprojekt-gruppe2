@@ -19,7 +19,7 @@ const EnergieberatendeAnfragenAbgeschlossen = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=Genehmigt&prozess_status=Abgenommen",    
+    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=Abgenommen",    
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 

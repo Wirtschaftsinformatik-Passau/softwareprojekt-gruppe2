@@ -223,7 +223,8 @@ async def create_rechnung(empfaenger_id: int,  steller_id: int, db: AsyncSession
             "rechnungsbetrag": massnahme.kosten,
             "rechnungsdatum": date.today(),
             "faelligkeitsdatum": date.today() + timedelta(days=30),
-            "rechnungsart": models.Rechnungsart.Energieberater_Rechnung
+            "rechnungsart": models.Rechnungsart.Energieberater_Rechnung,
+            "zahlungsstatus": models.Zahlungsstatus.Offen
         }
 
         neue_rechnung = models.Rechnungen(**rechnungsdaten)

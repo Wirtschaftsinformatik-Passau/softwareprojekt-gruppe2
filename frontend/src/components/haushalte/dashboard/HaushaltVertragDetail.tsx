@@ -107,7 +107,7 @@ const VertragDetail = ({}) => {
                     Abbrechen    
                 </Button>
                 <Button variant="contained" color="primary" 
-                onClick={() => navigate(`/haushalte/vertragChangeOverview/${vertragID}`)}
+                onClick={() => navigate(`/haushalte/vertragChangeOverview/${vertragID}?oldTarifID=${vertrag.tarif_id}`)}
                 sx = {{
                     backgroundColor: `${colors.color1[500]} !important`,
                     color: theme.palette.background.default
@@ -175,7 +175,7 @@ const VertragDetail = ({}) => {
     })}
    </Box>
    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Vertrag erfolgreich gekündigt!" navigationGoal="/haushalte"/>
+    text="Kündigungsantrag erfolgreich gestellt!" navigationGoal="/haushalte"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
     <SuccessModal open={conflictModalIsOpen} handleClose={() => setConflictModalIsOpen(false)}

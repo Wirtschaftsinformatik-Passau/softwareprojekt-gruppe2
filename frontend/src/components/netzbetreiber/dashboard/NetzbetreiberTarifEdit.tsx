@@ -25,6 +25,7 @@ const NetzbetreiberTarifEdit = ({}) => {
     const colors = tokens(theme.palette.mode);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const [overallFailModalIsOpen, setOverallFailModalIsOpen] = React.useState(false)
     const [initialValues, setInitialValues] = React.useState({
       tarifName: "",
       preisKwh: "",
@@ -39,10 +40,8 @@ const NetzbetreiberTarifEdit = ({}) => {
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
-      // Fetch your data here
       axios.get(addSuffixToBackendURL("netzbetreiber/tarife/"+tarifID), {headers: {Authorization: `Bearer ${token}`}})
         .then(response => {
-          // Assuming response.data contains the tarif data
           setInitialValues({
             tarifName: response.data.tarifname,
             preisKwh: response.data.preis_kwh,
@@ -58,6 +57,42 @@ const NetzbetreiberTarifEdit = ({}) => {
           setIsLoading(false);
         });
     }, []);
+
+    const updateTarif = (values: any, {setSubmitting}: any) => {
+
+      const token = localStorage.getItem("accessToken");
+      const tarif: ITarif = new Tarif(values.tarifName, Number(values.preisKwh), Number(values.grundgebuehr), Number(values.laufzeit), 
+      values.spezielleKonditionen)
+      axios.put(addSuffixToBackendURL("netzbetreiber/tarife"), tarif, {headers: {Authorization: `Bearer ${token}`}})
+          .then((response) => {
+            if (response.status === 201) {
+              setSuccessModalIsOpen(true)
+              console.log("User erfolgreich gespeichert")
+            } else {
+              setFailModalIsOpen(true)
+              console.log("User konnte nicht gespeichert werden")
+            }
+          
+          })
+          .catch((error) => {
+              if (error.response && error.response.status === 422) {
+                  console.log("Server Response on Error 422:", error.response.data);
+              } else if (error.response && error.response.status === 401 || error.response.status === 403) {
+                navigate("/login")
+              } 
+              else if (error.response && error.response.status === 409) {
+                setFailModalIsOpen(true)
+              } else {
+                console.log("Server Error:", error.message);
+              }
+          })
+          .finally(() => {
+              setSubmitting(false);
+          })
+  
+  
+  }
+
  
     const createTarif = (values: { tarifName: string; preisKwh: any; grundgebuehr: any; laufzeit: any; spezielleKonditionen: string; }, {setSubmitting}: any) => {
 
@@ -84,16 +119,13 @@ const NetzbetreiberTarifEdit = ({}) => {
               } 
               else if (error.response && error.response.status === 409) {
                 setFailModalIsOpen(true)
-                console.log("Tarif konnte nicht gespeichert werden")
               } else {
-                console.log("Server Error:", error.message);
+                setOverallFailModalIsOpen(true)
               }
           })
           .finally(() => {
               setSubmitting(false);
           })
-  
-  
   }
  
   if (isLoading) {
@@ -255,7 +287,10 @@ return (
               }}
               />
               
-            <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
+            <Box display="flex" justifyContent="space-evenly" mt="20px" gridColumn= "span 4">
+            <Button type="submit" onClick={() => navigate(-1)} color="neutral" sx={{color: theme.palette.background.default}} variant="contained">
+                Abbrechen
+              </Button>
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">
                 Tarif bearbeiten
               </Button>
@@ -270,7 +305,9 @@ return (
     <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
     text="Tarif erfolgreich bearbeitet!" navigationGoal="/netzbetreiber/tarifTable"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
-    text="Tarifname bereits vergeben!"/>
+    text="Tarif konnte nicht geändert werden, da er einem laufenden Vertrag zugewiesen ist"/>
+    <SuccessModal open={overallFailModalIsOpen} handleClose={() => setOverallFailModalIsOpen(false)} 
+    text="Tarif konnte nicht bearbeitet werden"/>
     </Box>
   
 )}

@@ -142,7 +142,7 @@ return (
     gridAutoRows="140px"
     gap="0px">
         <Box gridColumn={"span 2"} m="20px">
-         <Header title="Übersicht über alle abgeschlossenen Verträge" subtitle="Für Details auf Vertrag klicken"/>
+        <Header title="Übersicht über alle Kündigungsanfragen" subtitle="Für Details auf Vertrag klicken"/>
          </Box>
 
         

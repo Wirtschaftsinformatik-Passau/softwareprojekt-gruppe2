@@ -9,14 +9,14 @@ import Header from "../../utility/Header";
 import {EnergieberaterResponseFinal} from "../../../entitities/pv";
 import {setStateOtherwiseRedirect} from "../../../utils/stateUtils";
 
-interface EnergieberatendeAusweisErstellenProps {
+interface EnergieberaterAbnahmeProps {
     anlageID: number;
     sucessModalSetter: React.Dispatch<React.SetStateAction<boolean>>;
     navigateFN: NavigateFunction
     failModalSetter: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const EnergieberatendeAusweisErstellen = (props: EnergieberatendeAusweisErstellenProps) => {
+const EnergieberaterAbnahme = (props: EnergieberaterAbnahmeProps) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [anlage, setAnlage] = React.useState<EnergieberaterResponseFinal | null>(null);
@@ -99,11 +99,11 @@ const EnergieberatendeAusweisErstellen = (props: EnergieberatendeAusweisErstelle
                     Anlage abnehmen
                 </Button>
                 </Box>
-            <Box gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} display={"grid"} gridColumn={"span 2"}>
+            <Box gridTemplateColumns={"repeat(4, minmax(0, 1fr))"} display={"grid"} gridColumn={"span 4"}>
                 {Object.entries(anlage).map(([key, value], index) => {
                     return (
                         key == "haushalt_id" || key == "anlage_id" || key == "energieausweis_id" ? undefined :
-                            <Box key={index} gridColumn={(key === "spezielle_konditionen") ? "span 4" : "span 2"} mt={2} ml={1}>
+                            <Box key={index} gridColumn={(key === "stadt") ? "span 4" : "span 2"} mt={2} ml={1}>
                                 <TextField
                                     fullWidth
                                     variant="outlined"
@@ -140,5 +140,5 @@ const EnergieberatendeAusweisErstellen = (props: EnergieberatendeAusweisErstelle
     )}
 
 
-export default EnergieberatendeAusweisErstellen;
+export default EnergieberaterAbnahme;
 

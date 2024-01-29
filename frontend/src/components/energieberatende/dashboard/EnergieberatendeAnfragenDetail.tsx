@@ -16,6 +16,7 @@ import { Angebot, PVAngebotCreate, ProzessStatus } from "../../../entitities/pv"
 import Header from "../../utility/Header";
 import { EnergieausweisCreate, SolarteurResponse, EnergieeffizienzmassnahmenCreate, MassnahmeTyp, } from "../../../entitities/pv";
 import EnergieberatendeAusweisErstellen from "./EnergieberatendeAusweisErstellen";
+import EnergieberaterAbnahme from "./EnergieberaterAbnahme";
 
 export interface EnergieberatendeResponseExtended extends SolarteurResponse {
     haushalt_id: number
@@ -39,6 +40,7 @@ const EnergieberatendeAnfragenDetail = ({}) => {
     const status = searchParams.get("status");
     const ausweisErstellen = status === ProzessStatus.AusweisAngefordert.valueOf() ? true : false;
     const planErstellen = status === ProzessStatus.AusweisErstellt.valueOf() ? true : false;
+    const abnehmen = status === ProzessStatus.Genehmigt.valueOf() ? true : false;
 
     const {anlageID} = useParams();
     const navigate = useNavigate();
@@ -189,7 +191,12 @@ const EnergieberatendeAnfragenDetail = ({}) => {
                 <LinearProgress sx={{ bgcolor: colors.color1[400] }}/>
                 </Box>
             </Box> 
-            :
+            : abnehmen ?
+                <>
+            {<EnergieberaterAbnahme anlageID={Number(anlageID)} navigateFN={navigate} sucessModalSetter={setPlanSuccessModalIsOpen}
+            failModalSetter={setPlanFailModalIsOpen} />}
+                </>
+      :
             
     <Box mt="30px" display={"grid"} columnGap={"5%"} gridTemplateColumns={"repeat(4, minmax(0, 1fr))"}>
          <Box  gridColumn={"span 2"}>
@@ -277,12 +284,12 @@ const EnergieberatendeAnfragenDetail = ({}) => {
    </Box>
    {ausweisErstellen ? <EnergieberatendeAusweisErstellen ausweis={ausweis} massnahmen={massnahmen} navigateFN={navigate} 
    sucessModalSetter={setSuccessModalIsOpen} failModalSetter={setFailModalIsOpen} energieausweisID={antrag.energieausweis_id}/>
-   :
-   <>
+      :
+      <>
     {undefined}
-      </>
-        }
-
+        
+        </>
+}
    </Box>
    
 }
@@ -290,10 +297,10 @@ const EnergieberatendeAnfragenDetail = ({}) => {
     text="Energiesausweis erfolgreich erstellt!" navigationGoal="/energieberatende"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Energiesausweis konnte nicht erstellt werden"/>
-    <SuccessModal open={planFailModalIsOpen} handleClose={() => setPlanFailModalIsOpen(false)}
-    text="Energieffizienzmaßnahmen konnten nicht eingetragen werden"/>
     <SuccessModal open={planSuccessModalIsOpen} handleClose={() => setPlanSuccessModalIsOpen(false)}
-    text="Energieffizienzmaßnahmen wurden eingetragen"/>
+    text="Anlage wurde erfolgreich abgenommen" navigationGoal="/antragTableAbgeschlossen"/>
+    <SuccessModal open={planFailModalIsOpen} handleClose={() => setPlanFailModalIsOpen(false)}
+    text="Anlage konnte nicht abgenommen werden"/>
     
 
         </Box>

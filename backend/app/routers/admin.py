@@ -542,7 +542,6 @@ async def create_kalender_eintrag(eintrag: schemas.KalenderEintragCreate,
     Raises:
         HTTPException: Wenn es ein Problem bei der Erstellung des Eintrags in der Datenbank gibt.
     """
-    await check_admin_role(current_user, "POST", "/kalendereintrag/")
     try:
         if isinstance(eintrag.start, str):
             if "T" in eintrag.start:
@@ -599,7 +598,7 @@ async def get_kalendereintraege(db: AsyncSession = Depends(database.get_db_async
     Raises:
         HTTPException: Wenn es ein Problem beim Abrufen von Daten aus der Datenbank gibt.
     """
-    await check_admin_role(current_user, "GET", "/kalendereintrag")
+
     try:
         stmt = select(models.Kalendereintrag).where(models.Kalendereintrag.user_id == current_user.user_id)
         result = await db.execute(stmt)
@@ -651,7 +650,7 @@ async def get_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(databa
     Raises:
         HTTPException: Wenn der Eintrag nicht gefunden wird oder es ein Problem mit der Datenbankabfrage gibt.
     """
-    await check_admin_role(current_user, "GET", f"/kalendereintrag/{eintrag_id}")
+
     try:
         db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
         if db_eintrag is None:
@@ -707,7 +706,6 @@ async def update_kalendereintrag(eintrag_id: int, eintrag_data: schemas.Kalender
     Raises:
         HTTPException: Wenn der Eintrag nicht gefunden wird oder es ein Problem mit der Aktualisierung des Datenbankeintrags gibt.
     """
-    await check_admin_role(current_user, "PUT", f"/kalendereintrag/{eintrag_id}")
     try:
         db_eintrag = await db.get(models.Kalendereintrag, eintrag_id)
         if db_eintrag is None:

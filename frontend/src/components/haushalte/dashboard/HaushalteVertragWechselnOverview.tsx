@@ -3,7 +3,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../../utils/theme";
 import { useState, useEffect, SetStateAction } from "react";
 import Header from "../../utility/Header";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams ,useSearchParams} from "react-router-dom";
 import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
@@ -24,8 +24,10 @@ const ChangeVertragTable = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<Tarif[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const oldTarifID = searchParams.get("oldTarifID");
   const navigate = useNavigate();
-  const oldTarifID = useParams()
+  const vertrag_id = useParams()
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -33,7 +35,7 @@ const ChangeVertragTable = () => {
   }, [])
 
   const handleRowClick = (params: { row: { tarif_id: SetStateAction<null>; }; }) => {
-    navigate(`/haushalte/vertragChange/${params.row.tarif_id}?oldTarifID=${oldTarifID.oldTarifID}`);
+    navigate(`/haushalte/vertragChange/${vertrag_id.vertragID}?oldTarifID=${oldTarifID}&newTarifID=${params.row.tarif_id}`);
   }
 
 

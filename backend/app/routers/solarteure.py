@@ -384,7 +384,8 @@ async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = De
             "rechnungsbetrag": angebot.kosten,
             "rechnungsdatum": date.today(),
             "faelligkeitsdatum": date.today() + timedelta(days=30),
-            "rechnungsart": models.Rechnungsart.Solarteur_Rechnung
+            "rechnungsart": models.Rechnungsart.Solarteur_Rechnung,
+            "zahlungsstatus": models.Zahlungsstatus.Offen
         }
         neue_rechnung = models.Rechnungen(**rechnungsdaten)
         db.add(neue_rechnung)

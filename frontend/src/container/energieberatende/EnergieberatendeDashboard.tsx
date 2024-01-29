@@ -9,6 +9,7 @@ import Topbar from "../../components/all/Topbar"
 import FAQ from "../../components/admin/dashboards/FAQs";
 import EnergieSidebar from "../../components/energieberatende/dashboard/EnergieSidebar";
 import EnergieberatendeAnfragen from "../../components/energieberatende/dashboard/EnergieberatendeAnfragen";
+import EnergieHome from "../../components/energieberatende/dashboard/EnergieberatendeHome";
 import EnergieberatendeAnfragenBearbeitet from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenBearbeitet";
 import EnergieberatendeAnfragenAbgeschlossen from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenAbgeschlossen";
 import EnergieberatendeAnfragenDetail from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenDetail";
@@ -89,6 +90,7 @@ const  EnergieberatendeDashboard = () => {
                 <div className="flex-1 overflow-y-auto">
                 <Topbar fixed={true} nutzerrolle={"Energieberatende"}/>
                 <Routes>
+                <Route path="/" element={<EnergieHome/>}/>
                 <Route path="/antragTable/:anlageID" element={<EnergieberatendeAnfragenDetail/>}/>
                 <Route path="/antragTableAbgeschlossen" element={<EnergieberatendeAnfragenAbgeschlossen/>}/>
                 <Route path="/antragTableBearbeitet" element={<EnergieberatendeAnfragenBearbeitet/>}/>

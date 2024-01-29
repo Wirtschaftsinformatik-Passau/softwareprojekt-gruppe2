@@ -107,6 +107,16 @@ const columns = [
         flex: 1,
         cellClassName: "name-column--cell"
     },
+    {
+      field: "vertragstatus",
+      headerAlign: "left",
+      align: "left",
+      headerName: "Vertragstatus",
+      type: "number",
+      flex: 1,
+      cellClassName: "name-column--cell"
+  },
+
     
   ];
 
@@ -169,8 +179,9 @@ return (
     }}
   >
     <DataGrid checkboxSelection getRowId={(row) => row.vertrag_id} rows={data} 
-    columns={columns} hideFooter={false} sx={{cursor: "pointer"}}
-    onRowClick={handleRowClick}/>
+      columns={columns} hideFooter={false} sx={{cursor: "pointer"}}
+      onRowClick={handleRowClick}
+    />
   </Box>
 </Box>
     </Grow>

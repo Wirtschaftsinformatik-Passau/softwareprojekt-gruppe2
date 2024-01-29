@@ -93,7 +93,7 @@ const HaushalteTable = () => {
 
   return (
     <Box m="20px">
-      <Header title="Nutzerverwaltung" subtitle="Übersicht über alle registrierten Nutzer"/>
+      <Header title="Haushaltübersicht" subtitle="Übersicht über alle Haushalte"/>
       <Box
         m="40px 0 0 0"
         height="75vh"

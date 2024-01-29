@@ -900,6 +900,7 @@ async def get_angebot(anlage_id: int,
 @router.post("/kuendigungsanfrage/{vertrag_id}")
 async def kuendigungsanfrage(
         vertrag_id: int,
+        neuer_tarif_id: int = Query(None, description="Die ID des neuen Tarifs"),
         current_user: models.Nutzer = Depends(oauth.get_current_user),
         db: AsyncSession = Depends(database.get_db_async)):
 
@@ -926,7 +927,8 @@ async def kuendigungsanfrage(
     # Erstelle eine Kündigungsanfrage
     kuendigungsanfrage = models.Kündigungsanfrage(
         vertrag_id=vertrag.vertrag_id,
-        bestätigt=False
+        bestätigt=False,
+        neuer_tarif_id=neuer_tarif_id if neuer_tarif_id else None
     )
     db.add(kuendigungsanfrage)
     await db.commit()

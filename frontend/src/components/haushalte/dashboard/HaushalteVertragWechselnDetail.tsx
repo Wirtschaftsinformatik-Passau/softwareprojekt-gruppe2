@@ -8,6 +8,7 @@ import axios from "axios";
 import CircularProgress from '@mui/material/CircularProgress';
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
+import { AntwortOptionen } from "../../netzbetreiber/dashboard/NetzbetreiberVertragDetail";
 
 interface IVertragPreview {
     beginn_datum: string
@@ -23,12 +24,16 @@ const HaushalteVertragWechselnDetail = ({}) => {
     const colors = tokens(theme.palette.mode);
     const {isLoading, setIsLoading} = React.useState(true);
     const tarifID = useParams();
+    const [denyModalIsOpen, setDenyModalIsOpen] = React.useState<boolean>(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const oldTarifID = searchParams.get("oldTarifID");
+    const newTarifID = searchParams.get("newTarifID");
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [vertragPreview, setVertragPreview] = React.useState<IVertragPreview | null>(null)
     const [conflictModalIsOpen, setConflictModalIsOpen] = React.useState<boolean>(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const vertragID = useParams();
+    console.log(vertragID)
     const [tarif, setTarif] = React.useState({
             "vorname": "",
             "nachname": "",
@@ -80,7 +85,7 @@ const HaushalteVertragWechselnDetail = ({}) => {
     useEffect(() => {  
         const token = localStorage.getItem("accessToken");
         console.log(tarifID)
-        setStateOtherwiseRedirect(setTarif, "haushalte/all-tarife/"+tarifID.tarifID , 
+        setStateOtherwiseRedirect(setTarif, "haushalte/all-tarife/"+newTarifID, 
         navigate,  {Authorization: `Bearer ${token}`}, setIsLoading)
     }, []
     )
@@ -92,35 +97,23 @@ const HaushalteVertragWechselnDetail = ({}) => {
     }, []
     )
 
-    const handleAccept = () => { 
+    const handleKuendigung = () => {
         const token = localStorage.getItem("accessToken");
-        axios.post(addSuffixToBackendURL(`haushalte/vertragswechsel/${tarifID.tarifID}?alter_vertrag_id=${oldTarifID}`), 
-        {}, {headers: { Authorization: `Bearer ${token}` }})
-        .then((res) => {
-            console.log("success")
-            setSuccessModalIsOpen(true)
-        })
-        .catch((err) => {
-            if (err.response.status === 403 || err.response.status === 403) {
-                console.log("Unauthorized  oder kein Haushalt", err.response.data)
-                navigate("/login")
-              }
-              else if (err.response.status === 409) {
-                console.log("Conflict", err.response.data)
-                setConflictModalIsOpen(true)
+        axios.post(addSuffixToBackendURL(`haushalte/kuendigungsanfrage/${vertragID.vertragID}?neuer_tarif_id=${newTarifID}`), {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-              
-              else if (err.response.status === 404) {
-                console.log("Bad Request", err.response.data)
-                setConflictModalIsOpen(true)
-              }
-            console.log(err)
+        }).then((response) => {
+            setSuccessModalIsOpen(true);
+        }).catch((error) => {
+            setFailModalIsOpen(true);
         })
     }
 
+
     const createVertragPreview = () => {
         const token = localStorage.getItem("accessToken");
-        axios.get(addSuffixToBackendURL(`haushalte/vertrag-preview/${tarifID.tarifID}`), {headers: { Authorization: `Bearer ${token}` }})
+        axios.get(addSuffixToBackendURL(`haushalte/vertrag-preview/${newTarifID}`), {headers: { Authorization: `Bearer ${token}` }})
         .then((res) => {
             setVertragPreview(res.data)
         })
@@ -289,7 +282,7 @@ const HaushalteVertragWechselnDetail = ({}) => {
     })}
    </Box>
    <Box>
-   <Button variant="contained" color="primary" onClick={handleAccept}
+   <Button variant="contained" color="primary" onClick={handleKuendigung}
                 sx = {{
                     backgroundColor: `${colors.color1[500]} !important`,
                     color: theme.palette.background.default,
@@ -304,7 +297,7 @@ const HaushalteVertragWechselnDetail = ({}) => {
 }
    
    <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Vertrag erfolgreich gewechselt!" navigationGoal="/haushalte"/>
+    text="Wechselanfrage erfolgreich gestellt!" navigationGoal="/haushalte"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Antrag fehlgeschlagen"/>
     <SuccessModal open={conflictModalIsOpen} handleClose={() => setConflictModalIsOpen(false)}

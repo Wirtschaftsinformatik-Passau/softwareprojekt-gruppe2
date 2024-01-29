@@ -240,6 +240,7 @@ class Kündigungsanfrage(Base):
     anfrage_id = Column(Integer, primary_key=True)
     vertrag_id = Column(Integer, ForeignKey('vertrag.vertrag_id' if settings.OS == 'Linux' else 'Vertrag.vertrag_id'))
     bestätigt = Column(Boolean, default=False)
+    neuer_tarif_id = Column(Integer, ForeignKey('tarif.tarif_id' if settings.OS == 'Linux' else 'Tarif.tarif_id'))
 
 
 class Arbeitsverhältnis(Base):

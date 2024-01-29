@@ -17,7 +17,7 @@ const EnergieberatendeAnfragenBearbeitet = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=AusweisErstellt",
+    setStateOtherwiseRedirect(setData, "energieberatende/anfragen?prozess_status=PlanErstellt&prozess_status=PlanErstellt&prozess_status=AusweisErstellt&prozess_status=Genehmigt",
      navigate,  {Authorization: `Bearer ${token}`})
   }, [])
 

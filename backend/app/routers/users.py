@@ -609,7 +609,7 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
             logger.error(logging_error.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden")
 
-        nutzer.password = hashed_passwort
+        nutzer.passwort = hashed_passwort
         await db.commit()
         await db.refresh(nutzer)
 

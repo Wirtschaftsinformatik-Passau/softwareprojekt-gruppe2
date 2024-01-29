@@ -1,5 +1,4 @@
-from datetime import date, timedelta
-
+from datetime import date, timedelta, datetime, time
 from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Path, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -279,6 +278,21 @@ async def create_angebot(angebot_data: schemas.AngebotCreate,
     )
 
 
+async def add_calendar_entry(db: AsyncSession, user_id: int, start: datetime, ende: datetime, beschreibung: str,
+                             allDay: bool = False):
+    new_entry = models.Kalendereintrag(
+        user_id=user_id,
+        start=start,
+        ende=ende,
+        beschreibung=beschreibung,
+        allDay=allDay
+    )
+    db.add(new_entry)
+    await db.commit()
+    await db.refresh(new_entry)
+    return new_entry
+
+
 @router.post("/installationsplan/{anlage_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.InstallationsplanResponse)
 async def create_installationsplan(anlage_id: int, installationsplan_data: schemas.InstallationsplanCreate,
@@ -299,6 +313,12 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
     pv_anlage.wechselrichterposition = installationsplan_data.wechselrichterposition
     pv_anlage.installationsdatum = installationsplan_data.installationsdatum
     pv_anlage.prozess_status = "PlanErstellt"
+
+    installationsdatum = datetime.combine(installationsplan_data.installationsdatum, time(8, 0))  # 8 Uhr Start
+    ende_datum = installationsdatum + timedelta(hours=4)  # Annahme: 4-Stunden-Installation
+    beschreibung = f"Installation einer PV-Anlage: {anlage_id}"
+
+    await add_calendar_entry(db, current_user.user_id, installationsdatum, ende_datum, beschreibung)
 
     installationsplan_csv = StringIO()
     writer = csv.writer(installationsplan_csv)

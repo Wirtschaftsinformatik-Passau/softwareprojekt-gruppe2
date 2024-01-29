@@ -1284,7 +1284,7 @@ async def create_mitarbeiter(nutzer: schemas.NutzerCreate,
             user_id=current_user.user_id,
             endpoint=f"/mitarbeiter",
             method="POST",
-            message=f"Fehler beim Erstelln der Mitarbeiter {e}",
+            message=f"Fehler beim Erstellen der Mitarbeiter {e}",
             success=False
         )
         logger.error(logging_error.dict())

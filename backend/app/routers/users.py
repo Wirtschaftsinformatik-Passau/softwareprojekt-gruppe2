@@ -31,10 +31,10 @@ logger = logging.getLogger("GreenEcoHub")
 router = APIRouter(prefix="/users", tags=["Users"])
 
 email_sender = EmailSender(
-    smtp_server="132.231.36.210",
-    smtp_port=1102,
-    username="mailhog_grup2",
-    password="connect19my41UP"
+    smtp_server=settings.SMTP_SERVER,
+    smtp_port=settings.SMTP_PORT,
+    username=settings.USERNAME,
+    password=settings.PASSWORD,
 )
 
 

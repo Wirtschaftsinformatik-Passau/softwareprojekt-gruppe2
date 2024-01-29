@@ -8,18 +8,15 @@ from sqlalchemy.future import select
 from logging.config import dictConfig
 import logging
 from time import sleep
-from typing import List, Union
+from typing import List, Union, Optional
 import uuid
 from datetime import datetime, timedelta
-
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
-from app import models, schemas, database, config, hashing, oauth
-from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
+import uuid
 from app.geo_utils import geocode_address
 from app.email_sender import EmailSender
 from app.config import settings
-
 
 
 dictConfig(LogConfigRegistration().dict())
@@ -485,8 +482,7 @@ async def delete_user(id: int, db: AsyncSession = Depends(database.get_db_async)
 
 
 @router.post("/request-password-reset")
-async def request_password_reset(request: schemas.PasswortReqReset,
-                                 db: AsyncSession = Depends(database.get_db_async)):
+async def request_password_reset(request: schemas.PasswortReqReset, db: AsyncSession = Depends(database.get_db_async)):
     """
     Sendet einen Link zum Zurücksetzen des Passworts an die E-Mail des Benutzers, wenn die angegebene E-Mail
     registriert ist.
@@ -591,6 +587,10 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
             )
             logger.error(logging_error.dict())
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token abgelaufen")
+            raise ValueError("Ungültiger Token")
+
+        if token_data.expiration < datetime.utcnow():
+            raise ValueError("Token abgelaufen")
 
         hashed_passwort = hashing.Hashing.hash_password(reset_data.neu_passwort)
 
@@ -626,6 +626,8 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
         logger.info(logging_info.dict())
         return "Passwort erfolgreich zurückgesetzt"
 
+    except ValueError as ve:
+        return str(ve)
 
     except SQLAlchemyError as e:
         await db.rollback()
@@ -634,6 +636,29 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-
         await db.rollback()
         return f"Ein unerwarteter Fehler ist aufgetreten: {e}"
+
+
+@router.post("/chat/send", response_model=schemas.ChatMessageSendResponse, status_code=status.HTTP_201_CREATED)
+async def send_message(chat_message: schemas.ChatMessageCreate, db: AsyncSession = Depends(database.get_db_async)):
+    neue_nachricht = models.ChatMessage(**chat_message.dict())
+    db.add(neue_nachricht)
+    await db.commit()
+    await db.refresh(neue_nachricht)
+    return {"nachricht": "Nachricht erfolgreich gesendet", "nachricht_id": neue_nachricht.nachricht_id}
+
+
+@router.get("/chat/history", response_model=List[schemas.ChatMessageResponse], status_code=status.HTTP_200_OK)
+async def get_chat_history(user_id: int, other_user_id: Optional[int] = None, db: AsyncSession = Depends(database.get_db_async)):
+    query = select(models.ChatMessage).where(
+        (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.empfaenger_id == user_id))
+
+    if other_user_id:
+        query = query.where(
+            (models.ChatMessage.sender_id == other_user_id) | (models.ChatMessage.empfaenger_id == other_user_id))
+
+    result = await db.execute(query)
+    chat_history = result.scalars().all()
+
+    return chat_history

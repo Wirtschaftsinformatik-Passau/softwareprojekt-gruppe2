@@ -809,7 +809,7 @@ async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(dat
 
 
 @router.get("/download_reports_dashboard", status_code=status.HTTP_200_OK)
-async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_async),
                                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_admin_role(current_user, "GET", "/download_reports_dashboard")
     try:
@@ -863,7 +863,7 @@ async def download_reports(db: AsyncSession = Depends(database.get_db_async),
     
 
 @router.get("/download_reports_vertrag", status_code=status.HTTP_200_OK)
-async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_admin_role(current_user, "GET", "/download_reports_vertrag")
 
@@ -901,7 +901,7 @@ async def download_reports(db: AsyncSession = Depends(database.get_db_async),
 
 
 @router.get("/download_reports_rechnungen", status_code=status.HTTP_200_OK)
-async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+async def download_reports_rechnung(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
     await check_admin_role(current_user, "GET", "/download_reports_rechnungen")
 
@@ -944,7 +944,7 @@ async def download_reports(db: AsyncSession = Depends(database.get_db_async),
     
 
 @router.get("/download_reports_energieausweise", status_code=status.HTTP_200_OK)
-async def download_reports(db: AsyncSession = Depends(database.get_db_async),
+async def download_reports_eausweis(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
 
     await check_admin_role(current_user, "GET", "/download_reports_energieausweise")

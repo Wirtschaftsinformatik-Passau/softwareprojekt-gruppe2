@@ -11,24 +11,18 @@ import PowerIcon from '@mui/icons-material/Power';
 import HomeIcon from '@mui/icons-material/Home';
 import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import LiveHelpIcon from '@mui/icons-material/LiveHelp';
-import MailIcon from '@mui/icons-material/Mail';
 import CircularProgress from '@mui/material/CircularProgress';
-import {Fade} from "@mui/material";
 import Grow from "@mui/material/Grow";
-import {Collapse} from "@mui/material";
+import Mail from "@mui/icons-material/Mail";
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import Header from "../../utility/Header";
-import LineChart from "../../utility/visualization/LineChart";
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
-import { Paper } from '@mui/material';
-import BusinessIcon from '@mui/icons-material/Business';
 import StatBox from "../../utility/visualization/StatBox";
 import PieChart from "../../utility/visualization/PieChart";
 import BarChart from "../../utility/visualization/BarChart";
 import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
-import Mail from "@mui/icons-material/Mail";
+import { getAllReports } from "../../../utils/reports";
 
 
 const AdminEndPointActivity = () => {
@@ -140,6 +134,7 @@ const AdminEndPointActivity = () => {
             <Header title="Admin Dashboard" subtitle="Einzelne Kacheln geben aktuellen Wert und prozentuale Veränderung zu gestern an"/>
             <Box display="flex" justifyContent="end" alignItems="center" >
           <Button
+            onClick={() => getAllReports()}
             sx={{
               backgroundColor: colors.color1[400],
               color: theme.palette.background.default,
@@ -152,7 +147,8 @@ const AdminEndPointActivity = () => {
               }
             }}
           >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            <DownloadOutlinedIcon sx={{ mr: "10px" }} 
+            />
             Download Reports
           </Button>
         </Box>

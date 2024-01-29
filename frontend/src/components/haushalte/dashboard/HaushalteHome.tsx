@@ -18,7 +18,14 @@ import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { Vertrag } from "./HaushaltVertrag";
 import { PVAntrag } from "../../../entitities/pv";
+import { ReportURL, getAllReports } from "../../../utils/reports";
 
+const haushaltURLs: ReportURL[] = [
+  { endpoint: "haushalte/download_reports_dashboard", filename: "dashboard.csv" },
+  { endpoint: "haushalte/download_reports_vertrag", filename: "vertrag.csv" },
+  { endpoint: "haushalte/download_reports_rechnungen", filename: "rechnungen.csv" },
+  { endpoint: "haushalte/download_reports_energieausweise", filename: "energieausweise.csv" }
+];
 
 const HaushaltHome = () => {
     const theme = useTheme();
@@ -80,6 +87,7 @@ const HaushaltHome = () => {
             <Header title="Haushalte Dashboard" subtitle="Für Details die Reiter in der Sidebar auswählen"/>
             <Box display="flex" justifyContent="end" alignItems="center" >
           <Button
+          onClick={() => getAllReports(haushaltURLs)}
             sx={{
               backgroundColor: colors.color1[400],
               color: theme.palette.background.default,

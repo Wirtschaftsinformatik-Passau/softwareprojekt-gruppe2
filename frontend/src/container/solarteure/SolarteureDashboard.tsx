@@ -13,21 +13,15 @@ import SolarteureAnfragenDetail from "../../components/solarteure/dashboard/Sola
 import SolarteuereAnfragenAbgeschlossen from "../../components/solarteure/dashboard/SolarteureAnfragenAbgeschlossen";
 import SolarteureAnfragenBearbeitet from "../../components/solarteure/dashboard/SolarteureAnfragenBearbeitet";
 import EnergieberaterRechnungsTable from "../../components/energieberatende/dashboard/EnergieberatendeRechnungenOverview";
-
+import SolarteurHome from "../../components/solarteure/dashboard/SolarteureHome";
+import Calendar from "../../components/all/dashboards/Calendar";
+import { standardFAQ } from "../../utils/faqs";
 
 
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
     const [theme, colorMode] = useMode();
-    const faqItems = [
-        {
-            title: "What is GreenEcoHub?",
-            text: "GreenEcoHub is a platform that allows users to track their carbon footprint and compare it to other users. It also allows users to track their progress in reducing their carbon footprint and provides tips on how to reduce it further.",
-        }, {
-            title: "How do I use GreenEcoHub?",
-            text: "To use GreenEcoHub, you must first create an account. Once you have created an account, you can log in and begin tracking your carbon footprint. You can also view your progress and compare it to other users.",
-        }
-    ]
+    
     return (
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
@@ -37,12 +31,14 @@ const  NetzbetreiberDashboard = () => {
                 <div className="flex-1 overflow-y-auto">
                 <Topbar fixed={true} nutzerrolle={"Solarteure"}/>
                 <Routes>
+                    <Route path="/" element={<SolarteurHome/>}/>
                     <Route path="/antragTable" element={<SolarteureAnfragen/>}/>
                     <Route path="/antragTable/:anlageID" element={<SolarteureAnfragenDetail/>}/>
                     <Route path="/antragTableAbgeschlossen" element={<SolarteuereAnfragenAbgeschlossen/>}/>
                     <Route path="/antragTableBearbeitet" element={<SolarteureAnfragenBearbeitet/>}/>
                     <Route path="/rechnungenOverview" element={<EnergieberaterRechnungsTable/>}/>
-                    <Route path="/faq" element={<FAQ faqItems={faqItems}/>}/>
+                    <Route path="/calendar" element={<Calendar/>}/>
+                    <Route path="/faq" element={<FAQ items={standardFAQ}/>}/>
                 </Routes>
                 </div>
                 

@@ -1056,11 +1056,23 @@ async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.ge
 async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_async),
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
     try:
-        query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
-                                             (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
+        query = select(models.Kündigungsanfrage).join(models.Vertrag).where(
+            (models.Vertrag.netzbetreiber_id == current_user.user_id) &
+            (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt)
+        )
         result = await db.execute(query)
         kuendigungsanfragen = result.scalars().all()
-        return kuendigungsanfragen
+
+        response_list = [
+            schemas.KündigungsanfrageResponse(
+                anfrage_id=anfrage.anfrage_id,
+                vertrag_id=anfrage.vertrag_id,
+                bestätigt=anfrage.bestätigt
+            )
+            for anfrage in kuendigungsanfragen
+        ]
+
+        return response_list
     except SQLAlchemyError as e:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,

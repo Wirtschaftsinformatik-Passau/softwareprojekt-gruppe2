@@ -253,3 +253,12 @@ class PasswortResetToken(Base):
     user_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     token = Column(String, unique=True, index=True)
     expiration = Column(DateTime, default=datetime.utcnow)
+
+
+class ChatMessage(Base):
+    __tablename__ = 'chat_messages' if settings.OS == 'Linux' else "Chat_messages"
+    nachricht_id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    empfaenger_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
+    nachricht_inhalt = Column(String, nullable=False)
+    timestamp = Column(TIMESTAMP, server_default=func.now())

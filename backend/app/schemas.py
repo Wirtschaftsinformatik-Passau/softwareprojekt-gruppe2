@@ -772,8 +772,8 @@ class ChatMessageCreate(BaseModel):
 
 
 class ChatMessageSendResponse(BaseModel):
-    message: str
-    message_id: int
+    nachricht: str
+    nachricht_id: int
 
 
 class ChatMessageResponse(BaseModel):

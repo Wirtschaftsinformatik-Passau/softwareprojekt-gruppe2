@@ -652,11 +652,11 @@ async def send_message(chat_message: schemas.ChatMessageCreate, db: AsyncSession
 @router.get("/chat/history", response_model=List[schemas.ChatMessageResponse], status_code=status.HTTP_200_OK)
 async def get_chat_history(user_id: int, other_user_id: Optional[int] = None, db: AsyncSession = Depends(database.get_db_async)):
     query = select(models.ChatMessage).where(
-        (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.receiver_id == user_id))
+        (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.empfaenger_id == user_id))
 
     if other_user_id:
         query = query.where(
-            (models.ChatMessage.sender_id == other_user_id) | (models.ChatMessage.receiver_id == other_user_id))
+            (models.ChatMessage.sender_id == other_user_id) | (models.ChatMessage.empfaenger_id == other_user_id))
 
     result = await db.execute(query)
     chat_history = result.scalars().all()

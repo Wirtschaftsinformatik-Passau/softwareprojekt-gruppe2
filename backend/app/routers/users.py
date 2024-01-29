@@ -7,7 +7,7 @@ from sqlalchemy import exc
 from sqlalchemy.future import select
 from logging.config import dictConfig
 import logging
-from typing import List, Union
+from typing import List, Union, Optional
 from datetime import datetime, timedelta
 from app import models, schemas, database, config, hashing, oauth
 from app.logger import LogConfig, LogConfigAdresse, LogConfigRegistration
@@ -556,8 +556,10 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: Asyn
         if not nutzer:
             raise ValueError("Benutzer nicht gefunden")
 
-        nutzer.password = hashed_passwort
+        nutzer.passwort = hashed_passwort
         await db.commit()
+        await db.refresh(nutzer)
+        logger.info(f"Password for user {nutzer.user_id} updated successfully.")
 
         await db.delete(token_data)
         await db.commit()
@@ -574,3 +576,27 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset ,db: Asyn
     except Exception as e:
         await db.rollback()
         return f"Ein unerwarteter Fehler ist aufgetreten: {e}"
+
+
+@router.post("/chat/send", response_model=schemas.ChatMessageSendResponse, status_code=status.HTTP_201_CREATED)
+async def send_message(chat_message: schemas.ChatMessageCreate, db: AsyncSession = Depends(database.get_db_async)):
+    neue_nachricht = models.ChatMessage(**chat_message.dict())
+    db.add(neue_nachricht)
+    await db.commit()
+    await db.refresh(neue_nachricht)
+    return {"nachricht": "Nachricht erfolgreich gesendet", "nachricht_id": neue_nachricht.nachricht_id}
+
+
+@router.get("/chat/history", response_model=List[schemas.ChatMessageResponse], status_code=status.HTTP_200_OK)
+async def get_chat_history(user_id: int, other_user_id: Optional[int] = None, db: AsyncSession = Depends(database.get_db_async)):
+    query = select(models.ChatMessage).where(
+        (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.receiver_id == user_id))
+
+    if other_user_id:
+        query = query.where(
+            (models.ChatMessage.sender_id == other_user_id) | (models.ChatMessage.receiver_id == other_user_id))
+
+    result = await db.execute(query)
+    chat_history = result.scalars().all()
+
+    return chat_history

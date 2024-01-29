@@ -1,6 +1,5 @@
-import datetime
 from pydantic import BaseModel, EmailStr, PastDate, field_validator, Field, Extra, PositiveInt, constr
-from datetime import date
+from datetime import date, datetime
 from typing import Dict, List, Optional, Union
 from app.types import *
 
@@ -53,7 +52,7 @@ class NutzerCreate(BaseModel):
     def check_geburtsdatum(cls, v):
         if v:  # Überprüfen, ob das Feld nicht leer ist
             try:
-                parsed_date = datetime.datetime.strptime(v, "%Y-%m-%d").date()
+                parsed_date = datetime.strptime(v, "%Y-%m-%d").date()
                 if parsed_date > date.today():
                     raise ValueError('geburtsdatum darf nicht in der Zukunft liegen')
             except ValueError:
@@ -764,3 +763,22 @@ class PasswortReqReset(BaseModel):
 
 class PasswortReset(BaseModel):
     neu_passwort: str
+
+
+class ChatMessageCreate(BaseModel):
+    sender_id: int
+    empfaenger_id: int
+    nachricht_inhalt: str
+
+
+class ChatMessageSendResponse(BaseModel):
+    message: str
+    message_id: int
+
+
+class ChatMessageResponse(BaseModel):
+    nachricht_id: int
+    sender_id: int
+    empfaenger_id: int
+    nachricht_inhalt: str
+    timestamp: datetime = Field(default_factory=datetime.now)

@@ -11,6 +11,7 @@ import SolarteureDashboard from "./container/solarteure/SolarteureDashboard.tsx"
 import EnergieberatendeDashboard from "./container/energieberatende/EnergieberatendeDashboard.tsx";
 import LoginUI from "./container/all/LoginUI.tsx"
 import RegistrationUI from "./container/all/RegistrationUI.tsx";
+import Chat from "./components/all/Chat.tsx";
 import Profile from "./container/all/Profile.tsx";
 import PasswordReset from "./container/all/PasswordReset.tsx";
 import { ColorModeContext, useMode } from "./utils/theme.js";
@@ -54,6 +55,7 @@ const App = () => {
             <Route path="/energieberatende/*" element={<EnergieberatendeDashboard/>}/>
             <Route path="/profile"  element={<Profile/>}/>
             <Route path="/reset-password/:token" element={<PasswordReset/>}/>
+            <Route path="/chat" element={<Chat/>}/>
             <Route path="*" element={<LoginUI isAlreadyLoggedIn={isLoggedIn}/>}/>
         </Routes>
         </ThemeProvider>

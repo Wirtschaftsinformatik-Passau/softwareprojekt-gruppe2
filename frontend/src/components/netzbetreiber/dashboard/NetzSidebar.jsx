@@ -22,6 +22,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import EditIcon from '@mui/icons-material/Edit';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import {addSuffixToBackendURL} from "../../../utils/networking_utils.js";
 
@@ -339,6 +340,13 @@ const Sidebar1 = () => {
               title="Calendar"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Chat"
+              to="/chat"
+              icon={<ChatBubbleIcon />}
               selected={selected}
               setSelected={setSelected}
             />

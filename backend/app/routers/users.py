@@ -649,8 +649,22 @@ async def send_message(chat_message: schemas.ChatMessageCreate, db: AsyncSession
     return {"nachricht": "Nachricht erfolgreich gesendet", "nachricht_id": neue_nachricht.nachricht_id}
 
 
+@router.get("/user-chat-history", status_code=status.HTTP_200_OK)
+async def get_user_chat_history(user_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    query = select(models.ChatMessage).where(
+        (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.empfaenger_id == user_id))
+    result = await db.execute(query)
+    chat_history = result.scalars().all()
+    return chat_history
+
 @router.get("/chat/history", response_model=List[schemas.ChatMessageResponse], status_code=status.HTTP_200_OK)
-async def get_chat_history(user_id: int, other_user_id: Optional[int] = None, db: AsyncSession = Depends(database.get_db_async)):
+async def get_chat_history(user_id: Optional[int] = None, other_user_id: Optional[int] = None,
+                           current_user: models.Nutzer = Depends(oauth.get_current_user),
+                           db: AsyncSession = Depends(database.get_db_async)):
+
+    if not user_id:
+        user_id = current_user.user_id
+
     query = select(models.ChatMessage).where(
         (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.empfaenger_id == user_id))
 

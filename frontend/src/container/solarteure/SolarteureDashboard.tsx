@@ -16,6 +16,7 @@ import EnergieberaterRechnungsTable from "../../components/energieberatende/dash
 import SolarteurHome from "../../components/solarteure/dashboard/SolarteureHome";
 import Calendar from "../../components/all/dashboards/Calendar";
 import { standardFAQ } from "../../utils/faqs";
+import Chat from "../../components/all/Chat";
 
 
 const  NetzbetreiberDashboard = () => {
@@ -39,6 +40,7 @@ const  NetzbetreiberDashboard = () => {
                     <Route path="/rechnungenOverview" element={<EnergieberaterRechnungsTable/>}/>
                     <Route path="/calendar" element={<Calendar/>}/>
                     <Route path="/faq" element={<FAQ items={standardFAQ}/>}/>
+                    <Route path="/chat" element={<Chat/>}/>
                 </Routes>
                 </div>
                 

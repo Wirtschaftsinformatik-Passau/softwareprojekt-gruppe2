@@ -19,6 +19,7 @@ import AdminLogOverview from "../../components/admin/dashboards/AdminLogOverview
 import Calendar from "../../components/all/dashboards/Calendar";
 import AdminUserEditSelect from "../../components/admin/dashboards/AdminUserEditSelect";
 import AdminUserEditCustom from "../../components/admin/dashboards/AdminUserEditCustom";
+import Chat from "../../components/all/Chat";
 
 
 const  AdminDashboard = () => {
@@ -47,6 +48,7 @@ const  AdminDashboard = () => {
                 <Routes>
                 <Route path="/" element={<AdminHomeDashboard/>}/>
                 <Route path="/faq" element={<FAQ items={faqItems}/>}/>
+                <Route path="/chat" element={<Chat/>}/>
                 <Route path="/userCreation" element={<UserCreation/>}/>
                 <Route path="/userTable" element={<AdminUserTable/>}/>
                 <Route path="/editUser/" element={<AdminUserEditSelect/>}/>

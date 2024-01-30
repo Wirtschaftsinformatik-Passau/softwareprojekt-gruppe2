@@ -12,6 +12,7 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrackChangesIcon from '@mui/icons-material/TrackChanges';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 import user from "../../../assets/admin_icon.png"
@@ -200,6 +201,13 @@ const EnergieSidebar = () => {
               title="Calendar"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Chat"
+              to="/chat"
+              icon={<ChatBubbleIcon />}
               selected={selected}
               setSelected={setSelected}
             />

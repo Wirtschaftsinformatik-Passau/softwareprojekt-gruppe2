@@ -26,6 +26,7 @@ import HaushalteRechnungenOverview from "../../components/haushalte/dashboard/Ha
 import HaushalteRechnungenDetail from "../../components/haushalte/dashboard/HaushalteRechnungenDetail";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import Calendar from "../../components/all/dashboards/Calendar";
+import Chat from "../../components/all/Chat.tsx";
 import { standardFAQ } from "../../utils/faqs";
 
 const  HaushaltDashboard = () => {
@@ -67,6 +68,7 @@ const  HaushaltDashboard = () => {
                     <Route path="/rechnungenOverview" element={<HaushalteRechnungenOverview/>}/>
                     <Route path="/rechnungenDetail/:rechnungID" element={<HaushalteRechnungenDetail/>}/>
                     <Route path="/calendar" element={<Calendar/>}/>
+                    <Route path="/chat" element={<Chat/>}/>
                     <Route path="/faq" element={<FAQ items={standardFAQ}/>}/>
                 </Routes>
                 </div>

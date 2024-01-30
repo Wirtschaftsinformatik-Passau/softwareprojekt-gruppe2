@@ -15,6 +15,7 @@ import EnergieberatendeAnfragenAbgeschlossen from "../../components/energieberat
 import EnergieberatendeAnfragenDetail from "../../components/energieberatende/dashboard/EnergieberatendeAnfragenDetail";
 import EnergieberaterRechnungsTable from "../../components/energieberatende/dashboard/EnergieberatendeRechnungenOverview";
 import Calendar from "../../components/all/dashboards/Calendar";
+import Chat from "../../components/all/Chat";
 import { standardFAQ } from "../../utils/faqs";
 
 const  EnergieberatendeDashboard = () => {
@@ -34,6 +35,7 @@ const  EnergieberatendeDashboard = () => {
                 <Route path="/antragTable/:anlageID" element={<EnergieberatendeAnfragenDetail/>}/>
                 <Route path="/antragTableAbgeschlossen" element={<EnergieberatendeAnfragenAbgeschlossen/>}/>
                 <Route path="/antragTableBearbeitet" element={<EnergieberatendeAnfragenBearbeitet/>}/>
+                <Route path="/chat" element={<Chat/>}/>
                 <Route path="/antragTable" element={<EnergieberatendeAnfragen/>}/>
                 <Route path="/rechnungenOverview" element={<EnergieberaterRechnungsTable/>}/>
                 <Route path="/calendar" element={<Calendar/>}/>

@@ -18,6 +18,7 @@ import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
 import InventoryIcon from '@mui/icons-material/Inventory';
 import EditIcon from '@mui/icons-material/Edit';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 import user from "../../../assets/admin_icon.png"
@@ -197,6 +198,13 @@ const Sidebar1 = () => {
               title="Calendar"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+            <Item
+              title="Chat"
+              to="/chat"
+              icon={<ChatBubbleIcon />}
               selected={selected}
               setSelected={setSelected}
             />

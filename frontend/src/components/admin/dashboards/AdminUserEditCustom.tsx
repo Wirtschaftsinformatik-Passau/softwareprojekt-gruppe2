@@ -13,62 +13,30 @@ import axios from "axios";
 import { Iadresse, Adresse } from "../../../entitities/adress";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
-
-class EditableUser{
-    public vorname;
-    public nachname;
-    public telefonnummer;
-    public titel;
-    public email;
-    public rolle;
-    public geburtsdatum;
-    public passwort;
-    public strasse;
-    public hausnr;
-    public plz;
-    public stadt;
-    public adresse_id;
-
-    constructor(
-        vorname: string,
-        nachname: string,
-        telefon: string,
-        email: string,
-        passwort: string,
-        rolle:  string,
-        geburtsdatum: string,
-        strasse: string,
-        hausnr: number,
-        plz: number,
-        stadt: string,
-        title: string = "",
-        adresse_id: number = 0
-    ) {
-        this.vorname = vorname;
-        this.nachname = nachname
-        this.telefonnummer = telefon
-        this.email = email
-        this.passwort = passwort
-        this.rolle = rolle
-        this.geburtsdatum = geburtsdatum
-        this.adresse_id = adresse_id
-        this.titel = title
-        this.strasse = strasse
-        this.hausnr = hausnr
-        this.plz = plz
-        this.stadt = stadt  
-        this.adresse_id = adresse_id      
-    }
+// Define TypeScript interfaces for the user details and address
+interface EditableUser {
+    vorname: string;
+    nachname: string;
+    telefonnummer: string;
+    titel?: string;
+    email: string;
+    rolle: Nutzerrolle;
+    geburtsdatum: string;
+    passwort?: string;
+    strasse: string;
+    hausnr: number;
+    plz: number;
+    stadt: string;
+    adresse_id?: number;
 }
 
+// Utility function for extracting address and user details from an EditableUser object
 const extractAdressAndUser = (user: EditableUser) => {
-    const adresse: Iadresse = new Adresse(user.strasse, user.hausnr, user.plz, user.stadt, "Deutschland")
+    const adresse: IAdresse = new Adresse(user.strasse, user.hausnr, user.plz, user.stadt, "Deutschland");
     const userToSave: IUser = new User(user.vorname, user.nachname, user.telefonnummer, user.email, 
-        user.passwort, user.rolle, user.geburtsdatum, user.adresse_id)
-    return {adresse, userToSave}
-    
-}
-
+        user.passwort || "", user.rolle, user.geburtsdatum, user.adresse_id);
+    return { adresse, userToSave };
+};
 
 
 const AdminUserEdit = ({}) => {
@@ -78,23 +46,23 @@ const AdminUserEdit = ({}) => {
     const [userID, setUserID] = React.useState("")
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
-    const [editableUser, setEditableUser] = React.useState(null)
-    const [initialValues, setInitialValues] = React.useState({vorname: '',
-    nachname: '',
-    strasse: '',
-        hausnr: '',
-        plz: '',
+    const [editableUser, setEditableUser] = useState<EditableUser | null>(null);
+    const [initialValues, setInitialValues] = useState<EditableUser>({
+        vorname: '',
+        nachname: '',
+        strasse: '',
+        hausnr: 0,
+        plz: 0,
         stadt: '',
-        geburtstag: '2000-01-01',
-        telefon: '',
-        nutzerrole: '',
+        geburtsdatum: '2000-01-01',
+        telefonnummer: '',
+        rolle: Nutzerrolle.Admin, // Default value or handle dynamically
         email: '',
-        passwort: '',
-        passwortWiederholen: '',
-        })
+        adresse_id: 0,
+    });
     const navigate = useNavigate();
-    const { userId } = useParams();  
-    console.log("userId:", userId)
+    const { userId } = useParams<{ userId: string }>(); 
+
 
     useEffect(() => {
       const token = localStorage.getItem("accessToken");
@@ -521,7 +489,7 @@ const AdminUserEdit = ({}) => {
                 Abbrechen
               </Button>
               <Button type="submit" sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
-                Profil erstellen
+                Nutzer bearbeiten
               </Button>
             </Box>
           </form>
@@ -530,7 +498,7 @@ const AdminUserEdit = ({}) => {
         </Box>
     
       <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} 
-    text="Nutzer erfolgreich gespeichert!" navigationGoal="/admin"/>
+    text="Nutzer erfolgreich bearbeitet!" navigationGoal="/admin"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Nutzer ID existiert nicht" />
     </>

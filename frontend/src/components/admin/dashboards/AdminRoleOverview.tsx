@@ -13,18 +13,28 @@ import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import PieChart from "../../utility/visualization/PieChart";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
+// TypeScript interface for defining the structure of a single pie data item
+interface PieDataItem {
+  id: string; // Assuming 'id' is a string that represents user roles, e.g., "Admin", "Netzbetreiber"
+  value: number; // Number of users in each role
+}
 
+// TypeScript interface for defining the structure of the state that holds the pie chart data
+interface PieDataState {
+  pieData: PieDataItem[];
+}
 
-const AdminRoleOverview = () => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-    const [pieData, setPieData] = React.useState([])
-    const navigate = useNavigate();
-    let counter = 0;
-  const addUniqueId = (item: any) => {
-    const uniqueId = `${counter++}`;
-    return { ...item, item_id: uniqueId };
+const AdminRoleOverview: React.FC = () => {
+  const theme = useTheme(); // Using theme for consistent styling across the app
+  const colors = tokens(theme.palette.mode); // Accessing color tokens based on the current theme mode
+  const navigate = useNavigate();
+  const [pieData, setPieData] = React.useState<PieDataItem[]>([]); // State for storing pie chart data
+
+  // Function to add a unique ID to each item for use as a key in rendering lists
+  const addUniqueId = (item: PieDataItem, index: number): PieDataItem & { item_id: string } => {
+    return { ...item, item_id: `item-${index}` };
   };
+
 
     React.useEffect(() => {
         const token = localStorage.getItem("accessToken");

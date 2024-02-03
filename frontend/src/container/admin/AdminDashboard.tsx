@@ -11,7 +11,6 @@ import Sidebar from "../../components/admin/dashboards/AdminSidebar";
 import FAQ from "../../components/admin/dashboards/FAQs";
 import UserCreation from "../../components/admin/dashboards/AdminCreateUser";
 import AdminUserTable from "../../components/admin/dashboards/AdminUserTable";
-import AdminUserEdit from "../../components/admin/dashboards/AdminUserEdit";
 import AdminEndPointActivity from "../../components/admin/dashboards/AdminEndPointAcitvity";
 import AdminRoleOverview from "../../components/admin/dashboards/AdminRoleOverview";
 import AdminHomeDashboard from "../../components/admin/dashboards/AdminHomeDashboard";

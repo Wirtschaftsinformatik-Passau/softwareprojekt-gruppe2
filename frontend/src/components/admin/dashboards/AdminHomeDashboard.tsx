@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
+import { Box, Button, useTheme } from "@mui/material";
 import { tokens } from "../../../utils/theme";
 import { useEffect } from "react";
 import React from "react";
@@ -25,7 +25,7 @@ import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { getAllReports } from "../../../utils/reports";
 
 
-const AdminEndPointActivity = () => {
+const AdminHome = () => {
     const theme = useTheme();
     const navigate = useNavigate();
     const colors = tokens(theme.palette.mode);
@@ -410,4 +410,4 @@ const AdminEndPointActivity = () => {
     )
 }
 
-export default AdminEndPointActivity;
+export default AdminHome;

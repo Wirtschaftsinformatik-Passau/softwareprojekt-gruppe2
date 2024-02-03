@@ -4,19 +4,35 @@ import { tokens } from "../../../utils/theme";
 import { useState, useEffect } from "react";
 import ErrorIcon from '@mui/icons-material/Error';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
-import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import Header from "../../utility/Header";
 
 
 
+// TypeScript interface for defining the structure of a log object
+interface Log {
+  log_id: number;
+  timestamp: string;
+  level: string;
+  name: string;
+  message: string;
+  user_id: number;
+  endpoint: string;
+  method: string;
+  success: boolean;
+}
+
+// TypeScript interface for defining the structure of the state that holds the logs
+interface LogsState {
+  logs: Log[];
+}
+
 const LogOverview = () => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  const navigate = useNavigate();
-  const [logs, setLogs] = useState({"logs":[{
+  const theme = useTheme(); // Use the theme for consistent styling across the app
+  const colors = tokens(theme.palette.mode); // Accessing color tokens based on the current theme mode
+  const navigate = useNavigate(); // Hook for programmatically navigating between routes
+  const [logs, setLogs] = useState<LogsState>({"logs":[{
     "log_id": 0,
     "timestamp": "2023-12-11 23:10:31,122",
     "level": "INFO",
@@ -26,7 +42,7 @@ const LogOverview = () => {
     "endpoint": "/auth/login",
     "method": "POST",
     "success": true
-}]});
+  }]});
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");

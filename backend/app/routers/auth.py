@@ -18,6 +18,19 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 @router.post("/login", status_code=status.HTTP_202_ACCEPTED, response_model=schemas.TokenResponse)
 async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Authentifiziert einen Nutzer und gibt ein Token zurück.
+
+    Args:
+        user_creds (schemas.NutzerLogin): Die Nutzeranmeldeinformationen.
+        db (AsyncSession, optional): Die Datenbank-Sitzung. Standardmäßig wird `database.get_db_async` verwendet.
+
+    Returns:
+        dict: Ein Token zur Authentifizierung des Nutzers.
+
+    Raises:
+        HTTPException: Wenn die Anmeldung fehlschlägt.
+    """
     try:
 
         stmt = select(models.Nutzer).where(models.Nutzer.email == user_creds.email)

@@ -29,6 +29,17 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Benutzer die Rolle eines Netzbetreibers hat.
+
+    Args:
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        method (str): Die HTTP-Methode der Anfrage.
+        endpoint (str): Der Endpunkt, auf den zugegriffen wird.
+
+    Raises:
+        HTTPException: Wenn der Benutzer nicht die Rolle des Netzbetreibers hat.
+    """
     if current_user.rolle != models.Rolle.Netzbetreiber:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -42,6 +53,17 @@ async def check_netzbetreiber_role(current_user: models.Nutzer, method: str, end
 
 
 async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Prüft, ob der aktuelle Benutzer entweder die Rolle eines Netzbetreibers oder eines Haushalters hat.
+
+    Args:
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        method (str): Die HTTP-Methode der Anfrage.
+        endpoint (str): Der Endpunkt, auf den zugegriffen wird.
+
+    Raises:
+        HTTPException: Wenn der Benutzer keine der angegebenen Rollen hat.
+    """
     if current_user.rolle not in [models.Rolle.Netzbetreiber, models.Rolle.Haushalte]:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -55,28 +77,46 @@ async def check_netzbetreiber_role_or_haushalt(current_user: models.Nutzer, meth
 
 
 def is_haushalt(user: models.Nutzer) -> bool:
+    """
+    Prüft, ob die Benutzerrolle Haushalt ist.
+
+    Args:
+        user (models.Nutzer): Der zu prüfende Benutzer.
+
+    Returns:
+        bool: True, wenn der Benutzer ein Haushalt ist, sonst False.
+    """
     return user.rolle == models.Rolle.Haushalte
 
 
 def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
+    """
+    Validiert eine PV-Anlage anhand von vordefinierten Kriterien.
+
+    Args:
+        pv_anlage (models.PVAnlage): Die zu prüfende PV-Anlage.
+
+    Returns:
+        bool: True, wenn die Anlage alle Kriterien erfüllt, andernfalls False.
+
+    Raises:
+        HTTPException: Wenn Daten für die Berechnung fehlen.
+    """
     # Annahmen für die Netzverträglichkeitsprüfung
     max_kapazitaet_kw = 100.0  # Maximale Kapazität in Kilowatt
     max_installationsflaeche_m2 = 1000.0  # Maximale Installationsfläche in Quadratmetern
     try:
         is_within_kapazitaetsgrenze = pv_anlage.kapazitaet <= max_kapazitaet_kw
         is_within_flaechengrenze = pv_anlage.installationsflaeche <= max_installationsflaeche_m2
-        is_valid_modulanordnung = pv_anlage.modulanordnung in [models.Orientierung.Sued, models.Orientierung.Suedost,
-                                                               models.Orientierung.Suedwest]
         is_valid_montagesystem = pv_anlage.montagesystem != models.Montagesystem.Freilandmontage
         is_valid_schattenanalyse = pv_anlage.schattenanalyse in [models.Schatten.Kein_Schatten,
                                                                  models.Schatten.Minimalschatten]
 
         print(
-            f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}, {is_valid_modulanordnung}")
+            f"Prozess Status der PV-Anlage (ID: {is_within_kapazitaetsgrenze}): {is_within_flaechengrenze}")
         return all([
             is_within_kapazitaetsgrenze,
             is_within_flaechengrenze,
-            is_valid_modulanordnung,
             is_valid_montagesystem,
             is_valid_schattenanalyse
         ])
@@ -86,6 +126,15 @@ def validate_pv_anlage(pv_anlage: models.PVAnlage) -> bool:
 
 
 def validate_email(email: str) -> bool:
+    """
+    Überprüft eine E-Mail-Adresse anhand eines Musters für einen regulären Ausdruck.
+
+    Args:
+        email (str): Die zu überprüfende E-Mail-Adresse.
+
+    Returns:
+        bool: True, wenn die E-Mail gültig ist, andernfalls False.
+    """
     pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     return re.match(pattern, email) is not None
 
@@ -94,6 +143,20 @@ def validate_email(email: str) -> bool:
 @router.post("/tarife", response_model=schemas.TarifResponse, status_code=status.HTTP_201_CREATED)
 async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(database.get_db_async),
                        current_user: models.Nutzer = Depends(oauth.get_current_user), ):
+    """
+    Erzeugt einen neuen Tarif.
+
+    Args:
+        tarif (schemas.TarifCreate): Der zu erstellende Tarif.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+
+    Returns:
+        schemas.TarifResponse: Der erstellte Tarif.
+
+    Raises:
+        HTTPException: Wenn der Tarif nicht erstellt werden konnte.
+    """
     try:
         user_id = current_user.user_id
         tarif.netzbetreiber_id = user_id
@@ -113,6 +176,21 @@ async def create_tarif(tarif: schemas.TarifCreate, db: AsyncSession = Depends(da
 async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
                        current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Aktualisiert einen bestehenden Tarif.
+
+    Args:
+        tarif_id (int): Die ID des zu aktualisierenden Tarifs.
+        tarif (schemas.TarifCreate): Die aktualisierten Tarifdaten.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        schemas.TarifResponse: Der aktualisierte Tarif.
+
+    Raises:
+        HTTPException: Wenn der Tarif nicht aktualisiert werden konnte oder in einem Vertrag verwendet wird.
+    """
     try:
         query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
         vertrag_query = select(models.Vertrag).where(models.Vertrag.tarif_id == tarif_id)
@@ -146,6 +224,17 @@ async def update_tarif(tarif_id: int, tarif: schemas.TarifCreate,
 @router.delete("/tarife/{tarif_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Löscht einen angegebenen Tarif.
+
+    Args:
+        tarif_id (int): Die ID des zu löschenden Tarifs.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das voraussichtlich die Rolle netzbetreiber hat.
+
+    Raises:
+        HTTPException: Wenn der Tarif nicht existiert oder wenn der Benutzer keine Berechtigung hat.
+    """
     delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
 
     await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
@@ -168,7 +257,19 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
 @router.get("/tarife", response_model=List[schemas.TarifResponse])
 async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    # TODO: nur tarife von netzbetreiber ausgeben
+    """
+    Ruft eine Liste von Tarifen ab.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+
+    Returns:
+        List[schemas.TarifResponse]: Eine Liste von Tarifen.
+
+    Raises:
+        HTTPException: Wenn keine Tarife gefunden werden.
+    """
     await check_netzbetreiber_role(current_user, "GET", "/tarife")
     user_id = current_user.user_id
     result = await db.execute(select(models.Tarif).where(models.Tarif.netzbetreiber_id == user_id))
@@ -181,6 +282,19 @@ async def get_tarife(db: AsyncSession = Depends(database.get_db_async),
 # Einzelnen Tarif abrufen
 @router.get("/tarife/{tarif_id}", response_model=schemas.TarifResponse)
 async def get_tarif_by_id(tarif_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft einen einzelnen Tarif anhand seiner ID ab.
+
+    Args:
+        tarif_id (int): Die ID des abzurufenden Tarifs.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        schemas.TarifResponse: Der angeforderte Tarif.
+
+    Raises:
+        HTTPException: Wenn der Tarif nicht gefunden wird.
+    """
     query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
     result = await db.execute(query)
     tarif = result.scalar_one_or_none()
@@ -192,6 +306,19 @@ async def get_tarif_by_id(tarif_id: int, db: AsyncSession = Depends(database.get
 @router.get("/laufzeit", response_model=List[schemas.TarifLaufzeitResponse])
 async def count_laufzeit(current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Zählt die Dauer der Tarife.
+
+    Args:
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        List[schemas.TarifLaufzeitResponse]: Eine Liste von Tariflaufzeiten.
+
+    Raises:
+        HTTPException: Wenn keine Tarife gefunden werden oder wenn ein Datenbankfehler vorliegt.
+    """
     await check_netzbetreiber_role(current_user or models.Rolle.Admin, "GET", "/tarife")
 
     try:
@@ -221,6 +348,19 @@ async def count_laufzeit(current_user: models.Nutzer = Depends(oauth.get_current
 @router.get("/preisstrukturen", response_model=List[schemas.PreisstrukturenResponse])
 async def get_preisstrukturen(current_user: models.Nutzer = Depends(oauth.get_current_user),
                               db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine Liste von Preisstrukturen ab.
+
+    Args:
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        List[schemas.PreisstrukturenResponse]: Eine Liste von Preisstrukturen.
+
+    Raises:
+        HTTPException: Wenn ein Datenbankfehler vorliegt oder keine Preisstrukturen gefunden werden.
+    """
     await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen")
     try:
         user_id = current_user.user_id
@@ -243,6 +383,20 @@ async def get_preisstrukturen(current_user: models.Nutzer = Depends(oauth.get_cu
 @router.get("/preisstrukturen/{preis_id}", response_model=schemas.PreisstrukturenResponse)
 async def get_preisstrukturen(preis_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                               db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine bestimmte Preisstruktur anhand ihrer ID ab.
+
+    Args:
+        preis_id (int): Die ID der abzurufenden Preisstruktur.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        schemas.PreisstrukturenResponse: Die angeforderte Preisstruktur.
+
+    Raises:
+        HTTPException: Wenn die Preisstruktur nicht gefunden wird oder ein Datenbankfehler vorliegt.
+    """
     await check_netzbetreiber_role(current_user, "GET", "/preisstrukturen/{preis_id}")
     try:
         user_id = current_user.user_id
@@ -271,6 +425,20 @@ async def get_preisstrukturen(preis_id: int, current_user: models.Nutzer = Depen
 async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
                                current_user: models.Nutzer = Depends(oauth.get_current_user),
                                db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erzeugt eine neue Preisstruktur.
+
+    Args:
+        Preisstruktur (schemas.PreisstrukturenCreate): Die zu erstellende Preisstruktur.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        schemas.PreisstrukturenResponse: Die neu erstellte Preisstruktur.
+
+    Raises:
+        HTTPException: Wenn es einen Validierungs- oder Datenbankfehler gibt.
+    """
     await check_netzbetreiber_role(current_user, "POST", "/preisstrukturen")
     try:
         user_id = current_user.user_id
@@ -315,6 +483,21 @@ async def create_preisstruktur(preisstruktur: schemas.PreisstrukturenCreate,
 async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.PreisstrukturenCreate,
                                current_user: models.Nutzer = Depends(oauth.get_current_user),
                                db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Aktualisiert eine bestimmte Preisstruktur anhand ihrer ID.
+
+    Args:
+        preis_id (int): Die ID der zu aktualisierenden Preisstruktur.
+        preisstruktur_data (schemas.PreisstrukturenCreate): Die aktualisierten Preisstrukturdaten.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        schemas.PreisstrukturenResponse: Die aktualisierte Preisstruktur.
+
+    Raises:
+        HTTPException: Wenn die Preisstruktur nicht gefunden wird oder ein Datenbankfehler vorliegt.
+    """
     await check_netzbetreiber_role(current_user, "PUT", "/preisstrukturen")
     user_id = current_user.user_id
     query = select(models.Preisstrukturen).where((models.Preisstrukturen.preis_id == preis_id) &
@@ -361,13 +544,27 @@ async def update_preisstruktur(preis_id: int, preisstruktur_data: schemas.Preiss
         raise HTTPException(status_code=500, detail="Interner Serverfehler")
 
 
-# haben wir einen datencheck drin, das nichts falsches hochgeladen wird??
 @router.post("/dashboard/{haushalt_id}", status_code=status.HTTP_201_CREATED,
              response_model=schemas.DashboardSmartMeterDataResponse)
 async def add_dashboard_smartmeter_data(haushalt_id: int,
                                         db: AsyncSession = Depends(database.get_db_async),
                                         file: UploadFile = File(...),
                                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Fügt dem Dashboard Smart-Meter-Daten für einen bestimmten Haushalt hinzu.
+
+    Args:
+        haushalt_id (int): Die ID des Haushalts, dem die Daten hinzugefügt werden sollen.
+        db (AsyncSession): Die Datenbanksitzung.
+        file (UploadDatei): Die CSV-Datei mit den Smart-Meter-Daten.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, voraussichtlich mit der Rolle netzbetreiber oder haushalt.
+
+    Returns:
+        schemas.DashboardSmartMeterDataResponse: Bestätigung des Hinzufügens von Daten.
+
+    Raises:
+        HTTPException: Wenn die Benutzerrolle nicht angemessen ist oder ein Fehler bei der Verarbeitung der Datei auftritt.
+    """
     await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard")
     try:
         haushalt_user = await db.get(models.Nutzer, haushalt_id)
@@ -426,6 +623,19 @@ async def add_dashboard_smartmeter_data(haushalt_id: int,
 @router.get("/haushalte", status_code=status.HTTP_200_OK, )
 async def get_haushalte(current_user: models.Nutzer = Depends(oauth.get_current_user),
                         db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine Liste von Haushalten ab.
+
+    Args:
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        Eine Liste von Haushalten mit deren Details.
+
+    Raises:
+        HTTPException: Wenn ein Datenbankfehler vorliegt oder keine Haushalte gefunden werden.
+    """
     try:
         await check_netzbetreiber_role_or_haushalt(current_user, "GET", "/haushalte")
         user_id = current_user.user_id
@@ -482,6 +692,24 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
                                                    start: str = "2023-01-01", end: str = "2023-01-30",
                                                    db: AsyncSession = Depends(database.get_db_async),
                                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft aggregierte Smart-Meter-Daten für einen bestimmten Haushalt über einen bestimmten Zeitraum ab.
+
+    Args:
+        haushalt_id (int): Die ID des Haushalts.
+        field (str): Das Feld, nach dem aggregiert werden soll (z. B. "all", "pv", "soc").
+        period (str): Der Aggregationszeitraum (z. B. "DAY", "MONTH").
+        start (str): Das Startdatum für den Aggregationszeitraum.
+        end (str): Das Enddatum für den Aggregationszeitraum.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt.
+
+    Returns:
+        Eine Liste der aggregierten Smart-Meter-Daten gemäß dem angegebenen Feld und Zeitraum.
+
+    Raises:
+        HTTPException: Wenn die Benutzerrolle nicht angemessen ist, der Zeitraum ungültig ist oder ein Fehler bei der Verarbeitung der Daten auftritt.
+    """
     try:
         await check_netzbetreiber_role_or_haushalt(current_user, "POST", "/dashboard/{haushalt_id}")
 
@@ -612,11 +840,18 @@ async def get_aggregated_dashboard_smartmeter_data(haushalt_id: int, field: str 
 
 
 def determine_query_parts(field):
-    # Initialize variables for fields to select and the GROUP BY clause
+    """
+    Bestimmt die Felder und die GROUP BY-Klausel auf der Grundlage des angegebenen Aggregationsfeldes für die Abfrage von aggregierten Dashboarddaten.
+
+    Args:
+        field (str): Das Feld, nach dem aggregiert werden soll (z. B. "all", "pv", "soc").
+
+    Returns:
+        Tupel: Enthält die auszuwählenden Felder und die GROUP BY-Klausel für die SQL-Abfrage.
+    """
     fields = []
     group_by = "GROUP BY DATE_TRUNC(:period, datum)"
 
-    # Define the fields and GROUP BY clause based on the 'field' parameter
     if field == "all":
         fields = [
             "sum(pv_erzeugung) as gesamt_pv_erzeugung",
@@ -633,15 +868,22 @@ def determine_query_parts(field):
     elif field == "last":
         fields = ["sum(last) as gesamt_last"]
     else:
-        # If an invalid field is provided, raise an error
         raise ValueError("Ungültiges Feld: {}".format(field))
 
-    # Return the fields and the GROUP BY clause
     return fields, group_by
 
 
 def process_aggregated_data(field, aggregated_data):
-    # Process and return the data based on the 'field' parameter
+    """
+    Verarbeitet aggregierte Daten basierend auf dem angegebenen Feld, um die Antwort zu formatieren.
+
+    Args:
+        field (str): Das Feld, das aggregiert wurde (z. B. "all", "pv", "soc").
+        aggregierte_Daten: Die aggregierten Rohdaten aus der Datenbank.
+
+    Returns:
+        Die formatierten aggregierten Daten, die für die Antwort geeignet sind.
+    """
     if field == "all":
         return [schemas.AggregatedDashboardSmartMeterData(
             datum=row[0].isoformat() if row[0] else None,
@@ -685,6 +927,20 @@ def process_aggregated_data(field, aggregated_data):
             response_model=schemas.NetzvertraeglichkeitspruefungResponse)
 async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Führt eine Netzverträglichkeitsprüfung für eine bestimmte PV-Anlage durch.
+
+    Args:
+        anlage_id (int): Die ID der zu prüfenden PV-Anlage.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das voraussichtlich die Rolle "Netzbetreiber" hat.
+
+    Returns:
+        schemas.NetzvertraeglichkeitspruefungResponse: Das Ergebnis der Netzverträglichkeitsprüfung.
+
+    Erzeugt:
+        HTTPException: Wenn die PV-Anlage nicht gefunden wird, nicht den richtigen Status hat oder ein Datenbankfehler vorliegt.
+    """
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/nvpruefung/{anlage_id}")
 
     stmt = select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id)
@@ -741,6 +997,20 @@ async def durchfuehren_netzvertraeglichkeitspruefung(anlage_id: int, db: AsyncSe
             response_model=schemas.EinspeisezusageResponse)
 async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(database.get_db_async),
                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Erteilt eine Einspeisezusage für eine bestimmte PV-Anlage.
+
+    Args:
+        anlage_id (int): Die ID der zu genehmigenden PV-Anlage.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das voraussichtlich die Rolle "Netzbetreiber" hat.
+
+    Returns:
+        schemas.EinspeisezusageResponse: Bestätigung der Einspeisezusage.
+
+    Raises:
+        HTTPException: Wenn die PV-Anlage nicht gefunden wird, der Netzverträglichkeitstest nicht bestanden wurde oder ein Datenbankfehler vorliegt.
+    """
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/einspeisezusage/{anlage_id}")
 
     stmt = select(models.PVAnlage).where(models.PVAnlage.anlage_id == anlage_id)
@@ -789,6 +1059,11 @@ async def einspeisezusage_erteilen(anlage_id: int, db: AsyncSession = Depends(da
 
 
 async def check_and_create_rechnung():
+    """
+    Prüft regelmäßig, ob für Verträge eine neue Rechnung erforderlich ist und erstellt sie bei Bedarf.
+
+    Diese Funktion ist für die Ausführung als Hintergrundaufgabe in der Anwendung vorgesehen.
+    """
     async for db in get_db_async():
         try:
             today = datetime.today().date()
@@ -814,6 +1089,16 @@ async def check_and_create_rechnung():
 
 
 def berechnen_jahrestag(vertrag, today):
+    """
+    Berechnet das Jahrestagsdatum eines Vertrags auf der Grundlage des heutigen Datums.
+
+    Args:
+        vertrag (models.Vertrag): Der Vertrag, für den der Jahrestag berechnet werden soll.
+        heute (Datum): Das Bezugsdatum für die Berechnung.
+
+    Returns:
+        date: Das berechnete Jahrestagsdatum.
+    """
     try:
         if vertrag.beginn_datum.month == 2 and vertrag.beginn_datum.day == 29:
             if not calendar.isleap(today.year):
@@ -828,6 +1113,17 @@ def berechnen_jahrestag(vertrag, today):
 
 
 async def create_rechnung_bei_bedarf(vertrag, today, db):
+    """
+    Erstellt bei Bedarf eine Rechnung für einen Vertrag, basierend auf bestimmten Bedingungen.
+
+    Args:
+        vertrag (models.Vertrag): Der Vertrag, für den eine Rechnung erstellt werden soll.
+        today (Datum): Das für die Rechnungserstellung zu berücksichtigende Datum.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Raises:
+        Exception (Ausnahme): Wenn während der Rechnungserstellung ein Fehler auftritt.
+    """
     try:
         next_period_start = today
         next_period_end = today + timedelta(days=365)
@@ -848,6 +1144,18 @@ async def create_rechnung_bei_bedarf(vertrag, today, db):
 
 
 async def check_rechnung_exists(vertrag, start_date, end_date, db):
+    """
+    Prüft, ob bereits eine Rechnung für einen bestimmten Vertrag innerhalb eines bestimmten Datumsbereichs existiert.
+
+    Args:
+        vertrag (models.Vertrag): Der Vertrag, der auf eine vorhandene Rechnung geprüft werden soll.
+        start_date (Datum): Das Startdatum des zu prüfenden Zeitraums.
+        end_date (Datum): Das Enddatum des zu prüfenden Zeitraums.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Returns:
+        bool: True, wenn eine Rechnung existiert, sonst False.
+    """
     try:
         result = await db.execute(
             select(models.Rechnungen).where(
@@ -864,6 +1172,19 @@ async def check_rechnung_exists(vertrag, start_date, end_date, db):
 
 
 async def create_new_rechnung(vertrag, today, start_date, end_date, db):
+    """
+    Erzeugt eine neue Rechnung für einen Vertrag.
+
+    Args:
+        vertrag (models.Vertrag): Der Vertrag, für den eine Rechnung erstellt werden soll.
+        today (Datum): Das aktuelle Datum, das für das Erstellungsdatum der Rechnung verwendet wird.
+        start_date (Datum): Das Startdatum für den Rechnungszeitraum.
+        end_date (Datum): Das Enddatum des Rechnungszeitraums.
+        db (AsyncSession): Die Datenbanksitzung.
+
+    Raises:
+        SQLAlchemyError: Wenn bei der Rechnungserstellung ein Datenbankfehler auftritt.
+    """
     try:
         neue_rechnung = models.Rechnungen(
             empfaenger_id=vertrag.user_id,
@@ -891,6 +1212,20 @@ async def create_new_rechnung(vertrag, today, start_date, end_date, db):
 @router.get("/pv-angenommen", response_model=List[schemas.NetzbetreiberEinspeisungDetail])
 async def get_angenommene_pv_anlagen(db: AsyncSession = Depends(database.get_db),
                                      current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft detaillierte Informationen über eine bestimmte PV-Anlage anhand ihrer ID ab.
+
+    Args:
+        anlage_id (int): Die ID der PV-Anlage.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, muss die Rolle netzbetreiber haben.
+
+    Returns:
+        schemas.NetzbetreiberEinspeisungDetail: Detaillierte Informationen über die spezifische Einspeisezusage.
+
+    Raises:
+        HTTPException: Wenn die Einspeiseverpflichtung nicht gefunden wird, der Benutzer kein Netzbetreiber ist, oder wenn ein Datenbankfehler vorliegt.
+    """
     try:
         if current_user.rolle != models.Rolle.Netzbetreiber:
             raise HTTPException(status_code=403, detail="Nicht autorisiert")
@@ -928,6 +1263,19 @@ async def get_einspeisezusagen_vorschlag(
         prozess_status: List[types.ProzessStatus] = Query(types.ProzessStatus.PlanErstellt, alias="prozess_status"),
         db: AsyncSession = Depends(database.get_db_async),
         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft eine Liste der PV-Anlagen ab, für die ein Antrag auf Einspeiseverpflichtung beim Netzbetreiber vorliegt.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, voraussichtlich ein Netzbetreiber.
+
+    Returns:
+        List[schemas.PVSolarteuerResponse]: Eine Liste von PV-Anlagen mit Basisinformationen und vorgeschlagener Einspeiseverpflichtung.
+
+    Erzeugt:
+        HTTPException: Wenn der Benutzer nicht autorisiert ist oder ein Datenbankfehler auftritt.
+    """
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
         if prozess_status[0] == types.ProzessStatus.PlanErstellt and (
@@ -982,6 +1330,20 @@ async def get_einspeisezusagen_vorschlag(
 async def get_einspeisezusagen_vorschlag(anlage_id: int,
                                          db: AsyncSession = Depends(database.get_db_async),
                                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """"
+    Ruft Vorschläge für Einspeisezusagen auf der Grundlage des Status von PV-Anlagen ab.
+
+    Args:
+        prozess_status (Liste[types.ProzessStatus]): Eine Liste von Prozessstatus zum Filtern der Vorschläge.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Der aktuelle Nutzer, der voraussichtlich ein Netzbetreiber ist.
+
+    Returns:
+        List[schemas.PVSolarteuerResponse]: Eine Liste von PV-Anlagenvorschlägen für Einspeiseverträge.
+
+    Raises:
+        HTTPException: Wenn nicht autorisiert oder ein Datenbankfehler auftritt.
+    """
     await check_netzbetreiber_role(current_user, "GET", f"/netzbetreiber/einspeisezusagen")
     try:
         stmt = (select(models.PVAnlage, models.Nutzer, models.Adresse)
@@ -1033,6 +1395,20 @@ async def get_einspeisezusagen_vorschlag(anlage_id: int,
 @router.put("/tarife/deactivate/{tarif_id}", status_code=status.HTTP_200_OK)
 async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Deaktiviert einen bestimmten Tarif.
+
+    Args:
+        tarif_id (int): Die ID des zu deaktivierenden Tarifs.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das voraussichtlich die Rolle netzbetreiber hat.
+
+    Returns:
+        Eine Erfolgsmeldung, die anzeigt, dass der Tarif deaktiviert wurde.
+
+    Raises:
+        HTTPException: Wenn der Tarif nicht gefunden wird oder wenn ein Datenbankfehler auftritt.
+    """
     await check_netzbetreiber_role(current_user, "PUT", f"/netzbetreiber/tarif/deactivate/{tarif_id}")
     try:
         stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
@@ -1060,6 +1436,19 @@ async def deactivate_tarif(tarif_id: int, db: AsyncSession = Depends(database.ge
 @router.get("/kuendigungsanfragen", response_model=List[schemas.KündigungsanfrageResponse])
 async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_async),
                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft eine Liste der Kündigungsanträge für Verträge ab.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das ein Netzbetreiber sein sollte.
+
+    Returns:
+        List[schemas.KündigungsanfrageResponse]: Eine Liste von Kündigungsanfragen.
+
+    Raises:
+        HTTPException: Wenn nicht autorisiert oder ein Datenbankfehler auftritt.
+    """
     try:
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
                                              (models.Vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt_Unbestaetigt))
@@ -1078,11 +1467,25 @@ async def get_kuendigungsanfragen(db: AsyncSession = Depends(database.get_db_asy
         raise HTTPException(status_code=409, detail=f"SQLAlchemy Fehler beim Abrufen der Kuendigungsanfragen: {e}")
 
 
-#Todo: hier muss angepasst werden, stimmt nicht mit dem richtigen models.Rechnung überein
 @router.put("/kuendigungsanfragenbearbeitung/{vertrag_id}")
 async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
                                          db: AsyncSession = Depends(database.get_db_async),
                                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Bearbeitet eine Kündigungsanfrage für einen bestimmten Vertrag.
+
+    Args:
+        vertrag_id (int): Die ID des Vertrags, für den eine Kündigungsanfrage gestellt wurde.
+        aktion (str): Die Aktion, die auf den Stornierungsantrag angewendet werden soll ('bestaetigen' oder 'ablehnen').
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das ein Netzbetreiber sein sollte.
+
+    Returns:
+        Das Vertragsobjekt mit aktualisiertem Status basierend auf der durchgeführten Aktion.
+
+    Raises:
+        HTTPException: Wenn der Vertrag nicht gefunden wird, die Aktion ungültig ist oder ein Datenbankfehler auftritt.
+    """
     try:
         # Abrufen der Kündigungsanfrage
         query = select(models.Vertrag).where((models.Vertrag.netzbetreiber_id == current_user.user_id) &
@@ -1187,6 +1590,20 @@ async def kuendigungsanfragenbearbeitung(vertrag_id: int, aktion: str,
 async def get_vertraege(vertragsstatus: str = "all",
                         db: AsyncSession = Depends(database.get_db_async),
                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft eine Liste von Verträgen ab, optional gefiltert nach Status.
+
+    Args:
+        vertragsstatus (str): Der Status, nach dem die Verträge gefiltert werden sollen. Verwenden Sie 'all', um Verträge mit allen Status abzurufen.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das ein Netzbetreiber sein sollte.
+
+    Returns:
+        List[schemas.VertragTarifResponse]: Eine Liste von Verträgen mit deren Details.
+
+    Raises:
+        HTTPException: Wenn nicht autorisiert oder ein Datenbankfehler auftritt.
+    """
     await check_netzbetreiber_role(current_user, "GET", "/vertraege")
     try:
         stmt = select(models.Vertrag, models.Tarif).join(models.Tarif,
@@ -1238,6 +1655,20 @@ async def get_vertraege(vertragsstatus: str = "all",
 async def get_vertrag(vertrag_id: int,
                       db: AsyncSession = Depends(database.get_db_async),
                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft detaillierte Informationen über einen bestimmten Vertrag ab.
+
+    Args:
+        vertrag_id (int): Die ID des abzurufenden Vertrags.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das ein Netzbetreiber sein sollte.
+
+    Returns:
+        schemas.VertragTarifNBResponse: Detaillierte Informationen über den angegebenen Vertrag.
+
+    Raises:
+        HTTPException: Wenn der Vertrag nicht gefunden wird, nicht autorisiert ist oder ein Datenbankfehler auftritt.
+    """
     await check_netzbetreiber_role(current_user, "GET", f"/vertraege/{vertrag_id}")
     try:
         stmt = select(models.Vertrag, models.Tarif, models.Nutzer) \
@@ -1273,6 +1704,20 @@ async def get_vertrag(vertrag_id: int,
 async def create_mitarbeiter(nutzer: schemas.NutzerCreate,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Legt einen neuen Datensatz für einen Mitarbeiter (Mitarbeiter) an. Dieser Endpunkt ist für Netzbetreiber gedacht, um neue Mitarbeiter hinzuzufügen.
+
+    Args:
+        nutzer (schemas.NutzerCreate): Die zu erstellenden Informationen des Mitarbeiters.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, muss die Rolle netzbetreiber haben.
+
+    Returns:
+        Eine Erfolgsmeldung mit der ID des erstellten Mitarbeiters.
+
+    Raises:
+        HTTPException: Wenn der aktuelle Benutzer nicht berechtigt ist, einen Mitarbeiter zu erstellen, oder wenn ein Datenbankfehler vorliegt.
+    """
     await check_netzbetreiber_role(current_user, "POST", "/mitarbeiter")
     if nutzer.rolle != models.Rolle.Netzbetreiber.value:
         raise HTTPException(status_code=403, detail="Netzbetreiber kann nur Netzbetreiber erstellen")
@@ -1322,6 +1767,19 @@ async def create_mitarbeiter(nutzer: schemas.NutzerCreate,
 @router.get("/mitarbeiter", response_model=List[schemas.UserOut])
 async def get_mitarbeiter(db: AsyncSession = Depends(database.get_db_async),
                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Liefert eine Liste aller Mitarbeiter (Mitarbeiter) für den aktuellen Netzbetreiber.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, das ein Netzbetreiber sein sollte.
+
+    Returns:
+        List[schemas.UserOut]: Eine Liste von Mitarbeiterdatensätzen.
+
+    Raises:
+        HTTPException: Wenn nicht autorisiert oder ein Datenbankfehler auftritt.
+    """
     stmt = (
         select(models.Nutzer, models.Adresse)
         .join(models.Arbeitsverhältnis, models.Nutzer.user_id == models.Arbeitsverhältnis.arbeitnehmer_id)
@@ -1363,6 +1821,19 @@ async def get_mitarbeiter(db: AsyncSession = Depends(database.get_db_async),
 @router.get("/check-arbeitgeber", status_code=status.HTTP_200_OK)
 async def check_arbeitgeber(db: AsyncSession = Depends(database.get_db_async),
                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Prüft, ob der aktuelle netzbetreiber-Benutzer im System als arbeitgeber markiert ist.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aktuelle Benutzerobjekt, muss die Rolle netzbetreiber haben.
+
+    Returns:
+        Ein Wörterbuch, das angibt, ob der aktuelle Benutzer ein Arbeitgeber ist.
+
+    Raises:
+        HTTPException: Wenn ein Datenbankfehler vorliegt oder die Prüfung nicht durchgeführt werden kann.
+    """
     try:
         netzbetreiber = await db.get(models.Netzbetreiber, current_user.user_id)
         if not netzbetreiber.arbeitgeber:

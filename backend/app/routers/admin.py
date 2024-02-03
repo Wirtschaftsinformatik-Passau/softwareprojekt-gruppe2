@@ -811,6 +811,21 @@ async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(dat
 @router.get("/download_reports_dashboard", status_code=status.HTTP_200_OK)
 async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_async),
                                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ladet einen Dashboard-Bericht herunter, der verschiedene Metriken zusammenfasst, darunter die Gesamtzahl der Nutzer,
+    Backend-Aufrufe, neue Energie- und PV-Anfragen sowie die Nutzerzahlen nach Rolle.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Abfragekontext abgerufen wird;
+        es wird erwartet, dass es sich um einen Administrator handelt.
+
+    Returns:
+        StreamingResponse: Eine CSV-Datei mit den zusammengefassten Dashboard-Metriken.
+
+    Raises:
+        HTTPException: Wenn während der Berichtserstellung ein interner Serverfehler auftritt.
+    """
     await check_admin_role(current_user, "GET", "/download_reports_dashboard")
     try:
         # Gesamtanzahl Nutzer
@@ -865,6 +880,20 @@ async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_
 @router.get("/download_reports_vertrag", status_code=status.HTTP_200_OK)
 async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ladet einen Bericht über alle Verträge im CSV-Format herunter.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aus dem aktuellen Anfragekontext erhaltene Benutzerobjekt, bei dem es sich
+        voraussichtlich um einen Administrator handelt.
+
+    Returns:
+        StreamingResponse: Eine CSV-Datei mit Details zu allen Verträgen.
+
+    Raises:
+        HTTPException: Wenn während der Berichtserstellung ein interner Serverfehler auftritt.
+    """
     await check_admin_role(current_user, "GET", "/download_reports_vertrag")
 
     try:
@@ -903,6 +932,20 @@ async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_as
 @router.get("/download_reports_rechnungen", status_code=status.HTTP_200_OK)
 async def download_reports_rechnung(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ladet einen Bericht mit allen Rechnungen im CSV-Format herunter.
+
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das Benutzerobjekt, das aus dem aktuellen Anforderungskontext abgerufen wird;
+        es wird erwartet, dass es sich um einen Administrator handelt.
+
+    Returns:
+        StreamingResponse: Eine CSV-Datei mit Details zu allen Rechnungen.
+
+    Raises:
+        HTTPException: Wenn während der Berichtserstellung ein interner Serverfehler auftritt.
+    """
     await check_admin_role(current_user, "GET", "/download_reports_rechnungen")
 
     try:
@@ -946,7 +989,20 @@ async def download_reports_rechnung(db: AsyncSession = Depends(database.get_db_a
 @router.get("/download_reports_energieausweise", status_code=status.HTTP_200_OK)
 async def download_reports_eausweis(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ladet einen Bericht über alle Energieausweise im CSV-Format herunter.
 
+    Args:
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aus dem aktuellen Anfragekontext erhaltene Benutzerobjekt, bei dem es sich
+        voraussichtlich um einen Administrator handelt.
+
+    Returns:
+        StreamingResponse: Eine CSV-Datei mit Details zu allen Energieausweisen.
+
+    Raises:
+        HTTPException: Wenn während der Berichtserstellung ein interner Serverfehler auftritt.
+    """
     await check_admin_role(current_user, "GET", "/download_reports_energieausweise")
     
     try:

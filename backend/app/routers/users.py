@@ -41,6 +41,19 @@ email_sender = EmailSender(
 @router.post("/geocode", status_code=status.HTTP_200_OK)
 async def geocode_entries(current_user: models.Nutzer = Depends(oauth.get_current_user),
                           db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Geokodiert Adressen, denen Längen- oder Breitengradinformationen fehlen, indem ein externer Geokodierungsdienst abgefragt wird.
+
+    Args:
+        current_user (models.Nutzer): Der Benutzer, der die Anfrage initiiert. Er muss authentifiziert sein.
+        db (AsyncSession): Die Datenbanksitzung, die für die Abfrage und Aktualisierung von Adressen verwendet wird.
+
+    Returns:
+        dict: Eine Nachricht, die den Erfolg des Geokodierungsvorgangs angibt.
+
+    Raises:
+        HTTPException: Wenn es ein Problem mit dem Geokodierungsvorgang gibt oder ein Datenbankfehler auftritt.
+    """
     try:
         stmt = select(models.Adresse)
         result = await db.execute(stmt)
@@ -87,6 +100,19 @@ async def geocode_entries(current_user: models.Nutzer = Depends(oauth.get_curren
 
 
 async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
+    """
+    Registriert einen neuen Benutzer in der Datenbank mit den angegebenen Benutzerinformationen und sendet eine Willkommens-E-Mail.
+
+    Args:
+        nutzer (schemas.NutzerCreate): Die Benutzerinformationen für den neuen Benutzer.
+        db (AsyncSession): Die Datenbanksitzung für diesen Vorgang.
+
+    Returns:
+        int: Die ID des neu registrierten Benutzers.
+
+    Raises:
+        HTTPException: Wenn der Benutzer aufgrund eines Datenbankintegritätsfehlers oder anderer Probleme nicht registriert werden konnte.
+    """
     try:
         nutzer.geburtsdatum = datetime.strptime(nutzer.geburtsdatum, "%Y-%m-%d").date()
         try:
@@ -157,6 +183,19 @@ async def register_user(nutzer: schemas.NutzerCreate, db: AsyncSession):
 
 @router.post("/registration", status_code=status.HTTP_201_CREATED, response_model=schemas.NutzerResponse)
 async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Endpunkt für die Erstellung eines neuen Benutzers. Er verwendet die Funktion `register_user`, um die Registrierungslogik zu handhaben.
+
+    Args:
+        nutzer (schemas.NutzerCreate): Die Informationen über den zu erstellenden Benutzer.
+        db (AsyncSession): Die zu verwendende Datenbanksitzung.
+
+    Returns:
+        schemas.NutzerResponse: Das Antwortschema, das die ID des erstellten Benutzers enthält.
+
+    Raises:
+        HTTPException: Wenn es ein Problem bei der Registrierung des Benutzers gibt.
+    """
     user_id: int = await register_user(nutzer, db)
 
     return {"nutzer_id": user_id}
@@ -164,6 +203,19 @@ async def create_user(nutzer: schemas.NutzerCreate, db: AsyncSession = Depends(d
 
 @router.post("/adresse", status_code=status.HTTP_201_CREATED, response_model=schemas.AdresseIDResponse)
 async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erzeugt einen neuen Adressdatensatz in der Datenbank.
+
+    Args:
+        adresse (schemas.AdresseCreate): Die zu speichernden Adressinformationen.
+        db (AsyncSession): Die Datenbanksitzung für diesen Vorgang.
+
+    Returns:
+        schemas.AdresseIDResponse: Das Antwortschema, das die ID der erstellten Adresse enthält.
+
+    Raises:
+        HTTPException: Wenn die Adresse aufgrund eines Datenbankintegritätsfehlers oder anderer Probleme nicht erstellt werden konnte.
+    """
     try:
         db_adresse = models.Adresse(**adresse.dict())
         db.add(db_adresse)
@@ -188,7 +240,21 @@ async def create_adresse(adresse: schemas.AdresseCreate, db: AsyncSession = Depe
             response_model=Union[List[schemas.AdresseResponse], List[schemas.AdresseResponseLongLat]])
 async def get_adressen(skip: int = 0, limit: int = 100, type: str = "geo",
                        db: AsyncSession = Depends(database.get_db_async)):
-    # TODO nur die adressen die im vertrag auch sind!!
+    """
+    Ruft eine Liste von Adressen aus der Datenbank ab, optional einschließlich Geolocation-Daten.
+
+    Args:
+        skip (int): Die Anzahl der zu überspringenden Datensätze (für die Paginierung).
+        limit (int): Die maximale Anzahl von Datensätzen, die zurückgegeben werden sollen.
+        type (str): Gibt an, ob Geolokalisierungsdaten ("geo") zurückgegeben werden sollen oder nicht.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Returns:
+        List[schemas.AdresseResponse] oder List[schemas.AdresseResponseLongLat]: Eine Liste von Adressen, mit oder ohne Geolocation-Daten.
+
+    Raises:
+        HTTPException: Wenn ein Datenbankfehler auftritt.
+    """
     stmt = select(models.Adresse).offset(skip).limit(limit)
     result = await db.execute(stmt)
     adressen = result.all()
@@ -220,6 +286,19 @@ async def get_adressen(skip: int = 0, limit: int = 100, type: str = "geo",
 
 @router.get("/{id}", status_code=status.HTTP_200_OK)
 async def get_user(id: int, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft einen Benutzer anhand seiner ID ab, einschließlich seiner zugehörigen Adresse.
+
+    Args:
+        id (int): Die ID des abzurufenden Benutzers.
+        db (AsyncSession): Die Datenbanksitzung für diesen Vorgang.
+
+    Returns:
+        dict: Ein Wörterbuch mit den Benutzerinformationen und der zugehörigen Adresse.
+
+    Raises:
+        HTTPException: Wenn der Benutzer nicht gefunden wird oder ein Datenbankfehler auftritt.
+    """
     stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
                                                       models.Nutzer.adresse_id == models.Adresse.adresse_id).where(
         models.Nutzer.user_id == id)
@@ -250,6 +329,17 @@ async def get_user(id: int, db: AsyncSession = Depends(database.get_db_async)):
 
 @router.put("/adresse/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Aktualisiert einen bestehenden Adressdatensatz in der Datenbank.
+
+    Args:
+        id (int): Die ID der zu aktualisierenden Adresse.
+        adresse (schemas.AdresseCreate): Die neuen Adressinformationen.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Raises:
+        HTTPException: Wenn die Adresse nicht gefunden wird oder ein Datenbankfehler auftritt.
+    """
     stmt = select(models.Adresse).where(models.Adresse.adresse_id == id)
     result = await db.execute(stmt)
     db_adresse = result.first()
@@ -271,6 +361,20 @@ async def update_adresse(id: int, adresse: schemas.AdresseCreate, db: AsyncSessi
 async def read_current_user(include_adresse: str = "yes",
                             current_user: models.Nutzer = Depends(oauth.get_current_user),
                             db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft Informationen über den aktuell authentifizierten Benutzer ab, optional einschließlich seiner Adresse.
+
+    Args:
+        include_adresse (str): Gibt an, ob Adressinformationen in die Antwort aufgenommen werden sollen.
+        current_user (models.Nutzer): Der aktuell authentifizierte Benutzer.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Returns:
+        dict: Ein Wörterbuch mit den Informationen des Benutzers, optional einschließlich seiner Adresse.
+
+    Raises:
+        HTTPException: Wenn die Adresse des Benutzers angefordert, aber nicht gefunden wird.
+    """
     if include_adresse:
         user_id = current_user.user_id
         stmt = select(models.Nutzer, models.Adresse).join(models.Adresse,
@@ -306,6 +410,17 @@ async def read_current_user(include_adresse: str = "yes",
 
 @router.put("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Aktualisiert die Informationen eines vorhandenen Benutzers in der Datenbank.
+
+    Args:
+        id (int): Die ID des zu aktualisierenden Benutzers.
+        updated_user (schemas.NutzerUpdate): Die neuen Informationen für den Benutzer.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Raises:
+        HTTPException: Wenn der Benutzer nicht gefunden wird, ein Validierungsfehler auftritt oder ein Datenbankfehler auftritt.
+    """
     stmt = select(models.Nutzer).where(models.Nutzer.user_id == id)
     try:
         result = await db.execute(stmt)
@@ -380,6 +495,21 @@ async def update_user(id: int, updated_user: schemas.NutzerUpdate, db: AsyncSess
 async def get_users(skip: int = 0, limit: int | None = None,
                     current_user: models.Nutzer = Depends(oauth.get_current_user),
                     db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine Liste von Benutzern aus der Datenbank ab.
+
+    Args:
+        skip (int): Die Anzahl der zu überspringenden Datensätze (für Paginierung).
+        limit (int | Keine): Die maximale Anzahl von Datensätzen, die zurückgegeben werden sollen. Wenn None, wird keine Begrenzung angewendet.
+        current_user (models.Nutzer): Der aktuell authentifizierte Benutzer, erforderlich für die Autorisierung.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Returns:
+        List[dict]: Eine Liste von Dictionaries, die jeweils einen Benutzer und die zugehörige Adresse darstellen.
+
+    Raises:
+        HTTPException: Wenn ein Datenbankfehler auftritt.
+    """
     stmt = (
         select(models.Nutzer, models.Adresse)
         .join(models.Adresse, models.Nutzer.adresse_id == models.Adresse.adresse_id)
@@ -422,6 +552,17 @@ async def get_users(skip: int = 0, limit: int | None = None,
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(id: int, db: AsyncSession = Depends(database.get_db_async),
                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Löscht einen Benutzer aus der Datenbank, einschließlich der zugehörigen Adresse, wenn keine anderen Benutzer mit ihm verknüpft sind.
+
+    Args:
+        id (int): Die ID des zu löschenden Benutzers.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+        current_user (models.Nutzer): Der aktuell authentifizierte Benutzer, der für die Autorisierung benötigt wird.
+
+    Raises:
+        HTTPException: Wenn der Benutzer nicht gefunden wird, der aktuelle Benutzer nicht autorisiert ist, Benutzer zu löschen, oder ein Datenbankfehler auftritt.
+    """
     try:
         if current_user.rolle != models.Rolle.Admin:
             logging_obj = schemas.LoggingSchema(
@@ -484,15 +625,19 @@ async def delete_user(id: int, db: AsyncSession = Depends(database.get_db_async)
 @router.post("/request-password-reset")
 async def request_password_reset(request: schemas.PasswortReqReset, db: AsyncSession = Depends(database.get_db_async)):
     """
-    Sendet einen Link zum Zurücksetzen des Passworts an die E-Mail des Benutzers, wenn die angegebene E-Mail
-    registriert ist.
+    Initiiert einen Prozess zum Zurücksetzen des Passworts für einen Benutzer auf der Grundlage seiner E-Mail-Adresse.
+    Wenn die E-Mail in der Datenbank vorhanden ist, wird ein Token zum Zurücksetzen des Passworts generiert, gespeichert
+    und ein Link zum Zurücksetzen an die E-Mail-Adresse des Benutzers gesendet.
 
-    Parameters:
-    - email (str): Die E-Mail-Adresse des Benutzers, der eine Kennwortrücksetzung beantragt.
-    - db (AsyncSession): Die Datenbanksitzung zur Durchführung asynchroner Datenbankoperationen.
+    Args:
+        request (schemas.PasswortReqReset): Die Anforderung zum Zurücksetzen des Kennworts, die die E-Mail-Adresse des Benutzers enthält.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
 
     Returns:
-    - str: Eine Meldung, die angibt, ob ein Link zum Zurücksetzen des Passworts gesendet wurde.
+        str: Eine Nachricht, die angibt, dass ein Link zum Zurücksetzen gesendet wird, wenn die E-Mail im System registriert ist.
+
+    Raises:
+        HTTPException: Wenn während des Prozesses ein Fehler auftritt.
     """
     email = request.email
     try:
@@ -515,10 +660,27 @@ async def request_password_reset(request: schemas.PasswortReqReset, db: AsyncSes
 
 
 async def generate_password_reset_token():
+    """
+    Erzeugt ein eindeutiges Token für Passwortrücksetzvorgänge.
+
+    Returns:
+        str: Ein eindeutiges Token zum Zurücksetzen des Passworts.
+    """
     return str(uuid.uuid4())
 
 
 async def store_reset_token(user_id, token, db):
+    """
+    Speichert ein Passwort-Reset-Token in der Datenbank mit einer Ablaufzeit.
+
+    Args:
+        user_id (int): Die ID des Benutzers, der das Zurücksetzen des Passworts beantragt.
+        token (str): Das generierte Token für die Kennwortrücksetzung.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Raises:
+        HTTPException: Wenn es ein Problem bei der Speicherung des Tokens in der Datenbank gibt.
+    """
     try:
         expiration_time = datetime.now() + timedelta(hours=24)
         reset_token = models.PasswortResetToken(user_id=user_id, token=token, expiration=expiration_time)
@@ -531,6 +693,16 @@ async def store_reset_token(user_id, token, db):
 
 
 async def send_password_recovery_email(user_email, token):
+    """
+    Sendet eine E-Mail zur Wiederherstellung des Passworts an den Benutzer, die den Link zum Zurücksetzen enthält.
+
+    Args:
+        user_email (str): Die E-Mail-Adresse des Benutzers, an den der Wiederherstellungslink gesendet werden soll.
+        token (str): Das Token, das im Wiederherstellungslink enthalten sein soll.
+
+    Raises:
+        Exception: Wenn beim Senden der E-Mail ein Fehler auftritt.
+    """
     subject = "Passwort-Wiederherstellung"
     recovery_link = f"132.231.36.102/reset-password/{token}"
     body = f"Bitte klicken Sie auf den Link, um Ihr Passwort zurückzusetzen: {recovery_link}"
@@ -642,6 +814,19 @@ async def reset_passwort(token: str, reset_data: schemas.PasswortReset,
 
 @router.post("/chat/send", response_model=schemas.ChatMessageSendResponse, status_code=status.HTTP_201_CREATED)
 async def send_message(chat_message: schemas.ChatMessageCreate, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Sendet eine Chat-Nachricht von einem Benutzer an einen anderen.
+
+    Args:
+        chat_message (schemas.ChatMessageCreate): Enthält den Absender, den Empfänger und den Inhalt der Nachricht.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Returns:
+        schemas.ChatMessageSendResponse: Eine Antwort, die anzeigt, dass die Nachricht erfolgreich gesendet wurde.
+
+    Raises:
+        SQLAlchemyError: Wenn es ein Problem beim Speichern der Nachricht in der Datenbank gibt.
+    """
     neue_nachricht = models.ChatMessage(**chat_message.dict())
     db.add(neue_nachricht)
     await db.commit()
@@ -651,6 +836,19 @@ async def send_message(chat_message: schemas.ChatMessageCreate, db: AsyncSession
 
 @router.get("/user-chat-history", status_code=status.HTTP_200_OK)
 async def get_user_chat_history(user_id: int, db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft den Chatverlauf für einen bestimmten Benutzer ab, einschließlich aller von ihm gesendeten und empfangenen Nachrichten.
+
+    Args:
+        user_id (int): Die ID des Benutzers, dessen Chat-Verlauf abgerufen werden soll.
+        db (AsyncSession): Die Datenbanksitzung für diesen Vorgang.
+
+    Returns:
+        List[models.ChatMessage]: Eine Liste von Chatnachrichten, die sich auf den angegebenen Benutzer beziehen.
+
+    Raises:
+        SQLAlchemyError: Wenn es ein Problem bei der Abfrage der Datenbank gibt.
+    """
     query = select(models.ChatMessage).where(
         (models.ChatMessage.sender_id == user_id) | (models.ChatMessage.empfaenger_id == user_id))
     result = await db.execute(query)
@@ -661,7 +859,21 @@ async def get_user_chat_history(user_id: int, db: AsyncSession = Depends(databas
 async def get_chat_history(user_id: Optional[int] = None, other_user_id: Optional[int] = None,
                            current_user: models.Nutzer = Depends(oauth.get_current_user),
                            db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft den Chatverlauf zwischen zwei Benutzern ab.
 
+    Args:
+        user_id (Optional[int]): Die ID des ersten Benutzers (Standardwert ist der aktuelle Benutzer, falls nicht angegeben).
+        other_user_id (Optional[int]): Die ID des zweiten am Chat beteiligten Benutzers.
+        current_user (models.Nutzer): Der aktuell authentifizierte Benutzer.
+        db (AsyncSession): Die Datenbanksitzung für den Vorgang.
+
+    Returns:
+        List[schemas.ChatMessageResponse]: Eine Liste der zwischen den beiden Benutzern ausgetauschten Chatnachrichten.
+
+    Raises:
+        SQLAlchemyError: Wenn es ein Problem bei der Abfrage der Datenbank gibt.
+    """
     if not user_id:
         user_id = current_user.user_id
 

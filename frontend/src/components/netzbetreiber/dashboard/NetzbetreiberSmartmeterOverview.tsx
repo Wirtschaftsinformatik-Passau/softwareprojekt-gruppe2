@@ -6,7 +6,8 @@ import { DateRangePicker, DateRange } from "mui-daterange-picker";
 import React, {Dispatch, useEffect} from "react";
 import {Grow} from "@mui/material";
 import axios from "axios";
-
+import { saveAs } from 'file-saver';
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import LineChart from "../../utility/visualization/LineChart";
 import Header from "../../utility/Header";
@@ -15,9 +16,11 @@ import { tokens } from "../../../utils/theme";
 import SuccessModal from "../../utility/SuccessModal";
 import {convertToDateOnly, convertToTimeOnly, dateFormater, formatDate} from "../../../utils/dateUtils";
 import {DataGrid} from "@mui/x-data-grid";
+import { convertToCSV } from "../../../utils/download_utils";
 
 
-interface SmartmeterData {
+
+export interface SmartmeterData {
     datum: string,
     gesamt_pv_erzeugung: number,
     gesamt_soc: number,
@@ -185,9 +188,6 @@ const NetzbetreiberSmartmeterOverview = () => {
         setPvPeriod(enumPeriodMapping[event.target.value]); // Assuming you want to set pvPeriod here
     };
 
-    // haushalt id checken!!
-    // übersicht über haushalte??
-    // gibt es nur einen netzbetreiber
 
     const getDashboardData = (field: string, setter: Dispatch<React.SetStateAction<ExtractedFieldData[]>>, 
           loadingSetter: Dispatch<React.SetStateAction<boolean>>) => {
@@ -220,6 +220,13 @@ const NetzbetreiberSmartmeterOverview = () => {
 
     }
 
+    const downloadCSV = (data: SmartmeterData[]) => {
+        const csvData = convertToCSV(data);
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        saveAs(blob, 'smartmeter_data.csv');
+    };
+
+
     useEffect(() => {
         const token = localStorage.getItem("accessToken");
         setStateOtherwiseRedirect(setSmartMeterData, `netzbetreiber/dashboard/${haushaltID}?field=all&period=${pvPeriod}&start=${formatDate(dateRange.startDate)}&end=${formatDate(dateRange.endDate)}`,
@@ -233,9 +240,10 @@ const NetzbetreiberSmartmeterOverview = () => {
         getDashboardData("last", setLastData, setLoading3)
 
     }
-
+    console.log(smartMeterData)
     return (
         <Box m="20px">
+            
             <Header title="Smartmeter" subtitle="Übersicht über Smartmeter Daten für einen Haushalt"/>
             <Box component="form"  m="20px" sx={{display: "grid"}}>
             <TextField
@@ -256,6 +264,7 @@ const NetzbetreiberSmartmeterOverview = () => {
                 },
             }}
             />
+           
             <FormControl fullWidth sx={{
                 gridColumn: "span 4",
                 '& .MuiInputBase-input': { color: `${colors.color1[500]} !important`,
@@ -300,10 +309,39 @@ const NetzbetreiberSmartmeterOverview = () => {
                 }}
                 initialDateRange={dateRange}
             />
-           <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
-              <Button  sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained"
+           <Box display="flex" justifyContent="space-evenly" mt="20px" gridColumn= "span 4">
+              <Button
+              onClick={() => downloadCSV(smartMeterData)}
+            sx={{
+              backgroundColor: colors.color1[400],
+              color: theme.palette.background.default,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              ":hover" : {
+                backgroundColor: colors.grey[500],
+              
+              },
+              
+            }}
+          >
+            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            Daten herunterladen
+          </Button>
+              <Button  sx={{
+              backgroundColor: colors.color1[400],
+              color: theme.palette.background.default,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              ":hover" : {
+                backgroundColor: colors.grey[500],
+              
+              },
+              
+            }} variant="contained"
               onClick={handleEditButton}>
-                Haushalt auswählen
+                Daten zeigen
               </Button>
             </Box>
             </Box>

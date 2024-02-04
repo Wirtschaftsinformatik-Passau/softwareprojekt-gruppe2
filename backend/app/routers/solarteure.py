@@ -10,6 +10,8 @@ from logging.config import dictConfig
 from app.logger import LogConfig
 from app.schemas import LoggingSchema
 from io import StringIO
+import io
+from fastapi.responses import StreamingResponse
 import csv
 
 router = APIRouter(prefix="/solarteure", tags=["Solarteure"])
@@ -422,6 +424,62 @@ async def create_installationsplan(anlage_id: int, installationsplan_data: schem
     await create_rechnung(anlage_id=anlage_id, steller_id=current_user.user_id, db=db)
 
     return schemas.InstallationsplanResponse(installationsplan=pv_anlage.installationsplan)
+
+@router.get("/installationsplan/{anlage_id}")
+async def get_installationsplan(anlage_id: int,
+                                db: AsyncSession = Depends(database.get_db_async),
+                                current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft den Installationsplan für eine PV-Anlage ab und gibt ihn als CSV-Datei zurück.
+
+    Args:
+        anlage_id (int): Die ID der PV-Anlage.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        CSV-Datei: Der Installationsplan als CSV-Datei.
+
+    Raises:
+        HTTPException: Mit Statuscode 404, wenn die PV-Anlage nicht gefunden wurde, oder Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
+    try:
+        pv_anlage = await db.get(models.PVAnlage, anlage_id)
+        if not pv_anlage:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="PV-Anlage nicht gefunden oder gehört nicht zum aktuellen Solarteur."
+            )
+
+        installationsplan = pv_anlage.installationsplan
+        if not installationsplan:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Installationsplan nicht gefunden."
+            )
+
+        with open(installationsplan, 'rb') as f:
+            plan_csv = f.read()
+
+        return StreamingResponse(io.BytesIO(plan_csv), media_type="text/csv",
+                             headers={"Content-Disposition": f"attachment; filename={installationsplan}"})
+
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+
+        logging_obj = schemas.LoggingSchema(
+            user_id=current_user.user_id,
+            endpoint=f"/installationsplan/",
+            method="GET",
+            message=f"Fehler beim Abrufen des Installationsplans: {e}",
+            success=False
+        )
+        logger.error(logging_obj.dict())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Fehler beim Abrufen des Installationsplans: {e}"
+        )
 
 
 async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = Depends(database.get_db_async)):

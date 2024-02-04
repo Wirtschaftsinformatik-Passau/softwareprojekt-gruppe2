@@ -40,6 +40,7 @@ class Nutzer(Base):
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
+
 class Netzbetreiber(Base):
     __tablename__ = 'netzbetreiber' if settings.OS == 'Linux' else "Netzbetreiber"
     user_id = Column(Integer, Identity(), primary_key=True)

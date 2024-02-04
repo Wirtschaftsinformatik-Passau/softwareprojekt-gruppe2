@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
   
-const HaushalteTable = () => {
+const NetzbetreiberHaushalteTable = () => {
   
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -137,4 +137,4 @@ const HaushalteTable = () => {
   );
 };
 
-export default HaushalteTable;
+export default NetzbetreiberHaushalteTable;

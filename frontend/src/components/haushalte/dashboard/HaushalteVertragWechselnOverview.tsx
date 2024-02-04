@@ -20,7 +20,7 @@ export interface Tarif {
 
 
 
-const ChangeVertragTable = () => {
+const HaushalteChangeVertragTable = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<Tarif[]>([]);
@@ -155,4 +155,4 @@ return (
 }
 
 
-export default ChangeVertragTable;
+export default HaushalteChangeVertragTable;

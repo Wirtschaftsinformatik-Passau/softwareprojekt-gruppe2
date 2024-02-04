@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { addSuffixToBackendURL } from './networking_utils';
+import { SmartmeterData } from '../components/netzbetreiber/dashboard/NetzbetreiberSmartmeterOverview';
 
 export interface ReportURL {
     endpoint: string;
@@ -48,4 +49,23 @@ export const getAllReports = async (urls: ReportURL[] = defaultUrls) => {
             console.error('Error downloading file:', error);
         }
     }
+};
+
+
+export const convertToCSV = (data: Array<Object>) => {
+    const csvRows = [];
+    // Get the headers
+    const headers = Object.keys(data[0]);
+    csvRows.push(headers.join(','));
+
+    // Loop over the rows
+    for (const row of data) {
+        const values = headers.map(header => {
+            const escaped = ('' + row[header]).replace(/"/g, '\\"');
+            return `"${escaped}"`;
+        });
+        csvRows.push(values.join(','));
+    }
+
+    return csvRows.join('\n');
 };

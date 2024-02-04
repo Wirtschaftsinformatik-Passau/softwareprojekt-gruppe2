@@ -16,7 +16,7 @@ import { ITarif, Tarif } from "../../../entitities/tarif";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 
-const TarifCreation = () => {
+const NetzbetreiberTarifCreate = () => {
   const navigate = useNavigate();
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
@@ -251,4 +251,4 @@ const TarifCreation = () => {
     spezielleKonditionen: "",
 };
 
-export default TarifCreation;
+export default NetzbetreiberTarifCreate;

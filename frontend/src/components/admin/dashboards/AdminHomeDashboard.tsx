@@ -22,10 +22,11 @@ import PieChart from "../../utility/visualization/PieChart";
 import BarChart from "../../utility/visualization/BarChart";
 import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
-import { getAllReports } from "../../../utils/reports";
+import { getAllReports } from "../../../utils/download_utils";
 
-
+// The AdminHome component serves as the main dashboard for administrators, providing stats and actions.
 const AdminHome = () => {
+    // State management for various pieces of data and UI state.
     const theme = useTheme();
     const navigate = useNavigate();
     const colors = tokens(theme.palette.mode);
@@ -75,6 +76,7 @@ const AdminHome = () => {
       setStateOtherwiseRedirect(setPieData, "admin/userOverview", navigate,  {Authorization: `Bearer ${token}`})
     }, [])
 
+    // useMemo hooks for calculating counts based on specific roles within the user data
     const adminCount = useMemo(() => {
       return users.filter((user) => user.rolle === "Admin").length
     }, [users]);

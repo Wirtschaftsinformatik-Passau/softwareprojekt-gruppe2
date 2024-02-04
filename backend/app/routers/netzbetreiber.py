@@ -235,22 +235,26 @@ async def delete_tarif(tarif_id: int, db: AsyncSession = Depends(database.get_db
     Raises:
         HTTPException: Wenn der Tarif nicht existiert oder wenn der Benutzer keine Berechtigung hat.
     """
-    delete_stmt = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+    query = select(models.Tarif).where(models.Tarif.tarif_id == tarif_id)
+    vertrag_query = select(models.Vertrag).where(models.Vertrag.tarif_id == tarif_id)
+    await check_netzbetreiber_role(current_user, "PUT", "/tarife")
 
-    await check_netzbetreiber_role(current_user, "DELETE", "/tarife/{tarif_id}")
+    result = await db.execute(query)
+    result_vertrag = await db.execute(vertrag_query)
+    vertrag = result_vertrag.scalar_one_or_none()
+    existing_tarif = result.scalar_one_or_none()
 
-    user_id = current_user.user_id
+    if existing_tarif is None:
+        raise HTTPException(status_code=404, detail=f"Tarif mit ID {tarif_id} nicht gefunden")
 
-    # Überprüfen, ob der Tarif existiert
-    delete_stmt = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
-                                             (models.Tarif.user_id == user_id))
-    result = await db.execute(delete_stmt)
-    db_tarif = result.scalar_one_or_none()
-    if db_tarif is None:
-        raise HTTPException(status_code=404, detail="Tarif nicht gefunden")
+    if vertrag is None or vertrag.vertragstatus == models.Vertragsstatus.Gekuendigt:
+        await db.delete(existing_tarif)
+        await db.commit()
 
-    await db.delete(db_tarif)
-    await db.commit()
+    else:
+        raise HTTPException(status_code=409,
+                            detail=f"Tarif mit ID {tarif_id} kann nicht geändert werden, da er bereits in einem Vertrag verwendet wird")
+
 
 
 # Alle Tarife abrufen

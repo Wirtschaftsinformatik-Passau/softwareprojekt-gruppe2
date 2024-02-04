@@ -14,7 +14,7 @@ import { Vertrag } from "../../../entitities/vertrag";
 
 
 
-const VertragDetail = ({}) => {
+const HaushalteVertragDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -184,4 +184,4 @@ const VertragDetail = ({}) => {
     )
 }
 
-export default VertragDetail;
+export default HaushalteVertragDetail;

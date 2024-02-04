@@ -25,6 +25,8 @@ const NetzbetreiberTarifEdit = ({}) => {
     const colors = tokens(theme.palette.mode);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const [deleteModalIsOpen, setDeleteModalIsOpen] = React.useState(false);
+    const [deleteFailModalisOpen, setDeleteFailModalisOpen] = React.useState(false)
     const [overallFailModalIsOpen, setOverallFailModalIsOpen] = React.useState(false)
     const [initialValues, setInitialValues] = React.useState({
       tarifName: "",
@@ -58,40 +60,6 @@ const NetzbetreiberTarifEdit = ({}) => {
         });
     }, []);
 
-    const updateTarif = (values: any, {setSubmitting}: any) => {
-
-      const token = localStorage.getItem("accessToken");
-      const tarif: ITarif = new Tarif(values.tarifName, Number(values.preisKwh), Number(values.grundgebuehr), Number(values.laufzeit), 
-      values.spezielleKonditionen)
-      axios.put(addSuffixToBackendURL("netzbetreiber/tarife"), tarif, {headers: {Authorization: `Bearer ${token}`}})
-          .then((response) => {
-            if (response.status === 201) {
-              setSuccessModalIsOpen(true)
-              console.log("User erfolgreich gespeichert")
-            } else {
-              setFailModalIsOpen(true)
-              console.log("User konnte nicht gespeichert werden")
-            }
-          
-          })
-          .catch((error) => {
-              if (error.response && error.response.status === 422) {
-                  console.log("Server Response on Error 422:", error.response.data);
-              } else if (error.response && error.response.status === 401 || error.response.status === 403) {
-                navigate("/login")
-              } 
-              else if (error.response && error.response.status === 409) {
-                setFailModalIsOpen(true)
-              } else {
-                console.log("Server Error:", error.message);
-              }
-          })
-          .finally(() => {
-              setSubmitting(false);
-          })
-  
-  
-  }
 
  
     const createTarif = (values: { tarifName: string; preisKwh: any; grundgebuehr: any; laufzeit: any; spezielleKonditionen: string; }, {setSubmitting}: any) => {
@@ -126,6 +94,33 @@ const NetzbetreiberTarifEdit = ({}) => {
           .finally(() => {
               setSubmitting(false);
           })
+  }
+
+  const deleteTarif = () => {
+    const token = localStorage.getItem("accessToken");
+    axios.delete(addSuffixToBackendURL("netzbetreiber/tarife/" + tarifID), {headers: {Authorization: `Bearer ${token}`}})
+        .then((response) => {
+          if (response.status === 204) {
+            setDeleteModalIsOpen(true)
+            console.log("Tarif erfolgreich gelöscht")
+          } else {
+            setDeleteFailModalisOpen(true)
+            console.log("Tarif konnte nicht gelöscht werden")
+          }
+        
+        })
+        .catch((error) => {
+            if (error.response && error.response.status === 422) {
+                console.log("Server Response on Error 422:", error.response.data);
+            } else if (error.response && error.response.status === 401 || error.response.status === 403) {
+              navigate("/login")
+            } 
+            else if (error.response && error.response.status === 409) {
+              setFailModalIsOpen(true)
+            } else {
+              setOverallFailModalIsOpen(true)
+            }
+        })
   }
  
   if (isLoading) {
@@ -295,6 +290,9 @@ return (
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">
                 Tarif bearbeiten
               </Button>
+              <Button onClick={deleteTarif} sx={{background: colors.color5[400],  color: theme.palette.background.default}} variant="contained">
+                Tarif löschen
+              </Button>
             </Box>
           </form>
         )}
@@ -308,6 +306,10 @@ return (
     text="Tarif konnte nicht geändert werden, da er einem laufenden Vertrag zugewiesen ist"/>
     <SuccessModal open={overallFailModalIsOpen} handleClose={() => setOverallFailModalIsOpen(false)} 
     text="Tarif konnte nicht bearbeitet werden"/>
+    <SuccessModal open={deleteModalIsOpen} handleClose={() => setDeleteModalIsOpen(false)}
+    text="Tarif erfolgreich gelöscht" navigationGoal="/netzbetreiber/tarifTable"/>
+    <SuccessModal open={deleteFailModalisOpen} handleClose={() => setDeleteFailModalisOpen(false)}
+    text="Tarif konnte nicht gelöscht werden"/>
     </Box>
   
 )}

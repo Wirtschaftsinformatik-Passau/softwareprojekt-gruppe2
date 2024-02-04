@@ -7,6 +7,8 @@ import React, { Dispatch, useEffect } from "react";
 import {Grow} from "@mui/material";
 import axios from "axios";
 import { DataGrid } from "@mui/x-data-grid";
+import { saveAs } from 'file-saver';
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import LineChart from "../../utility/visualization/LineChart";
@@ -17,6 +19,7 @@ import SuccessModal from "../../utility/SuccessModal";
 import { convertToDateOnly, convertToTimeOnly, dateFormater, formatDate } from "../../../utils/dateUtils";
 import { IUser } from "../../../entitities/user";
 import {smartMeterData} from "../../../entitities/smartMeter";
+import { convertToCSV } from "../../../utils/download_utils";
 
 interface IUserFull extends IUser {
     user_id: number
@@ -78,8 +81,7 @@ const extractFieldFromData = (rawData: Array<SmartmeterData>, field: string): Ex
 };
 
 
-// todo: smart meter peak daten anzeigen
-// am besten als barchart
+
 const HaushalteSmartmeterOverview = () => {
     const navigate = useNavigate();
   
@@ -184,6 +186,15 @@ const HaushalteSmartmeterOverview = () => {
         "HOUR": convertToTimeOnly,
         "MINUTE": convertToTimeOnly  
     }
+
+    const downloadCSV = (data: SmartmeterData[]) => {
+        const today = new Date();
+        const csvData = convertToCSV(data);
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const fileName = `smartmeter_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.csv`;
+        saveAs(blob, fileName);
+    };
+
 
     
     const handlePeriodChange = (event) => {
@@ -293,10 +304,39 @@ const HaushalteSmartmeterOverview = () => {
                 }}
                 initialDateRange={dateRange}
             />
-           <Box display="flex" justifyContent="end" mt="20px" gridColumn= "span 4">
-              <Button  sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained"
+           <Box display="flex" justifyContent="space-evenly" mt="20px" gridColumn= "span 4">
+              <Button
+              onClick={() => downloadCSV(smartMeterData)}
+            sx={{
+              backgroundColor: colors.color1[400],
+              color: theme.palette.background.default,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              ":hover" : {
+                backgroundColor: colors.grey[500],
+              
+              },
+              
+            }}
+          >
+            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            Daten herunterladen
+          </Button>
+              <Button  sx={{
+              backgroundColor: colors.color1[400],
+              color: theme.palette.background.default,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              ":hover" : {
+                backgroundColor: colors.grey[500],
+              
+              },
+              
+            }} variant="contained"
               onClick={handleEditButton}>
-                Haushalt auswählen
+                Daten zeigen
               </Button>
             </Box>
             </Box>

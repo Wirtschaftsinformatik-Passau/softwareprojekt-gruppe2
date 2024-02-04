@@ -6,7 +6,7 @@ import Paper from '@material-ui/core/Paper';
 import Autocomplete from "@mui/material/Autocomplete";
 import Grid from '@material-ui/core/Grid';
 import { useNavigate } from 'react-router-dom';
-import Box from '@material-ui/core/Box';
+import {Button} from '@mui/material';
 import Divider from '@material-ui/core/Divider';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
@@ -15,15 +15,11 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Avatar from '@material-ui/core/Avatar';
-import Fab from '@material-ui/core/Fab';
 import PersonIcon from '@mui/icons-material/Person';
 import SendIcon from '@mui/icons-material/Send';
 import axios from 'axios';
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
-import { User } from '../../entitities/user';
 import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt';
-import { setStateOtherwiseRedirect } from '../../utils/stateUtils';
 import { addSuffixToBackendURL } from '../../utils/networking_utils';
 import { formatTime } from '../../utils/dateUtils';
 import { tokens } from '../../utils/theme';
@@ -31,26 +27,6 @@ import { reduceUsers, ExtendedUser, SearchBarUser,
     ChatHistory, getUniqueUsers, filterSearchBarUsers,
     setAndRequestConversationHistory } from '../../utils/chatUtils';
 
-
-    const useStyles = makeStyles({
-        table: {
-          minWidth: 650,
-        },
-        chatSection: {
-          width: '100%',
-          height: '80vh'
-        },
-        headBG: {
-            backgroundColor: '#e0e0e0'
-        },
-        borderRight500: {
-            borderRight: '1px solid #e0e0e0'
-        },
-        messageArea: {
-          height: '70vh',
-          overflowY: 'auto'
-        }
-      });
 
 interface SideUserProps {
     user: SearchBarUser;
@@ -71,7 +47,8 @@ const SideUser: React.FC<SideUserProps> = ({user, current, selectedUser, activeS
         
   >
         <ListItemIcon>
-            <Avatar alt="user">
+            <Avatar alt="user"
+            >
                 {current ? <SentimentSatisfiedAltIcon/> : <PersonIcon/>}
             </Avatar>
         </ListItemIcon>
@@ -126,10 +103,15 @@ const Messages: React.FC<MessagesProps> = ({classes, current_user, selectedUser,
                         return <ListItem key={message.nachricht_id}>
                             <Grid container>
                                 <Grid item xs={12}>
-                                    <ListItemText align={message.sender_id === current_user.user_id ? "right" : "left"} primary={message.nachricht_inhalt}></ListItemText>
+                                <ListItemText 
+                                    align={message.sender_id === current_user.user_id ? "right" : "left"} 
+                                    primary={<span style={{ border: '2px solid green', borderRadius: '10px', padding: '10px' }}>
+                                    {message.nachricht_inhalt}</span>}
+                                />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <ListItemText align={message.sender_id === current_user.user_id ? "right" : "left"} secondary={formatTime(message.timestamp)}></ListItemText>
+                                    <ListItemText align={message.sender_id === current_user.user_id ? "right" : "left"} 
+                                    secondary={formatTime(message.timestamp)}></ListItemText>
                                 </Grid>
                             </Grid>
                         </ListItem>
@@ -141,10 +123,39 @@ const Messages: React.FC<MessagesProps> = ({classes, current_user, selectedUser,
                         <TextField id="outlined-basic-email" 
                         label="Nachricht eingeben" fullWidth 
                         value={message}
-                        onChange={handleInputChange}/>
+                        variant="outlined"
+                        onChange={handleInputChange}
+                        sx = {{
+                            '& .MuiInputBase-input': { 
+                                color: colors.color1[500] + " !important",
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: colors.color1[500] + " !important",
+                            }
+                        }}
+                        InputLabelProps={{
+                            color: colors.color1[500]
+                        }}
+                        />
                     </Grid>
                     <Grid xs={1} align="right">
-                        <Fab color="primary" onClick={handleSendClick} aria-label="add"><SendIcon /></Fab>
+                        <Button onClick={handleSendClick} 
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                handleSendClick()
+                            }
+                        }}
+                        sx= {{
+                            backgroundColor: colors.color1[500],
+                            color: theme.palette.mode === "dark" ? "white" : "black",
+                            marginTop: "0%",
+                            padding: "18px",
+                            paddingLeft: "30px",
+                            paddingRight: "30px",
+   
+                        }}>
+                            <SendIcon/>
+                        </Button>
                     </Grid>
                 </Grid>
             </Grid>
@@ -152,6 +163,34 @@ const Messages: React.FC<MessagesProps> = ({classes, current_user, selectedUser,
 }
 
 const Chat = () => {
+    const useStyles = makeStyles({
+        table: {
+          minWidth: 650,
+        },
+        chatSection: {
+          width: '100%',
+          height: '80vh'
+        },
+        headBG: {
+            backgroundColor: '#e0e0e0'
+        },
+        borderRight500: {
+            borderRight: '1px solid #e0e0e0'
+        },
+        messageArea: {
+          height: '70vh',
+          overflowY: 'auto'
+        },
+        messageItem: {
+            border: '2px solid green',
+            borderRadius: '10px',
+            margin: '5px 0',
+          },    
+        "& .MuiAutocomplete-input": {
+            backgroundColor: "white"
+        },
+      });
+
   const classes = useStyles();
   const [currentUser, setCurrentUser] = React.useState<SearchBarUser | null>(null);
   const [users, setUsers] = React.useState<SearchBarUser[]>([]); 

@@ -9,15 +9,12 @@ import Header from "../../utility/Header";
 import { useTheme } from "@mui/material/styles";
 import { tokens } from "../../../utils/theme";
 import SuccessModal from "../../utility/SuccessModal";
-import {IUser, User, Nutzerrolle, UserDropDownOption} from "../../../entitities/user"
-import {MenuItem, Select, FormControl, InputLabel, FormHelperText} from "@mui/material";
 import axios from "axios";
-import { ITarif, Tarif } from "../../../entitities/tarif";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import {IPreis, Preis} from "./NetzbetreibePreisEditCustom"
 
 
-const PreisCreation = () => {
+const NetzbetreiberPreisCreation = () => {
   const navigate = useNavigate();
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
@@ -178,4 +175,4 @@ const initialValues = {
 
     
 
-export default PreisCreation;
+export default NetzbetreiberPreisCreation;

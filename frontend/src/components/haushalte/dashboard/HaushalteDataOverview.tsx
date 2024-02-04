@@ -15,10 +15,6 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 
 
-
-
-
-
 const HaushalteData = ({}) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);

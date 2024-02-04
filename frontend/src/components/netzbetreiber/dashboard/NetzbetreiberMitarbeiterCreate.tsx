@@ -16,7 +16,7 @@ import { Iadresse, Adresse } from "../../../entitities/adress";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 
-const UserCreation = () => {
+const NetzMitarbeiterCreate = () => {
     const navigate = useNavigate();
     const isNonMobile = useMediaQuery("(min-width:600px)");
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
@@ -451,4 +451,4 @@ const initialValues = {
     passwortWiederholen: '',
 };
 
-export default UserCreation;
+export default NetzMitarbeiterCreate;

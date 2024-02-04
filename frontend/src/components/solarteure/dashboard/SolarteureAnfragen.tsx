@@ -9,7 +9,7 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { SolarteurResponse } from "../../../entitities/pv";
 import { ProzessStatus } from "../../../entitities/pv";
 
-const AntragTable = () => {
+const SolarteureAntragTableOpen = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<SolarteurResponse[]>([]);
@@ -167,4 +167,4 @@ return (
 }
 
 
-export default AntragTable;
+export default SolarteureAntragTableOpen;

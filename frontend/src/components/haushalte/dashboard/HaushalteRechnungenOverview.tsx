@@ -3,10 +3,14 @@ import { DataGrid } from "@mui/x-data-grid";
 import { tokens } from "../../../utils/theme";
 import { useState, useEffect, SetStateAction } from "react";
 import Header from "../../utility/Header";
+import { saveAs } from 'file-saver';
+import {Button} from "@mui/material";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import {Zahlungsstatus, Rechnung} from "../../../entitities/pv";
+import { convertToCSV } from "../../../utils/download_utils";
 
 
 const HaushalteRechnungsTable = () => {
@@ -105,6 +109,13 @@ const HaushalteRechnungsTable = () => {
 
     ];
 
+    const downloadCSV = (data: Rechnung[] ) => {
+        const today = new Date();
+        const csvData = convertToCSV(data);
+        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        const fileName = `rechnungen_${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}.csv`;
+        saveAs(blob, fileName);
+    };
 
     return (
 
@@ -112,10 +123,33 @@ const HaushalteRechnungsTable = () => {
             display="grid"
             gridTemplateColumns="repeat(2, 1fr)"
             gridAutoRows="140px"
-            gap="0px">
-            <Box gridColumn={"span 2"} m="20px">
+            gap="40px">
+                <Box  gridColumn={"span 2"}>
+            <Box m="20px"  >
                 <Header title="Rechnungsübersicht" subtitle="Zum bezahlen auf Rechnung klicken"/>
             </Box>
+            <Box marginLeft={"85%"}>
+                <Button
+              onClick={() => downloadCSV(data)}
+            sx={{
+              backgroundColor: colors.color1[400],
+              color: theme.palette.background.default,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "10px 20px",
+              ":hover" : {
+                backgroundColor: colors.grey[500],
+              
+              },
+    
+            }}
+          >
+            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
+            Daten herunterladen
+          </Button>
+          </Box>
+          </Box>
+           
 
 
             <Grow in={true} timeout={1000}>

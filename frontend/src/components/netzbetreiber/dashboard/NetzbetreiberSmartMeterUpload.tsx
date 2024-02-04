@@ -14,7 +14,7 @@ export interface IUserFull extends IUser {
     user_id: number 
 }
 
-const Upload = () => {
+const NetzbetreiberUpload = () => {
   const navigate = useNavigate();  
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -163,4 +163,4 @@ const Upload = () => {
 
     
 
-export default Upload;
+export default NetzbetreiberUpload;

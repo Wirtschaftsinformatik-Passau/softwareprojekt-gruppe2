@@ -3,7 +3,6 @@ import {React, useEffect, useState} from "react";
 import {Routes, Route, Navigate} from "react-router-dom";
 import {ThemeProvider, CssBaseline } from "@mui/material";
 import axios from "axios";
-import Registration from "./container/all/Registration.tsx"
 import AdminDashboard from "./container/admin/AdminDashboard.tsx";
 import NetzbetreiberDashboard from "./container/netzbetreiber/NetzbetreiberDashboard.tsx";
 import HaushaltDashboard from "./container/haushalte/HaushaltDashboard.tsx";

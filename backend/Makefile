@@ -81,3 +81,7 @@ inspect-alembic-volume:
 # clean not used containers, volumes and images
 docker-clean:
 	sudo docker system prune
+
+# get ip address of the database container
+get-ip:
+	sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' postgres_tose_backend

@@ -7,16 +7,14 @@ import Header from "../../utility/Header";
 import { useNavigate } from "react-router-dom";
 import {Grow} from "@mui/material";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
-import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import CheckIcon from '@mui/icons-material/Check';
 import { PVAntrag } from "../../../entitities/pv";
-
+import { getAllReports, ReportURL } from "../../../utils/download_utils";
 
 
 // todo: conditional rendering of navigation of table based on prozesstatus
 
-const AntragTable = () => {
+const HaushaltAntragTable = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<PVAntrag[]>([]);
@@ -31,11 +29,24 @@ const AntragTable = () => {
                                           prozess_status: SetStateAction<String>}; }) => {
     const { row } = params;
     console.log(row)
-    row.prozess_status === "DatenAngefordert" ? navigate("/haushalte/dataOverview/") :
-    row.prozess_status === "AngebotGemacht" ? navigate("/haushalte/angebote/"+row.anlage_id) :
-    undefined
+    switch (row.prozess_status) {
+    case "DatenAngefordert":  navigate("/haushalte/dataOverview/")
+    break;
+    case "AngebotGemacht":  navigate("/haushalte/angebote/"+row.anlage_id)
+    break;
+    case "PlanErstellt" : {
+      const InstallationsPlanUrl: ReportURL= {
+        endpoint: "solarteure/installationsplan/" + row.anlage_id,
+        filename: `installationsplan_${row.anlage_id}.csv`,
+      }
+      const plans: ReportURL[] = new Array(InstallationsPlanUrl)
+      getAllReports(plans)
+    }
+    break;
+    default: undefined
     
   }
+}
 
   
 //todo: genauere Erklärung
@@ -45,7 +56,7 @@ const AntragTable = () => {
     ["DatenFreigegeben", "Daten wurden freigegeben", ""],
     ["AngebotGemacht", "Angebot wurde gemacht", <CheckIcon/>],
     ["AngebotAngenommen", "Angebot wurde angenommen", ""],
-    ["PlanErstellt", "Plan wurde erstellt", ""],
+    ["PlanErstellt", "Plan wurde erstellt", "Download des Plans möglich durch Klicken"],
     ["Genehmigt", "Plan wurde genehmigt", ""],
     ["Abgenommen", "Plan wurde abgenommen", ""],
     ["InstallationAbgeschlossen", "Installation wurde abgeschlossen", ""],
@@ -97,6 +108,8 @@ const columns = [
                   ? colors.color5[400] :
                   prozess_status === "AngebotGemacht"
                   ? colors.color3[400] :
+                  prozess_status === "PlanErstellt"
+                  ? colors.color4[400] :
                    undefined}
             >
               <Typography color={colors.grey[100]} sx={{ ml: "5px" }}>
@@ -224,4 +237,4 @@ return (
 }
 
 
-export default AntragTable;
+export default HaushaltAntragTable;

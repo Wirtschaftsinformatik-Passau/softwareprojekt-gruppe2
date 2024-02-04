@@ -46,8 +46,8 @@ const AdminUserEdit = ({}) => {
     const [userID, setUserID] = React.useState("")
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
-    const [editableUser, setEditableUser] = useState<EditableUser | null>(null);
-    const [initialValues, setInitialValues] = useState<EditableUser>({
+    const [editableUser, setEditableUser] = React.useState<EditableUser | null>(null);
+    const [initialValues, setInitialValues] = React.useState<EditableUser>({
         vorname: '',
         nachname: '',
         strasse: '',

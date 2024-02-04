@@ -46,7 +46,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
   );
 };
 
-const Sidebar1 = () => {
+const HaushalteSidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -253,7 +253,7 @@ const Sidebar1 = () => {
               Pages
             </Typography>
             <Item
-              title="Calendar"
+              title="Kalender"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
               selected={selected}
@@ -282,4 +282,4 @@ const Sidebar1 = () => {
   );
 };
 
-export default Sidebar1;
+export default HaushalteSidebar;

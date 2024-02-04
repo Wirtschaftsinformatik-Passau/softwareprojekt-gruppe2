@@ -9,7 +9,7 @@ import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 
 
-const PreisTable = () => {
+const NetzbetreiberPreisTable = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [data, setData] = useState([]);
@@ -115,4 +115,4 @@ return (
 }
 
 
-export default PreisTable;
+export default NetzbetreiberPreisTable;

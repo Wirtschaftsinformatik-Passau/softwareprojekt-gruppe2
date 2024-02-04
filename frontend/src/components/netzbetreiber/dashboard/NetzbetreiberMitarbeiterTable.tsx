@@ -13,7 +13,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
-const UserTable = () => {
+const MitarbeiterTable = () => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -163,4 +163,4 @@ const UserTable = () => {
     );
 };
 
-export default UserTable;
+export default MitarbeiterTable;

@@ -21,7 +21,7 @@ export enum AntwortOptionen {
 
 
 
-const VertragDetail = ({}) => {
+const NetzbetreiberVertragDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -200,4 +200,4 @@ const VertragDetail = ({}) => {
     )
 }
 
-export default VertragDetail;
+export default NetzbetreiberVertragDetail;

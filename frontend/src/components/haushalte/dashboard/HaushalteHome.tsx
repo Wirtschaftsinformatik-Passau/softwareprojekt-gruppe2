@@ -18,7 +18,7 @@ import {setStateOtherwiseRedirect}  from "../../../utils/stateUtils.js"
 import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 import { Vertrag } from "./HaushaltVertrag";
 import { PVAntrag } from "../../../entitities/pv";
-import { ReportURL, getAllReports } from "../../../utils/reports";
+import { ReportURL, getAllReports } from "../../../utils/download_utils";
 
 const haushaltURLs: ReportURL[] = [
   { endpoint: "haushalte/download_reports_dashboard", filename: "dashboard.csv" },

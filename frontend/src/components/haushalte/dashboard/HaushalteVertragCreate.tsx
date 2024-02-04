@@ -17,7 +17,7 @@ interface IVertragPreview {
 
 
 
-const NetzbetreiberEinspeisungenZusage = ({}) => {
+const HaushalteVertragCreate = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
@@ -251,4 +251,4 @@ const NetzbetreiberEinspeisungenZusage = ({}) => {
     )
 }
 
-export default NetzbetreiberEinspeisungenZusage;
+export default HaushalteVertragCreate;

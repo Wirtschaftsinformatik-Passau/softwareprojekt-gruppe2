@@ -14,13 +14,15 @@ import { Angebot } from "../../../entitities/pv";
 import { dateFormater } from "../../../utils/dateUtils";
 
 
-const AngebotDetail = ({}) => {
+const HaushalteAngebotDetail = ({}) => {
 
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
     const [isLoading, setIsLoading] = React.useState<boolean>(true);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState<boolean>(false);
     const [failModalIsOpen, setFailModalIsOpen] = React.useState<boolean>(false);
+    const [ablehnenModalIsOpen, setAblehnenModalIsOpen] = React.useState<boolean>(false);
+    const [ablehnenFailModalIsOpen, setAblehnenFailModalIsOpen] = React.useState<boolean>(false);
     const {anlageID} = useParams();
     const [angebote , setAngebote] = React.useState<Angebot[]>([{
         angebot_id: 0,
@@ -65,6 +67,19 @@ const AngebotDetail = ({}) => {
         })
     }
 
+    const handleAblehnen = () => {
+        const token = localStorage.getItem("accessToken");
+        const url = addSuffixToBackendURL("haushalte/angebot-ablehnen/"+anlageID);
+        axios.put(url, {}, {headers: {Authorization: `Bearer ${token}`}})
+        .then((response) => {
+            setAblehnenModalIsOpen(true);
+        })
+        .catch((error) => {
+            setAblehnenFailModalIsOpen(true);
+        })
+    }
+
+
     const kontaktAufnahme = () => {
         const token = localStorage.getItem("accessToken");
         const url = addSuffixToBackendURL("haushalte/kontaktaufnahme-energieberatenden?anlage_id=" + anlageID);
@@ -103,7 +118,7 @@ const AngebotDetail = ({}) => {
                 }}>
                     Abbrechen    
                 </Button>
-                <Button variant="contained" color="primary" onClick={handleAnnehmen}
+                <Button variant="contained" color="primary" onClick={handleAblehnen}
                 sx = {{
                     backgroundColor: `${colors.color5[400]} !important`,
                     color: theme.palette.background.default
@@ -179,8 +194,13 @@ const AngebotDetail = ({}) => {
     text="Angebot erfolgreich angenommen!" navigationGoal="/haushalte"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Angebot konnte nicht angenommen werden!"/>
+    <SuccessModal open={ablehnenModalIsOpen} handleClose={() => setAblehnenModalIsOpen(false)}
+    text="Angebot erfolgreich abgelehnt!" navigationGoal="/haushalte"/>
+    <SuccessModal open={ablehnenFailModalIsOpen} handleClose={() => setAblehnenFailModalIsOpen(false)}
+    text="Angebot konnte nicht abgelehnt werden!"/>
+    
         </Box>
     )
 }
 
-export default AngebotDetail;
+export default HaushalteAngebotDetail;

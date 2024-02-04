@@ -9,7 +9,7 @@ import { setStateOtherwiseRedirect } from "../../../utils/stateUtils";
 import { NetzbetreiberPVResponse } from "../../../entitities/pv";
 import { ProzessStatus } from "../../../entitities/pv";
 
-const NetzbetreiberEinspeisungenAnfrage = () => {
+const NetzbetreiberEinspeisungenAnfrageAngenommen = () => {
   const theme = useTheme();
   const colors: Object = tokens(theme.palette.mode);
   const [data, setData] = useState<NetzbetreiberPVResponse[]>([]);
@@ -166,4 +166,4 @@ return (
 }
 
 
-export default NetzbetreiberEinspeisungenAnfrage;
+export default NetzbetreiberEinspeisungenAnfrageAngenommen;

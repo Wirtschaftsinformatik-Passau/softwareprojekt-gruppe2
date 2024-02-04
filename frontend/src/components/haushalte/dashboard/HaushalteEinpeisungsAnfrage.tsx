@@ -9,7 +9,7 @@ import { addSuffixToBackendURL } from "../../../utils/networking_utils";
 
 
 
-const Anfrage = () => {
+const HaushalteEinspeisungsAnfrage = () => {
   
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -77,4 +77,4 @@ const Anfrage = () => {
 
     
 
-export default Anfrage;
+export default HaushalteEinspeisungsAnfrage;

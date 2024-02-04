@@ -39,7 +39,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
   );
 };
 
-const Sidebar1 = () => {
+const SolarteureSidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -227,4 +227,4 @@ const Sidebar1 = () => {
   );
 };
 
-export default Sidebar1;
+export default SolarteureSidebar;

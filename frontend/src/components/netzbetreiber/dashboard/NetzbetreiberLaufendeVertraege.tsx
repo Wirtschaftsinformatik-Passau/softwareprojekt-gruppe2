@@ -24,7 +24,7 @@ export interface Vertrag {
   "spezielle_konditionen": string,
 }
 
-const VertragTable = () => {
+const NetzbetreiberLaufendeVertraege = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -197,4 +197,4 @@ return (
 }
 
 
-export default VertragTable;
+export default NetzbetreiberLaufendeVertraege;

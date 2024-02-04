@@ -198,7 +198,7 @@ const EnergieSidebar = () => {
               Pages
             </Typography>
             <Item
-              title="Calendar"
+              title="Kalender"
               to="/calendar"
               icon={<CalendarTodayOutlinedIcon />}
               selected={selected}

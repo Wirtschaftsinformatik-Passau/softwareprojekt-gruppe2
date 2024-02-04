@@ -14,7 +14,7 @@ export interface IUserFull extends IUser {
     user_id: number
 }
 
-const Anfrage = () => {
+const HaushalteSmartMeterUpload = () => {
   const navigate = useNavigate();  
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -140,4 +140,4 @@ const Anfrage = () => {
 
     
 
-export default Anfrage;
+export default HaushalteSmartMeterUpload;

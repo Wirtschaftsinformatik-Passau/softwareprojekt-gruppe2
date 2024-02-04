@@ -29,6 +29,17 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 async def check_haushalt_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Nutzer die Rolle "Haushalte" hat.
+
+    Args:
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        method (str): Die HTTP-Methode.
+        endpoint (str): Der Endpunkt der Anfrage.
+
+    Raises:
+        HTTPException: Wenn der Nutzer keine Berechtigung hat.
+    """
     if current_user.rolle != models.Rolle.Haushalte:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -41,7 +52,18 @@ async def check_haushalt_role(current_user: models.Nutzer, method: str, endpoint
         raise HTTPException(status_code=403, detail="Nur Haushalte haben Zugriff auf diese Daten")
 
 
-async def check_haushalt_or_solarteur_role(current_user: models.Nutzer, method: str, endpoint: str):
+async def check_haushalt_or_solarteur_role(current_user: models.Nutzer, method: str, endpoint: str): 
+    """
+    Überprüft, ob der aktuelle Nutzer die Rolle "Haushalte" oder "Solarteure" hat.
+
+    Args:
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        method (str): Die HTTP-Methode.
+        endpoint (str): Der Endpunkt der Anfrage.
+
+    Raises:
+        HTTPException: Wenn der Nutzer keine Berechtigung hat.
+    """
     if current_user.rolle != models.Rolle.Haushalte and current_user.rolle != models.Rolle.Solarteure:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -54,6 +76,17 @@ async def check_haushalt_or_solarteur_role(current_user: models.Nutzer, method: 
         raise HTTPException(status_code=403, detail="Nur Haushalte oder Solarteure haben Zugriff auf diese Daten")
 
 async def check_haushalt_or_solarteur_role_or_berater(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Nutzer die Rolle "Haushalte", "Solarteure" oder "Energieberatende" hat.
+
+    Args:
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        method (str): Die HTTP-Methode.
+        endpoint (str): Der Endpunkt der Anfrage.
+
+    Raises:
+        HTTPException: Wenn der Nutzer keine Berechtigung hat.
+    """
     if current_user.rolle != models.Rolle.Haushalte and current_user.rolle != models.Rolle.Solarteure \
             and current_user.rolle != models.Rolle.Energieberatende:
         logging_error = LoggingSchema(
@@ -69,6 +102,16 @@ async def check_haushalt_or_solarteur_role_or_berater(current_user: models.Nutze
 @router.post("/angebot-anfordern", status_code=status.HTTP_201_CREATED, response_model=schemas.PVAnforderungResponse)
 async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.get_db_async),
                                             current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Erstellt ein PV-Installationsangebot für den Haushalt.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        schemas.PVAnforderungResponse: Die Antwort auf die Anforderung des PV-Installationsangebots.
+    """
     await check_haushalt_role(current_user, "POST", "/angebot-anfordern")
     try:
         stmt = (select(models.Nutzer.user_id, func.count(models.PVAnlage.anlage_id).label("anfragen_count"))
@@ -118,6 +161,16 @@ async def pv_installationsangebot_anfordern(db: AsyncSession = Depends(database.
 @router.get("/angebot-anfordern", response_model=Union[List[schemas.PVAnlageHaushaltResponse], List])
 async def get_pv_anlage(db: AsyncSession = Depends(database.get_db_async),
                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft Informationen über PV-Anlagen für den Haushalt ab.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        Union[List[schemas.PVAnlageHaushaltResponse], List]: Eine Liste von PV-Anlageninformationen oder eine leere Liste.
+    """
     await check_haushalt_role(current_user, "GET", "/angebot-anfordern")
     try:
         stmt = select(models.PVAnlage).where(models.PVAnlage.haushalt_id == current_user.user_id)
@@ -164,7 +217,17 @@ async def get_pv_anlage(db: AsyncSession = Depends(database.get_db_async),
 @router.get("/vertrag-preview/{tarif_id}", response_model=schemas.VertragPreview)
 async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get_db_async),
                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
-    # Prüfen, ob der angeforderte Tarif existiert
+    """
+    Ruft eine Vorschau des Vertrags für einen bestimmten Tarif ab.
+
+    Args:
+        tarif_id (int): Die ID des Tarifs.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        schemas.VertragPreview: Eine Vorschau des Vertrags.
+    """
     await check_haushalt_role(current_user, "GET", f"/tarifantrag/{tarif_id}")
     try:
         query = select(models.Tarif).where((models.Tarif.tarif_id == tarif_id) &
@@ -223,6 +286,17 @@ async def get_tarifantrag(tarif_id: int, db: AsyncSession = Depends(database.get
 async def tarifantrag(tarif_id: int,
                       current_user: models.Nutzer = Depends(oauth.get_current_user),
                       db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt einen Tarifantrag für den Haushalt.
+
+    Args:
+        tarif_id (int): Die ID des ausgewählten Tarifs.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        schemas.VertragResponse: Die Antwort auf den Tarifantrag.
+    """
     # Prüfen, ob der angeforderte Tarif existiert
     await check_haushalt_role(current_user, "POST", f"/tarifantrag/{tarif_id}")
     user_id = current_user.user_id
@@ -318,6 +392,17 @@ async def tarifantrag(tarif_id: int,
 async def kontakt_aufnehmen_energieberatenden(anlage_id: int = Query(None, description="Anlage ID der PV Anlage",),
                                               db: AsyncSession = Depends(database.get_db_async),
                                               current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Nimmt Kontakt mit Energieberatenden für den Haushalt auf, um einen Energieausweis anzufordern.
+
+    Args:
+        anlage_id (int, optional): Die ID der PV-Anlage. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        schemas.EnergieausweisAnfrageResponse: Die Antwort auf die Energieausweis-Anfrage.
+    """
     await check_haushalt_role(current_user, "POST", "/kontaktaufnahme-energieberatenden")
 
     try:
@@ -396,6 +481,16 @@ async def kontakt_aufnehmen_energieberatenden(anlage_id: int = Query(None, descr
 @router.get("/angebotsueberpruefung", status_code=status.HTTP_200_OK, response_model=List[schemas.AngebotResponse])
 async def ueberpruefung_angebote(current_user: models.Nutzer = Depends(oauth.get_current_user),
                                  db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Überprüft die Angebote für den Haushalt und gibt eine Liste von Angeboten zurück.
+
+    Args:
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        List[schemas.AngebotResponse]: Eine Liste von Angeboten oder eine leere Liste.
+    """
     await check_haushalt_role(current_user, "GET", "/angebotsueberpruefung")
     try:
         stmt = select(models.Angebot).where(models.Angebot.anlage_id == models.PVAnlage.anlage_id,
@@ -460,6 +555,16 @@ async def ueberpruefung_angebote(current_user: models.Nutzer = Depends(oauth.get
 @router.get("/all-tarife", response_model=List[schemas.TarifResponseAll])
 async def get_all_tarife(db: AsyncSession = Depends(database.get_db_async),
                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft eine Liste aller verfügbarer Tarife ab.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        List[schemas.TarifResponseAll]: Eine Liste aller verfügbarer Tarife.
+    """
     await check_haushalt_role(current_user, "GET", "/all-tarife")
     try:
         stmt = select(models.Tarif).where(models.Tarif.active == True)
@@ -474,6 +579,17 @@ async def get_all_tarife(db: AsyncSession = Depends(database.get_db_async),
 async def get_all_tarife(tarif_id: int,
                          db: AsyncSession = Depends(database.get_db_async),
                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft einen Haushaltstarif anhand der Tarif-ID ab.
+
+    Args:
+        tarif_id (int): Die ID des Tarifs.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        schemas.TarifHaushaltResponse: Informationen zum Haushaltstarif.
+    """
     await check_haushalt_role(current_user, "GET", f"/all-tarife/{tarif_id}")
     try:
         stmt = select(models.Tarif, models.Nutzer) \
@@ -505,6 +621,16 @@ async def get_all_tarife(tarif_id: int,
 @router.get("/vertraege", response_model=Union[List[schemas.VertragTarifResponse], List])
 async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
                         current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft die Verträge des Haushalts ab.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        Union[List[schemas.VertragTarifResponse], List]: Eine Liste von Verträgen oder eine leere Liste.
+    """
     await check_haushalt_role(current_user, "GET", "/vertraege")
     try:
         stmt = select(models.Vertrag, models.Tarif).join(models.Tarif, models.Vertrag.tarif_id == models.Tarif.tarif_id) \
@@ -541,6 +667,17 @@ async def get_vertraege(db: AsyncSession = Depends(database.get_db_async),
 async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
                          current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Aktualisiert die Haushaltsdatenfreigabe und Dashboard-Aggregationsdaten für den Haushalt.
+
+    Args:
+        freigabe_daten (schemas.HaushaltsDatenFreigabe): Die freigegebenen Haushaltsdaten.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        schemas.HaushaltsDatenFreigabeResponse: Die Antwort auf die Haushaltsdatenfreigabe.
+    """
     await check_haushalt_role(current_user, "POST", "/datenfreigabe")
     user_id = current_user.user_id
     haushaltsdaten = await db.execute(select(models.Haushalte).where(models.Haushalte.user_id == user_id))
@@ -633,6 +770,17 @@ async def daten_freigabe(freigabe_daten: schemas.HaushaltsDatenFreigabe,
 async def get_vertrag(vertrag_id: int,
                       db: AsyncSession = Depends(database.get_db_async),
                       current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft einen bestimmten Vertrag des Haushalts ab.
+
+    Args:
+        vertrag_id (int): Die ID des Vertrags.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        schemas.VertragTarifNBResponse: Informationen zum Vertrag und dem zugehörigen Netzbetreiber.
+    """
     await check_haushalt_role(current_user, "GET", f"/vertraege/{vertrag_id}")
     try:
         stmt = select(models.Vertrag, models.Tarif, models.Nutzer) \
@@ -668,6 +816,17 @@ async def get_vertrag(vertrag_id: int,
 async def deactivate_vertrag(vertrag_id: int,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Deaktiviert einen Vertrag und erstellt eine Kündigungsanfrage.
+
+    Args:
+        vertrag_id (int): Die ID des zu deaktivierenden Vertrags.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        dict: Eine Bestätigungsmeldung.
+    """
     endpoint = f"/vertrag-deaktivieren/{vertrag_id}"
     await check_haushalt_role(current_user, "GET", endpoint)
 
@@ -700,6 +859,17 @@ async def deactivate_vertrag(vertrag_id: int,
 async def get_haushalt_daten(haushalt_id: int,
                              db: AsyncSession = Depends(database.get_db_async),
                              current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Ruft die freigegebenen Haushaltsdaten für einen bestimmten Haushalt ab.
+
+    Args:
+        haushalt_id (int): Die ID des Haushalts.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        schemas.HaushaltsDatenFreigabe: Freigegebene Haushaltsdaten.
+    """
     await check_haushalt_or_solarteur_role_or_berater(
         current_user, "GET", f"/haushalt-daten/{haushalt_id}"
     )
@@ -752,6 +922,18 @@ async def update_haushalt_daten(haushalt_id: int,
                                 current_user: models.Nutzer = Depends(oauth.get_current_user),
                                 db: AsyncSession = Depends(database.get_db_async),
                                 haushalt_daten: schemas.HaushaltsDatenFreigabe = Depends(get_haushalt_daten)):
+    """
+    Aktualisiert die Haushaltsdaten für einen bestimmten Haushalt.
+
+    Args:
+        haushalt_id (int): Die ID des Haushalts.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        haushalt_daten (schemas.HaushaltsDatenFreigabe): Die zu aktualisierenden Haushaltsdaten.
+
+    Returns:
+        dict: Eine Bestätigungsmeldung.
+    """
     await check_haushalt_role(current_user, "PUT", f"/haushalt-daten/{haushalt_id}")
     
     try:
@@ -863,6 +1045,17 @@ async def angebot_annehmen(anlage_id: int = Path(..., description="Die ID der PV
 async def get_angebot(anlage_id: int,
                       current_user: models.Nutzer = Depends(oauth.get_current_user),
                       db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft ein Angebot für eine bestimmte PV-Anlage ab.
+
+    Args:
+        anlage_id (int): Die ID der PV-Anlage.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        list: Eine Liste von Angeboten für die angegebene PV-Anlage.
+    """
     await check_haushalt_role(current_user, "GET", f"/angebote/{anlage_id}")
     try:
         stmt = select(models.Angebot, models.PVAnlage)\
@@ -905,7 +1098,18 @@ async def kuendigungsanfrage(
         neuer_tarif_id: int = Query(None, description="Die ID des neuen Tarifs"),
         current_user: models.Nutzer = Depends(oauth.get_current_user),
         db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt eine Kündigungsanfrage für einen Vertrag.
 
+    Args:
+        vertrag_id (int): Die ID des zu kündigenden Vertrags.
+        neuer_tarif_id (int, optional): Die ID des neuen Tarifs. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        dict: Eine Bestätigungsmeldung.
+    """
     user_id = current_user.user_id
 
     # Überprüfe den bestehenden Vertrag
@@ -1015,6 +1219,17 @@ async def angebot_ablehnen(anlage_id: int = Path(..., description="Die ID der PV
 async def get_rechnungen(rolle: str = Query(None, description="Zahlungsteller oder Empfänger"),
                          current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine Liste von Rechnungen basierend auf der Rolle des Nutzers ab (Zahlungsteller oder Empfänger).
+
+    Args:
+        rolle (str, optional): Die Rolle des Nutzers (Zahlungsteller oder Empfänger). Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        list: Eine Liste von Rechnungen, die den angegebenen Kriterien entsprechen.
+    """
     try:
         if rolle not in ["steller", "empfaenger"]:
             logging_obj = schemas.LoggingSchema(
@@ -1078,6 +1293,20 @@ async def get_rechnungen(rolle: str = Query(None, description="Zahlungsteller od
 async def get_rechnung(rechnung_id: int,
                        current_user: models.Nutzer = Depends(oauth.get_current_user),
                        db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine einzelne Rechnung basierend auf ihrer ID ab.
+
+    Args:
+        rechnung_id (int): Die ID der Rechnung, die abgerufen werden soll.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        schemas.RechnungResponse: Informationen zur abgerufenen Rechnung.
+
+    Raises:
+        HTTPException: Wenn die Rechnung nicht gefunden wird oder dem Benutzer nicht gehört.
+    """
     try:
         await check_haushalt_role(current_user, "GET", f"/rechnungen/{rechnung_id}")
 
@@ -1194,6 +1423,19 @@ async def rechnung_bezahlen(rechnung_id: int,
 @router.get("/download_reports_dashboard", status_code=status.HTTP_200_OK)
 async def download_reports_dashbaord(db: AsyncSession = Depends(database.get_db_async),
                                 current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Generiert einen Bericht über das Dashboard und ermöglicht den Download als CSV-Datei.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        StreamingResponse: Die CSV-Datei als Download.
+
+    Raises:
+        HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_haushalt_role(current_user, "GET", "/download_reports_dashboard")
     try:
         # Anzahl der laufenden PV-Anträge
@@ -1225,57 +1467,25 @@ async def download_reports_dashbaord(db: AsyncSession = Depends(database.get_db_
         logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=logging_error)
-
-
-@router.get("/download_reports_vertrag", status_code=status.HTTP_200_OK)
-async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_async),
-                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
-
-    await check_haushalt_role(current_user, "GET", "/download_reports_vertrag")
-
-    try:
-        # Selektiere nur Verträge, die dem aktuellen Nutzer zugeordnet sind
-        vertraege = await db.execute(
-            select(models.Vertrag).where(models.Vertrag.user_id == current_user.user_id)
-        )
-
-        # Erstellen der CSV-Datei
-        output = io.StringIO()
-        writer = csv.writer(output)
-
-        # Schreiben der Kopfzeilen entsprechend der Tabelle Vertrag
-        header = [
-            "vertrag_id", "user_id", "tarif_id", "beginn_datum", "end_datum",
-            "netzbetreiber_id", "jahresabschlag", "vertragstatus"
-        ]
-        writer.writerow(header)
-
-        # Schreiben der Daten aus der Vertrag-Tabelle
-        for vertrag in vertraege.scalars().all():
-            writer.writerow([
-                vertrag.vertrag_id,
-                vertrag.user_id,
-                vertrag.tarif_id,
-                vertrag.beginn_datum.isoformat() if vertrag.beginn_datum else None,
-                vertrag.end_datum.isoformat() if vertrag.end_datum else None,
-                vertrag.netzbetreiber_id,
-                vertrag.jahresabschlag,
-                vertrag.vertragstatus.value  
-            ])
-
-        output.seek(0)  # Zurück zum Anfang der Datei
-        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=haushalt_vertrag_report.csv"})
-
-    except Exception as e:
-        logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=logging_error)
     
 
 @router.get("/download_reports_rechnungen", status_code=status.HTTP_200_OK)
 async def download_reports_rechnungen(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
 
+    """
+    Generiert einen Bericht über Rechnungen und ermöglicht den Download als CSV-Datei.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        StreamingResponse: Die CSV-Datei als Download.
+
+    Raises:
+        HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_haushalt_role(current_user, "GET", "/download_reports_rechnungen")
     
     try:
@@ -1319,11 +1529,23 @@ async def download_reports_rechnungen(db: AsyncSession = Depends(database.get_db
                             detail=logging_error)
 
 
-
 @router.get("/download_reports_vertrag", status_code=status.HTTP_200_OK)
 async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
 
+    """
+    Generiert einen Bericht über Verträge und ermöglicht den Download als CSV-Datei.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        StreamingResponse: Die CSV-Datei als Download.
+
+    Raises:
+        HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_haushalt_role(current_user, "GET", "/download_reports_vertrag")
 
     try:
@@ -1369,6 +1591,19 @@ async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_as
 async def download_reports_eausweis(db: AsyncSession = Depends(database.get_db_async),
                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
 
+    """
+    Generiert einen Bericht über Energieausweise und ermöglicht den Download als CSV-Datei.
+
+    Args:
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+
+    Returns:
+        StreamingResponse: Die CSV-Datei als Download.
+
+    Raises:
+        HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_haushalt_role(current_user, "GET", "/download_reports_energieausweise")
     
     try:

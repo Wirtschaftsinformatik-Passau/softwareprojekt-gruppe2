@@ -24,6 +24,12 @@ else:
 
 
 def get_db():
+    """
+    Funktion zur Bereitstellung einer Datenbankverbindung für synchrone Operationen.
+
+    Returns:
+        Session: Eine SQLAlchemy-Sitzung, die für den Zugriff auf die Datenbank verwendet werden kann.
+    """
     db = SessionLocal()
     try:
         yield db
@@ -32,6 +38,12 @@ def get_db():
 
 
 async def get_db_async():
+    """
+    Funktion zur Bereitstellung einer Datenbankverbindung für asynchrone Operationen.
+
+    Returns:
+        AsyncSession: Eine SQLAlchemy-Async-Sitzung, die für den asynchronen Zugriff auf die Datenbank verwendet werden kann.
+    """
     db = SessionLocal()
     try:
         yield db

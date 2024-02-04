@@ -17,6 +17,15 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 def create_access_token(data: dict):
+    """
+    Erzeugt einen JWT (JSON Web Token) für die angegebenen Daten.
+
+    Args:
+        data (dict): Die Daten, die im Token gespeichert werden sollen.
+
+    Returns:
+        str: Der erstellte JWT.
+    """
     to_encode = data.copy()
 
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -28,7 +37,16 @@ def create_access_token(data: dict):
 
 
 def verify_access_token(token: str, credentials_exception):
+    """
+    Überprüft einen JWT (JSON Web Token) und gibt die darin enthaltenen Daten zurück, wenn der Token gültig ist.
 
+    Args:
+        token (str): Der zu überprüfende JWT.
+        credentials_exception: Die Ausnahme, die ausgelöst wird, wenn die Überprüfung fehlschlägt.
+
+    Returns:
+        schemas.TokenData: Die in den JWT-Daten enthaltene Benutzer-ID.
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
 
@@ -46,6 +64,16 @@ def verify_access_token(token: str, credentials_exception):
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Holt den aktuellen Benutzer anhand des JWTs aus der Datenbank.
+
+    Args:
+        token (str): Der JWT des Benutzers.
+        db (AsyncSession): Die Datenbankverbindung.
+
+    Returns:
+        models.Nutzer: Das Benutzermodell des aktuellen Benutzers.
+    """
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                           detail=f"Could not validate credentials",
                                           headers={"WWW-Authenticate": "Bearer"})

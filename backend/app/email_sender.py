@@ -9,6 +9,28 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 class EmailSender:
+    """
+    Eine Klasse zur Verwendung für das Senden von E-Mails über SMTP.
+
+    Args:
+        smtp_server (str): Der SMTP-Server, über den die E-Mail gesendet werden soll.
+        smtp_port (int): Der Port für die SMTP-Verbindung.
+        username (str): Der Benutzername für die SMTP-Authentifizierung.
+        password (str): Das Passwort für die SMTP-Authentifizierung.
+        use_ssl (bool, optional): True, wenn SSL verwendet werden soll, False (Standard) für unverschlüsselte Verbindung.
+
+    Methods:
+        send_email(empfaenger_email, subject, body):
+            Sendet eine E-Mail an die angegebene E-Mail-Adresse.
+
+    Raises:
+        smtplib.SMTPException: Wenn ein SMTP-Fehler auftritt.
+        Exception: Wenn ein allgemeiner Fehler beim Senden der E-Mail auftritt.
+
+    Example:
+        email_sender = EmailSender("smtp.example.com", 587, "me@example.com", "mypassword")
+        await email_sender.send_email("recipient@example.com", "Betreff der E-Mail", "Inhalt der E-Mail")
+    """
     def __init__(self, smtp_server, smtp_port, username, password, use_ssl=False):
         self.smtp_server = smtp_server
         self.smtp_port = smtp_port

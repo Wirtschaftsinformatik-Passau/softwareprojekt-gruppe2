@@ -20,6 +20,11 @@ scheduler = AsyncIOScheduler()
 
 @app.on_event("startup")
 async def start_scheduler():
+    """
+    Event-Funktion beim Start der Anwendung.
+    Startet den Scheduler und fügt einen Cron-Job hinzu, um die Funktion "check_and_create_rechnung"
+    von "netzbetreiber" täglich um Mitternacht auszuführen.
+    """
     scheduler.start()
 
     scheduler.add_job(
@@ -30,11 +35,24 @@ async def start_scheduler():
 
 @app.on_event("shutdown")
 async def shutdown_scheduler():
+    """
+    Event-Funktion beim Herunterfahren der Anwendung.
+    Beendet den Scheduler.
+    """
     scheduler.shutdown()
 
 
 @app.get("/")
 def test(user_id: dict = Depends(get_current_user)):
+    """
+    Eine Test-Route, um sicherzustellen, dass die Anwendung funktioniert.
+
+    Args:
+        user_id (dict, optional): Benutzer-ID aus dem OAuth-Token.
+
+    Returns:
+        dict: Eine einfache JSON-Antwort.
+    """
     return {"message": "Hello World"}
 
 

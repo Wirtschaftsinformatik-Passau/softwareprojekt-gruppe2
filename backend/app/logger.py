@@ -19,7 +19,19 @@ class JsonFormatter(jsonlogger.JsonFormatter):
 
 
 class LogConfig(BaseModel):
-    """Logging configuration to be set for the server"""
+    """
+    Logging-Konfiguration für den Server.
+
+    Attributes:
+        LOGGER_NAME (str): Der Name des Loggers.
+        LOG_FORMAT (str): Das Format für die Standard-Logausgabe.
+        JSON_LOG_FORMAT (str): Das Format für die JSON-Logausgabe.
+        LOG_LEVEL (str): Das Log-Level für den Logger.
+        LOG_FILE (str): Der Pfad zur Log-Datei.
+
+    Example:
+        config = LogConfig()
+    """
 
     LOGGER_NAME: str = "GreenEcoHub"
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
@@ -62,7 +74,19 @@ class LogConfig(BaseModel):
     }
 
 class LogConfigRegistration(BaseModel):
-    """Logging configuration to be set for the server"""
+    """
+    Logging-Konfiguration für den Server-Registration-Logger.
+
+    Attributes:
+        LOGGER_NAME (str): Der Name des Loggers.
+        LOG_FORMAT (str): Das Format für die Standard-Logausgabe.
+        JSON_LOG_FORMAT (str): Das Format für die JSON-Logausgabe.
+        LOG_LEVEL (str): Das Log-Level für den Logger.
+        LOG_FILE (str): Der Pfad zur Log-Datei.
+
+    Example:
+        config = LogConfigRegistration()
+    """
 
     LOGGER_NAME: str = "GreenEcoHubRegistration"
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
@@ -106,7 +130,19 @@ class LogConfigRegistration(BaseModel):
 
 
 class LogConfigAdresse(BaseModel):
-    """Logging configuration to be set for the server"""
+    """
+    Logging-Konfiguration für den Server-Adresse-Logger.
+
+    Attributes:
+        LOGGER_NAME (str): Der Name des Loggers.
+        LOG_FORMAT (str): Das Format für die Standard-Logausgabe.
+        JSON_LOG_FORMAT (str): Das Format für die JSON-Logausgabe.
+        LOG_LEVEL (str): Das Log-Level für den Logger.
+        LOG_FILE (str): Der Pfad zur Log-Datei.
+
+    Example:
+        config = LogConfigAdresse()
+    """
 
     LOGGER_NAME: str = "GreenEcoHubAdresse"
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
@@ -149,7 +185,18 @@ class LogConfigAdresse(BaseModel):
     }
 
 class LogConfigBase(BaseModel):
-    """Logging configuration to be set for the server"""
+    """
+    Basisklasse für die Logging-Konfiguration für den Server.
+
+    Attributes:
+        LOGGER_NAME (str): Der Name des Loggers.
+        LOG_FORMAT (str): Das Format für die Standard-Logausgabe.
+        LOG_LEVEL (str): Das Log-Level für den Logger.
+        LOG_FILE (str): Der Pfad zur Log-Datei.
+
+    Example:
+        config = LogConfigBase()
+    """
 
     LOGGER_NAME: str = "GreenEcoHubBase"
     LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"

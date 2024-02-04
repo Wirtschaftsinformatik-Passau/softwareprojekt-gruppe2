@@ -19,6 +19,17 @@ logger = logging.getLogger("GreenEcoHub")
 
 
 async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Nutzer die Rolle "Solarteure" hat, andernfalls wird eine HTTPException ausgelöst.
+
+    Args:
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        method (str): Die HTTP-Anfragemethode (z.B. "GET", "POST").
+        endpoint (str): Der Endpunkt der Anfrage.
+
+    Raises:
+        HTTPException: Mit Statuscode 403, wenn der Nutzer keine Rolle "Solarteure" hat.
+    """
     if current_user.rolle != models.Rolle.Solarteure:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -32,6 +43,17 @@ async def check_solarteur_role(current_user: models.Nutzer, method: str, endpoin
 
 
 async def check_solarteur_role_and_berater_role(current_user: models.Nutzer, method: str, endpoint: str):
+    """
+    Überprüft, ob der aktuelle Nutzer die Rolle "Solarteure" oder "Energieberatende" hat, andernfalls wird eine HTTPException ausgelöst.
+
+    Args:
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        method (str): Die HTTP-Anfragemethode (z.B. "GET", "POST").
+        endpoint (str): Der Endpunkt der Anfrage.
+
+    Raises:
+        HTTPException: Mit Statuscode 403, wenn der Nutzer keine Rolle "Solarteure" oder "Energieberatende" hat.
+    """
     if current_user.rolle != models.Rolle.Solarteure and current_user.rolle != models.Rolle.Energieberatende:
         logging_error = LoggingSchema(
             user_id=current_user.user_id,
@@ -50,6 +72,20 @@ async def get_anfragen(
         current_user: models.Nutzer = Depends(oauth.get_current_user),
         db: AsyncSession = Depends(database.get_db_async)
 ):
+    """
+    Ruft Anfragen für Solarteure ab und gibt sie als Liste von PVSolarteuerResponse-Objekten zurück.
+
+    Args:
+        prozess_status (List[types.ProzessStatus], optional): Eine Liste von Prozessstatuswerten. Standardmäßig "AnfrageGestellt".
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        List[schemas.PVSolarteuerResponse]: Eine Liste von PVSolarteuerResponse-Objekten.
+
+    Raises:
+        HTTPException: Mit Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_solarteur_role(current_user, "GET", "/angebote")
     try:
         if (prozess_status[0] == types.ProzessStatus.AnfrageGestellt and
@@ -108,6 +144,20 @@ async def get_anfragen(
 @router.get("/anfragen/{anlage_id}", response_model=schemas.PVSolarteuerResponse)
 async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oauth.get_current_user),
                       db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft eine bestimmte Anfrage für einen Solarteur ab und gibt sie als PVSolarteuerResponse-Objekt zurück.
+
+    Args:
+        anlage_id (int): Die ID der PV-Anlage.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        schemas.PVSolarteuerResponse: Ein PVSolarteuerResponse-Objekt.
+
+    Raises:
+        HTTPException: Mit Statuscode 404, wenn die Anfrage nicht gefunden wurde, oder Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_solarteur_role_and_berater_role(current_user, "GET", f"/angebote/{anlage_id}")
 
     try:
@@ -175,6 +225,20 @@ async def get_anfrage(anlage_id: int, current_user: models.Nutzer = Depends(oaut
 async def create_angebot(angebot_data: schemas.AngebotCreate,
                          current_user: models.Nutzer = Depends(oauth.get_current_user),
                          db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt ein Angebot für eine PV-Anlage und gibt es als AngebotResponse-Objekt zurück.
+
+    Args:
+        angebot_data (schemas.AngebotCreate): Die Daten für das Angebot.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        schemas.AngebotResponse: Ein AngebotResponse-Objekt mit den erstellten Angebotsinformationen.
+
+    Raises:
+        HTTPException: Mit Statuscode 404, wenn die PV-Anlage nicht gefunden wurde, oder Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_solarteur_role(current_user, "POST", "/angebote")
 
     pv_anlage = await db.get(models.PVAnlage, angebot_data.anlage_id)
@@ -298,6 +362,21 @@ async def add_calendar_entry(db: AsyncSession, user_id: int, start: datetime, en
 async def create_installationsplan(anlage_id: int, installationsplan_data: schemas.InstallationsplanCreate,
                                    current_user: models.Nutzer = Depends(oauth.get_current_user),
                                    db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Erstellt einen Installationsplan für eine PV-Anlage und gibt ihn als InstallationsplanResponse-Objekt zurück.
+
+    Args:
+        anlage_id (int): Die ID der PV-Anlage.
+        installationsplan_data (schemas.InstallationsplanCreate): Die Daten für den Installationsplan.
+        current_user (models.Nutzer, optional): Der aktuelle Nutzer. Standardmäßig None.
+        db (AsyncSession, optional): Die Datenbankverbindung. Standardmäßig None.
+
+    Returns:
+        schemas.InstallationsplanResponse: Ein InstallationsplanResponse-Objekt mit den erstellten Installationsplaninformationen.
+
+    Raises:
+        HTTPException: Mit Statuscode 404, wenn die PV-Anlage nicht gefunden wurde, oder Statuscode 500 für eventuelle serverseitige Fehler während des Prozesses.
+    """
     await check_solarteur_role(current_user, "POST", f"/pv_anlagen/installationsplan/{anlage_id}")
 
     pv_anlage = await db.get(models.PVAnlage, anlage_id)
@@ -460,6 +539,19 @@ async def create_rechnung(anlage_id: int, steller_id: int, db: AsyncSession = De
 @router.get("/offene_pv_anlagen", status_code=status.HTTP_200_OK, response_model=list[schemas.PVAnlageResponse])
 async def offene_pv_anlagen_abrufen(current_user: models.Nutzer = Depends(oauth.get_current_user),
                                     db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Ruft offene PV-Anlagen ab, die noch keinem Solarteur zugewiesen sind.
+
+    Args:
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        db (AsyncSession): Die Datenbankverbindung.
+
+    Returns:
+        List[schemas.PVAnlageResponse]: Eine Liste von PV-Anlage-Objekten.
+
+    Raises:
+        HTTPException: Mit Statuscode 500, wenn ein Fehler beim Abrufen der PV-Anlagen auftritt.
+    """
     await check_solarteur_role(current_user, "GET", "/offene_pv_anlagen")
 
     try:
@@ -493,6 +585,22 @@ async def offene_pv_anlagen_abrufen(current_user: models.Nutzer = Depends(oauth.
 async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID der PV-Anlage", gt=0),
                                current_user: models.Nutzer = Depends(oauth.get_current_user),
                                db: AsyncSession = Depends(database.get_db_async)):
+    """
+    Stellt eine Datenanfrage für eine bestimmte PV-Anlage und aktualisiert den Anfragestatus.
+
+    Args:
+        anlage_id (int): Die ID der PV-Anlage.
+        current_user (models.Nutzer): Der aktuelle Nutzer.
+        db (AsyncSession): Die Datenbankverbindung.
+
+    Returns:
+        schemas.DatenanfrageResponse: Eine Antwort mit Informationen zur Datenanfrage.
+
+    Raises:
+        HTTPException: Mit Statuscode 404, wenn die PV-Anlage nicht gefunden wird.
+                      Mit Statuscode 422, wenn die Anlage-ID ungültig ist.
+                      Mit Statuscode 500, wenn ein anderer Fehler auftritt.
+    """
     await check_solarteur_role(current_user, "POST", f"/datenanfrage/{anlage_id}")
 
     if anlage_id <= 0:
@@ -546,27 +654,6 @@ async def datenanfrage_stellen(anlage_id: int = Path(..., description="Die ID de
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                                 detail="Haushaltsdaten existieren bereits oder Anfrage wurde bereits gestellt")
-
-        """
-        elif haushaltsdaten_existieren is None:
-            pv_anlage.prozess_status = models.ProzessStatus.DatenAngefordert
-            haushaltsdaten_existieren.anfragestatus = True
-            await db.commit()
-            await db.refresh(haushaltsdaten_existieren)
-            await db.refresh(pv_anlage)
-            logging_obj = schemas.LoggingSchema(
-                user_id=current_user.user_id,
-                endpoint=f"/datenanfrage/{anlage_id}",
-                method="POST",
-                message="Anfragestatus wurde bearbeitet",
-                success=True
-            )
-            logger.info(logging_obj.dict())
-            return schemas.DatenanfrageResponse(
-                message="Anfragestatus wurde bearbeitet",
-                haushalt_id=pv_anlage.haushalt_id,
-                anfragestatus=haushaltsdaten_existieren.anfragestatus)
-        """
     except SQLAlchemyError as e:
         logging_obj = schemas.LoggingSchema(
             user_id=current_user.user_id,

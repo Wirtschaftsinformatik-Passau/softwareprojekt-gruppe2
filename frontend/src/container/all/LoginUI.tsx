@@ -35,6 +35,7 @@ const LoginUI = () => {
     const [password, setPassword] = React.useState("")
     const [modalisOpen, setModalIsOpen] = React.useState(false);
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
+    const [notActiceModalIsOpen, setNotActiveModalIsOpen] = React.useState(false);
     const [currentUser, setCurrentUser] = React.useState(null); 
     const[loggedIn, setLoggedIn] = React.useState(false);
     const navigate = useNavigate();
@@ -99,6 +100,9 @@ const LoginUI = () => {
         .catch((error) => {
             if ((error.response && error.response.status === 404) || (error.response && error.response.status === 401)){
                 setSuccessModalIsOpen(true)
+            }
+            else if (error.response && error.response.status === 403){
+                setNotActiveModalIsOpen(true)
             }
             else {
                 console.log(error.response.data);
@@ -229,6 +233,7 @@ const LoginUI = () => {
 <LoginDialog open={vergessenOpen} handleClose={handleVergessenClose}/>
 <WrongPasswordModal open={modalisOpen} handleClose={() => setModalIsOpen(false)}/>
 <SuccessModal open={successModalIsOpen} handleClose={() => setSuccessModalIsOpen(false)} text="Password falsch!"/>
+<SuccessModal open={notActiceModalIsOpen} handleClose={() => setNotActiveModalIsOpen(false)} text="Account ist nicht aktiviert!"/>
         </Paper>
         </div>
         </div>

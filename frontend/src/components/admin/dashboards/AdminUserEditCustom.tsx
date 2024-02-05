@@ -28,6 +28,7 @@ interface EditableUser {
     plz: number;
     stadt: string;
     adresse_id?: number;
+    is_active: boolean;
 }
 
 // Utility function for extracting address and user details from an EditableUser object
@@ -38,6 +39,12 @@ const extractAdressAndUser = (user: EditableUser) => {
     return { adresse, userToSave };
 };
 
+const activeMapping = {
+    true: "Ja",
+    false: "Nein"
+};
+
+
 
 const AdminUserEdit = ({}) => {
     const theme = useTheme();
@@ -45,6 +52,8 @@ const AdminUserEdit = ({}) => {
     const [successModalIsOpen, setSuccessModalIsOpen] = React.useState(false);
     const [userID, setUserID] = React.useState("")
     const [failModalIsOpen, setFailModalIsOpen] = React.useState(false);
+    const [activateModalIsOpen, setActivateModalIsOpen] = React.useState(false);
+    const [deactivateModalIsOpen, setDeactivateModalIsOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
     const [editableUser, setEditableUser] = React.useState<EditableUser | null>(null);
     const [initialValues, setInitialValues] = React.useState<EditableUser>({
@@ -59,9 +68,33 @@ const AdminUserEdit = ({}) => {
         rolle: Nutzerrolle.Admin, // Default value or handle dynamically
         email: '',
         adresse_id: 0,
+        is_active: true
     });
     const navigate = useNavigate();
     const { userId } = useParams<{ userId: string }>(); 
+
+    const aktivieren = () => {
+      const token = localStorage.getItem("accessToken");
+      axios.put(addSuffixToBackendURL("admin/activate-user/"+userId), {}, {headers: {Authorization: `Bearer ${token}`}})
+      .then(response => {
+        setActivateModalIsOpen(true)
+      })
+      .catch(error => {
+        console.log(error)
+      });
+    
+    }
+
+    const deaktivieren = () => {
+      const token = localStorage.getItem("accessToken");
+      axios.put(addSuffixToBackendURL("admin/deactivate-user/"+userId), {}, {headers: {Authorization: `Bearer ${token}`}})
+      .then(response => {
+        setDeactivateModalIsOpen(true)
+      })
+      .catch(error => {
+        console.log(error)
+      });
+    }
 
 
     useEffect(() => {
@@ -83,6 +116,7 @@ const AdminUserEdit = ({}) => {
             email: user.email,
             passwort: user.passwort,
             passwortWiederholen: user.passwort,
+            is_active: user.is_active
           })
           setEditableUser(user)
           setIsLoading(false);
@@ -432,6 +466,31 @@ const AdminUserEdit = ({}) => {
                   },
               }}
               />
+               <TextField
+                fullWidth
+                variant="outlined"
+                type="is_active"
+                disabled
+                label="Aktiver Account"
+                
+                value={activeMapping[values.is_active]}
+                name="is_active"
+                InputLabelProps={{
+                  style: { color: `${colors.color1[500]}` }
+              }}
+              sx={{
+                  gridColumn: "span 2",
+                  '& .MuiInputBase-input': { 
+                      color: `${colors.color1[500]} !important`,
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: `${colors.color1[500]} !important`,
+                  },
+                  ".css-p51h6s-MuiInputBase-input-MuiOutlinedInput-input.Mui-disabled": {
+                    "-webkit-text-fill-color": `${colors.color1[500]} !important`,
+                  }
+              }}
+              />
               <TextField
                 fullWidth
                 variant="outlined"
@@ -480,6 +539,7 @@ const AdminUserEdit = ({}) => {
                   },
               }}
               />
+             
             </Box >
             <Box display="flex" justifyContent="space-between" mt="20px">
             <Button type="button" sx={{background: theme.palette.neutral.main, color: theme.palette.background.default}}
@@ -490,13 +550,13 @@ const AdminUserEdit = ({}) => {
               </Button>
               <Button type="button" sx={{background: colors.color5[400], color: theme.palette.background.default}}
             variant="contained"
-            onClick={() => navigate("/admin/editUser")}
+            onClick={deaktivieren}
             >
                 Nutzer deaktivieren
               </Button>
               <Button type="button" sx={{background: colors.color2[400], color: theme.palette.background.default}}
             variant="contained"
-            onClick={() => navigate("/admin/editUser")}
+            onClick={aktivieren}
             >
                 Nutzer aktivieren
               </Button>
@@ -513,6 +573,10 @@ const AdminUserEdit = ({}) => {
     text="Nutzer erfolgreich bearbeitet!" navigationGoal="/admin"/>
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Nutzer ID existiert nicht" />
+    <SuccessModal open={activateModalIsOpen} handleClose={() => setActivateModalIsOpen(false)}
+    text="Nutzer erfolgreich aktiviert" navigationGoal="/admin"/>
+    <SuccessModal open={deactivateModalIsOpen} handleClose={() => setDeactivateModalIsOpen(false)}
+    text="Nutzer erfolgreich deaktiviert" navigationGoal="/admin"/>
     </>
   )
       };
@@ -529,10 +593,11 @@ const AdminUserEdit = ({}) => {
         plz: yup.string().matches(/^\d{5}$/, 'PLZ muss 5 Ziffern lang sein').required('PLZ ist erforderlich'),
         stadt: yup.string().required('Stadt ist erforderlich'),
         geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
-        telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
+        telefon: yup.string().matches(phoneRegExp, 'Telefonummer muss von der Form +49/x sein').required('Telefonnummer ist erforderlich'),
         nutzerrole: yup.string().oneOf([Nutzerrolle.Admin, Nutzerrolle.Energieberatende, Nutzerrolle.Haushalte,
            Nutzerrolle.Netzbetreiber, Nutzerrolle.Solarteure], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
         email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
+        is_active: yup.boolean().required('Aktiver Account ist erforderlich'),
         passwort: yup.string().min(8, 'Das Passwort muss mindestens 8 Zeichen lang sein'),
         passwortWiederholen: yup.string().oneOf([yup.ref('passwort'), null], 'Passwörter müssen übereinstimmen'),
       });

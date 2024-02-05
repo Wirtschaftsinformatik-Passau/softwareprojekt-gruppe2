@@ -298,7 +298,7 @@ const EnergieberatendeAnfragenDetail = ({}) => {
     <SuccessModal open={failModalIsOpen} handleClose={() => setFailModalIsOpen(false)} 
     text="Energiesausweis konnte nicht erstellt werden"/>
     <SuccessModal open={planSuccessModalIsOpen} handleClose={() => setPlanSuccessModalIsOpen(false)}
-    text="Anlage wurde erfolgreich abgenommen" navigationGoal="/antragTableAbgeschlossen"/>
+    text="Anlage wurde erfolgreich abgenommen" navigationGoal="/energieberatende"/>
     <SuccessModal open={planFailModalIsOpen} handleClose={() => setPlanFailModalIsOpen(false)}
     text="Anlage konnte nicht abgenommen werden"/>
     

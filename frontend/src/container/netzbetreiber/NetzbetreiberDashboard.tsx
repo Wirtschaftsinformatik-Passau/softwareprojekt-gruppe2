@@ -36,15 +36,7 @@ import { standardFAQ } from "../../utils/faqs";
 const  NetzbetreiberDashboard = () => {
     const [effect, setEffect] = useState("")
     const [theme, colorMode] = useMode();
-    const faqItems = [
-        {
-            title: "What is GreenEcoHub?",
-            text: "GreenEcoHub is a platform that allows users to track their carbon footprint and compare it to other users. It also allows users to track their progress in reducing their carbon footprint and provides tips on how to reduce it further.",
-        }, {
-            title: "How do I use GreenEcoHub?",
-            text: "To use GreenEcoHub, you must first create an account. Once you have created an account, you can log in and begin tracking your carbon footprint. You can also view your progress and compare it to other users.",
-        }
-    ]
+
     return (
         <ColorModeContext.Provider value={colorMode}>
             <ThemeProvider theme={theme}>
@@ -55,7 +47,6 @@ const  NetzbetreiberDashboard = () => {
                 <Topbar fixed={true} nutzerrolle={"Netzbetreiber"}/>
                 <Routes>
                 <Route path="/" element={<NetzHome/>}/>
-                <Route path="/faq" element={<FAQ items={faqItems}/>}/>
                 <Route path="/tarifCreate" element={<NetzbetreiberTarifCreate/>}/>
                 <Route path="/tarifTable" element={<NetzbetreiberTarifTable/>}/>
                 <Route path="/tarifEdit" element={<NetzbetreiberTarifEditSelect/>}/>

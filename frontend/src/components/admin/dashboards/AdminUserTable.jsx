@@ -80,6 +80,31 @@ const UserTable = () => {
       headerName: "Geburtsdatum",
       flex: 1,
     },
+     {
+      field: "is_active",
+      headerName: "Aktiver Account",
+      flex: 1,
+      renderCell: ({ row: {is_active} }) => {
+        return (
+          <Box
+          width="100%"
+          p="5px"
+          display="flex"
+          justifyContent="center"
+          backgroundColor={
+            is_active
+              ? colors.color1[400]
+              : colors.color5[500]
+          }
+          borderRadius="4px"
+        >
+          <Typography color={colors.grey[100]}>
+            {is_active ? "Ja" : "Nein"}
+          </Typography>
+        </Box>
+        );
+      }
+     },
     {
       field: "rolle",
       headerName: "Nutzerrolle",

@@ -1078,7 +1078,6 @@ async def get_angebot(anlage_id: int,
         return [{
             "angebot_id": angebot.angebot_id,
             "kosten": angebot.kosten,
-            "angebotsstatus": angebot.angebotsstatus,
             "modulanordnung": anlage.modulanordnung,   
             "modultyp": anlage.modultyp,
             "kapazitaet": anlage.kapazitaet,

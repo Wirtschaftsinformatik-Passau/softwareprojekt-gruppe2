@@ -41,6 +41,13 @@ async def login(user_creds: schemas.NutzerLogin, db: AsyncSession = Depends(data
                                                 message="User not found", success=False)
             logger.error(logging_obj.dict())
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden")
+
+        if not db_user.is_active:
+            logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/auth/login", method="POST",
+                                                message="User not active", success=False)
+            logger.error(logging_obj.dict())
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Nutzer ist nicht aktiviert")
+
         if not hashing.Hashing.verify_password(user_creds.passwort, db_user.passwort):
             logging_obj = schemas.LoggingSchema(user_id=db_user.user_id, endpoint="/auth/login", method="POST",
                                                 message="Wrong password", success=False)

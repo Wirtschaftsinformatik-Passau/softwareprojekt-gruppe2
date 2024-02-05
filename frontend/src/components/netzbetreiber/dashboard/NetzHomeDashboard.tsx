@@ -99,7 +99,7 @@ const NetzHome = () => {
     return (
         <Box m="20px">
             <Header title="Netzbetreiber Dashboard" subtitle="Für Details die Reiter in der Sidebar auswählen"/>
-            <Box display="flex" justifyContent="space-between" alignItems="center" >
+            <Box display="flex" justifyContent="end" alignItems="center" >
             <Button
             onClick={() => geocodieren()}
             sx={{
@@ -117,22 +117,7 @@ const NetzHome = () => {
             <PublicIcon sx={{ mr: "10px" }} />
             Adressen geocodieren
           </Button>
-          <Button
-            sx={{
-              backgroundColor: colors.color1[400],
-              color: theme.palette.background.default,
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "10px 20px",
-              ":hover" : {
-                backgroundColor: colors.grey[500],
-              
-              }
-            }}
-          >
-            <DownloadOutlinedIcon sx={{ mr: "10px" }} />
-            Download Reports
-          </Button>
+          
         </Box>       
         <Box
         display="grid"

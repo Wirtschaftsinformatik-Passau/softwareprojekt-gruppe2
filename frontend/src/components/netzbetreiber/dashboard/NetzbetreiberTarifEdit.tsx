@@ -284,7 +284,7 @@ return (
               
             </Box>
             <Box display="flex" justifyContent="space-evenly" mt="20px" gridColumn= "span 8">
-            <Button  onClick={() => navigate("/")} color="neutral" sx={{color: theme.palette.background.default}} variant="contained">
+            <Button  onClick={() => navigate(-1)} color="neutral" sx={{color: theme.palette.background.default}} variant="contained">
                 Abbrechen
               </Button>
               <Button type="submit" sx={{background: colors.color1[400],  color: theme.palette.background.default}} variant="contained">

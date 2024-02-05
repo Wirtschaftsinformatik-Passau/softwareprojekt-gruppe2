@@ -14,7 +14,7 @@ import axios from "axios";
 import { Iadresse, Adresse } from "../../entitities/adress";
 import { addSuffixToBackendURL } from "../../utils/networking_utils";
 
-const Form = () => {
+const RegistrationUI = () => {
   const navigate = useNavigate();
   const isNonMobile = useMediaQuery("(min-width:600px)");
   const theme = useTheme();
@@ -433,7 +433,7 @@ const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
     plz: yup.string().matches(/^\d{5}$/, 'PLZ muss 5 Ziffern lang sein').required('PLZ ist erforderlich'),
     stadt: yup.string().required('Stadt ist erforderlich'),
     geburtstag: yup.date().typeError("Kein valides Datum").required('Geburtstag ist erforderlich'),
-    telefon: yup.string().matches(phoneRegExp, 'Telefonnummer ist nicht gültig').required('Telefonnummer ist erforderlich'),
+    telefon: yup.string().matches(phoneRegExp, 'Telefonnummer muss von der Form +49/x sein').required('Telefonnummer ist erforderlich'),
     nutzerrole: yup.string().oneOf([Nutzerrolle.Energieberatende, 
       Nutzerrolle.Solarteure, Nutzerrolle.Haushalte], 'Ungültige Nutzerrolle').required('Nutzerrolle ist erforderlich'),
     email: yup.string().email('E-Mail ist ungültig').required('E-Mail ist erforderlich'),
@@ -456,4 +456,4 @@ const phoneRegExp = /^\+\d{1,4}\/\d{1,}$/;
     passwortWiederholen: '',
   };
 
-export default Form;
+export default RegistrationUI;

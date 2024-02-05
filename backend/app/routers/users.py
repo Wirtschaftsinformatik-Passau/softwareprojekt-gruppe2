@@ -322,6 +322,7 @@ async def get_user(id: int, db: AsyncSession = Depends(database.get_db_async)):
         "stadt": adresse.stadt,
         "hausnr": adresse.hausnummer,
         "plz": adresse.plz,
+        "is_active": user.is_active
 
     }
     return user_out
@@ -533,6 +534,7 @@ async def get_users(skip: int = 0, limit: int | None = None,
             "stadt": adresse.stadt,
             "hausnr": adresse.hausnummer,
             "plz": adresse.plz,
+            "is_active": user.is_active
 
         } for user, adresse in user_adresse_pairs]
         return users_out

@@ -8,7 +8,7 @@ import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import SolarPowerIcon from '@mui/icons-material/SolarPower';
 import TableViewIcon from '@mui/icons-material/TableView';
 import {Grow} from "@mui/material";
-import ConnectWithoutContactIcon from '@mui/icons-material/ConnectWithoutContact';
+import DataSaverOnIcon from '@mui/icons-material/DataSaverOn';
 import {CircularProgress} from "@mui/material";
 import Header from "../../utility/Header";
 import StatBox from "../../utility/visualization/StatBox";
@@ -180,10 +180,10 @@ const HaushaltHome = () => {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        onClick={() => navigate("/haushalte/einspeisungsanfrage")}>
+        onClick={() => navigate("/haushalte/rechnungenOverview")}>
         
             <StatBox
-            title={"Rechung"}
+            title={"Rechnung"}
             subtitle="Klicken um Rechnung zu erhalten"
             progress="1"
             increase=""
@@ -202,15 +202,15 @@ const HaushaltHome = () => {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        onClick={() => navigate("/haushalte/energieausweisOverview")}>
+        onClick={() => navigate("/haushalte/smartMeterOverview")}>
         
             <StatBox
-            title={"Energieberatende"}
-            subtitle="Klicken um Kontakt aufzunehmen"
+            title={"Smart Meter Übersicht"}
+            subtitle="Klicken zum Navigieren"
             progress="1"
             increase=""
             icon={
-              <AttachMoneyIcon
+              <DataSaverOnIcon
                 sx={{ color: theme.palette.background.default, fontSize: "26px"}}
               />
             }

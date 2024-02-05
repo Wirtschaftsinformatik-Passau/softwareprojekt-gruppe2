@@ -8,4 +8,5 @@ backend/tose_backend/
 frontend/.env
 backend/vars/.env
 backend/vars/.env.prod
+frontend/.env
 .idea  

@@ -18,7 +18,7 @@ interface SolarteurePlanErstellenProps {
     navigateFN: NavigateFunction
 }
 
-const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
+const SolarteurAngebotErstellen = (props: SolarteurePlanErstellenProps) => {
     const theme = useTheme();
     const colors = tokens(theme.palette.mode);
 
@@ -144,7 +144,7 @@ const AngebotErstellen = (props: SolarteurePlanErstellenProps) => {
         }
 
 
-export default AngebotErstellen;
+export default SolarteurAngebotErstellen;
 
 const angebotSchema = yup.object({
     modultyp: yup.string().required("Modultyp ist erforderlich"),

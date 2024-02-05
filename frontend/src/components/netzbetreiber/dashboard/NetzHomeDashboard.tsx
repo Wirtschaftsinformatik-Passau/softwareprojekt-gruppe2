@@ -130,7 +130,7 @@ const NetzHome = () => {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        onClick={() => navigate("/admin/roleOverview")}>
+        onClick={() => navigate("/netzbetreiber/tarifTable")}>
         
             <StatBox
             title={Number(tarifData.length)}
@@ -151,7 +151,7 @@ const NetzHome = () => {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        onClick={() => navigate("/admin/roleOverview")}>
+        onClick={() => navigate("/netzbetreiber/priceTable")}>
         
             <StatBox
             title={Number(preisData.length)}
@@ -173,7 +173,7 @@ const NetzHome = () => {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        onClick={() => navigate("/admin/roleOverview")}>
+        onClick={() => navigate("/netzbetreiber/haushalteOverview")}>
         
             <StatBox
             title={Number(haushalte.length)}

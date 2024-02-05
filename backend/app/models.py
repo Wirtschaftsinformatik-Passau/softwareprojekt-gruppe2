@@ -265,3 +265,4 @@ class ChatMessage(Base):
     empfaenger_id = Column(Integer, ForeignKey('nutzer.user_id' if settings.OS == 'Linux' else "Nutzer.user_id"))
     nachricht_inhalt = Column(String, nullable=False)
     timestamp = Column(TIMESTAMP, server_default=func.now())
+

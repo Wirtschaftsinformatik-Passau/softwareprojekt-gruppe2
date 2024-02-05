@@ -1075,7 +1075,7 @@ async def activate_user(user_id: int, db: AsyncSession = Depends(database.get_db
         await db.commit()
         return {"message": f"User with ID {user_id} has been activated."}
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden.")
 
 
 @router.put("/deactivate-user/{user_id}", status_code=status.HTTP_200_OK)
@@ -1099,4 +1099,4 @@ async def deactivate_user(user_id: int, db: AsyncSession = Depends(database.get_
         await db.commit()
         return {"message": f"User with ID {user_id} has been deactivated."}
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden.")

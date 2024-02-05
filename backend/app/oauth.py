@@ -86,7 +86,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
 
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="User not found or account is explicitly deactivated",
+                            detail="Nutzer nicht gefunden oder bereits deaktiviert",
                             headers={"WWW-Authenticate": "Bearer"})
 
     return user

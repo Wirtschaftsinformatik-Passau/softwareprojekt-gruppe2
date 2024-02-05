@@ -37,6 +37,7 @@ class Nutzer(Base):
                                      create_type=False), nullable=False)
     telefonnummer = Column(String)
     adresse_id = Column(Integer, ForeignKey(f'adresse.adresse_id' if settings.OS == 'Linux' else "Adresse.adresse_id"))
+    is_active = Column(Boolean, default=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 
@@ -120,7 +121,6 @@ class Angebot(Base):
     angebot_id = Column(Integer, primary_key=True, index=True)
     anlage_id = Column(Integer, ForeignKey("pvanlage.anlage_id" if settings.OS == 'Linux' else "PVAnlage.anlage_id"))
     kosten = Column(Float)
-    angebotsstatus = Column(Boolean)
     created_at = Column(TIMESTAMP, server_default=func.now())
 
 

@@ -208,13 +208,7 @@ const HaushalteSidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-             <Item
-              title="Energieausweis"
-              to="/energieausweisOverview"
-              icon={<FilePresentIcon/>}
-              selected={selected}
-              setSelected={setSelected}
-            />
+           
           <Typography
               variant="h6"
               color={colors.white[300]}

@@ -48,7 +48,7 @@ const  HaushaltDashboard = () => {
         <div className="flex h-100" style={{marginTop: "64px"}}>
                 <HaushalteSidebar/>
                 <div className="flex-1 overflow-y-auto">
-                <Topbar fixed={true} nutzerrolle={"Solarteure"}/>
+                <Topbar fixed={true} nutzerrolle={"Haushalte"}/>
                 <Routes>
                     <Route path="/tarifTable" element={<HaushalteTarifTable/>}/>
                     <Route path="/" element={<HaushalteHome/>}/>
@@ -64,7 +64,7 @@ const  HaushaltDashboard = () => {
                     <Route path="/dataOverview" element={<HaushalteDataOverview/>}/>
                     <Route path="/vertragChange/:vertragID" element={<HaushalteVertragWechselnDetail/>}/>
                     <Route path="/vertragChangeOverview/:vertragID" element={<HaushalteVertragWechselnOverview/>}/>
-                    <Route path="/energieausweisOverview" element={<HaushalteEnergieAusweisOverview/>}/>
+
                     <Route path="/rechnungenOverview" element={<HaushalteRechnungenOverview/>}/>
                     <Route path="/rechnungenDetail/:rechnungID" element={<HaushalteRechnungenDetail/>}/>
                     <Route path="/calendar" element={<Calendar/>}/>

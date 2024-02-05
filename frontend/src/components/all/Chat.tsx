@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEffect } from 'react';
-import { useTheme } from '@mui/material';
+import { colors, useTheme } from '@mui/material';
+import { Box } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Autocomplete from "@mui/material/Autocomplete";
@@ -23,9 +24,16 @@ import SentimentSatisfiedAltIcon from '@mui/icons-material/SentimentSatisfiedAlt
 import { addSuffixToBackendURL } from '../../utils/networking_utils';
 import { formatTime } from '../../utils/dateUtils';
 import { tokens } from '../../utils/theme';
-import { reduceUsers, ExtendedUser, SearchBarUser, 
-    ChatHistory, getUniqueUsers, filterSearchBarUsers,
-    setAndRequestConversationHistory } from '../../utils/chatUtils';
+import { 
+    reduceUsers, 
+    ExtendedUser, 
+    SearchBarUser, 
+    ChatHistory, 
+    getUniqueUsers, 
+    filterSearchBarUsers,
+    setAndRequestConversationHistory 
+} 
+    from '../../utils/chatUtils';
 
 
 interface SideUserProps {
@@ -36,7 +44,16 @@ interface SideUserProps {
 }
 
 const SideUser: React.FC<SideUserProps> = ({user, current, selectedUser, activeSetter = null}) => {
+    const theme = useTheme();
+    const colors = tokens(theme.palette.mode);
+
     return(
+        <Box sx={{
+            backgroundColor: selectedUser && selectedUser.user_id === user.user_id ? colors.color1[400] : "white",
+            borderRadius: "10px",
+            margin: "5px 0",
+        
+        }}>
   <ListItem button key={user.user_id}
         onClick={() =>{
             if (activeSetter)
@@ -45,15 +62,14 @@ const SideUser: React.FC<SideUserProps> = ({user, current, selectedUser, activeS
         
         selected={selectedUser && selectedUser.user_id === user.user_id}
         
-  >
+  >     
         <ListItemIcon>
-            <Avatar alt="user"
-            >
                 {current ? <SentimentSatisfiedAltIcon/> : <PersonIcon/>}
-            </Avatar>
         </ListItemIcon>
+    
         <ListItemText primary={user.label}>user.label</ListItemText>
     </ListItem>
+    </Box>
     )
 }
 
@@ -95,7 +111,6 @@ const Messages: React.FC<MessagesProps> = ({classes, current_user, selectedUser,
                 console.log(err.response.data)
             })
     };
-
     return(
     <Grid item xs={9}>
                 <List className={classes.messageArea}>

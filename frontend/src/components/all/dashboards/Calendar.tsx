@@ -122,7 +122,7 @@ const Calendar = () => {
 
   return (
     <Box m="20px">
-      <Header title="Kalendar" subtitle="Kalendarübersicht über aufkommende Events"/>
+      <Header title="Kalender" subtitle="Kalendarübersicht über aufkommende Events"/>
       <Box display={"flex"} justifyContent={"space-evenly"} mb={"15px"}>
                 <Button variant="contained" color="primary" onClick={() => {addEvent()}}
                 sx = {{

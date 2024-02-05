@@ -18,11 +18,6 @@ const HelpModal: React.FC<HelpModalProps> = ({modalCloserState, nutzerrolle=null
         <div 
         onMouseLeave={() => modalCloserState(false)}
         className={`fixed top-16 md:top-18 right-16 bg-white px-6 py-4 rounded-xl grid grid-rows-2 gap-4 text-color1`}>
-            <button>
-                <h3 className={itemStyle}>
-                     Hilfe
-                </h3>
-                </button>
                 {nutzerrolle != undefined &&
                 <button>
                 <h3 className={itemStyle}
@@ -34,8 +29,8 @@ const HelpModal: React.FC<HelpModalProps> = ({modalCloserState, nutzerrolle=null
                 </button>
 }
                 <button>
-                <h3 className={itemStyle}>
-                    Kontakt
+                <h3 className={itemStyle} onClick={() => navigate("/impressum")}>
+                    Impressum
                 </h3>
                 </button>
            </div>

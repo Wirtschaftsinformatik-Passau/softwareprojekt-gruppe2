@@ -19,6 +19,7 @@ import { addSuffixToBackendURL, setStateofResponse } from '../../utils/networkin
 import LoginDialog from "../../components/all/login/LoginDialog";
 import WrongPasswordModal from "../../components/all/login/WrongPasswordModal";
 import SuccessModal from "../../components/utility/SuccessModal";
+import logo from "../../assets/logo_large.png"
 
 const LoginSchema = yup.object().shape({
     email: yup.string().email("Invalid email").required("Required"),
@@ -129,7 +130,7 @@ const LoginUI = () => {
                                 background: alpha('#f5f7fa', 0.8), 
                                 borderRadius: '15px', 
                             }}>
-        <Header title="GreenEcoHub" subtitle="Bitte Zugangsdaten eingeben" />
+        <Header title={logo} subtitle="Bitte Zugangsdaten eingeben" img={true}/>
         <Formik
     onSubmit={checkLogin}
     initialValues={{

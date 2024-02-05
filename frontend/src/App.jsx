@@ -8,6 +8,7 @@ import NetzbetreiberDashboard from "./container/netzbetreiber/NetzbetreiberDashb
 import HaushaltDashboard from "./container/haushalte/HaushaltDashboard.tsx";
 import SolarteureDashboard from "./container/solarteure/SolarteureDashboard.tsx";
 import EnergieberatendeDashboard from "./container/energieberatende/EnergieberatendeDashboard.tsx";
+import ImpressumPage from "./container/all/Impressum.tsx";
 import LoginUI from "./container/all/LoginUI.tsx"
 import RegistrationUI from "./container/all/RegistrationUI.tsx";
 import Chat from "./components/all/Chat.tsx";
@@ -54,7 +55,7 @@ const App = () => {
             <Route path="/energieberatende/*" element={<EnergieberatendeDashboard/>}/>
             <Route path="/profile"  element={<Profile/>}/>
             <Route path="/reset-password/:token" element={<PasswordReset/>}/>
-            <Route path="/chat" element={<Chat/>}/>
+            <Route path="/impressum" element={<ImpressumPage/>}/>
             <Route path="*" element={<LoginUI isAlreadyLoggedIn={isLoggedIn}/>}/>
         </Routes>
         </ThemeProvider>

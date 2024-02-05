@@ -83,5 +83,5 @@ docker-clean:
 	sudo docker system prune
 
 # get ip address of the database container
-get-ip:
+get-ip-postgres:
 	sudo docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' postgres_tose_backend

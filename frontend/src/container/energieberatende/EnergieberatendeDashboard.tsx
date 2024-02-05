@@ -29,7 +29,7 @@ const  EnergieberatendeDashboard = () => {
         <div className="flex h-100" style={{marginTop: "64px"}}>
                 <EnergieSidebar/>
                 <div className="flex-1 overflow-y-auto">
-                <Topbar fixed={true} nutzerrolle={"Energieberatende"}/>
+                <Topbar fixed={true} nutzerrolle={"Energieberantende"}/>
                 <Routes>
                 <Route path="/" element={<EnergieHome/>}/>
                 <Route path="/antragTable/:anlageID" element={<EnergieberatendeAnfragenDetail/>}/>

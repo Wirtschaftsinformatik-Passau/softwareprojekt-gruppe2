@@ -488,6 +488,18 @@ const AdminUserEdit = ({}) => {
             >
                 Abbrechen
               </Button>
+              <Button type="button" sx={{background: colors.color5[400], color: theme.palette.background.default}}
+            variant="contained"
+            onClick={() => navigate("/admin/editUser")}
+            >
+                Nutzer deaktivieren
+              </Button>
+              <Button type="button" sx={{background: colors.color2[400], color: theme.palette.background.default}}
+            variant="contained"
+            onClick={() => navigate("/admin/editUser")}
+            >
+                Nutzer aktivieren
+              </Button>
               <Button type="submit" sx={{background: colors.color1[400], color: theme.palette.background.default}} variant="contained">
                 Nutzer bearbeiten
               </Button>

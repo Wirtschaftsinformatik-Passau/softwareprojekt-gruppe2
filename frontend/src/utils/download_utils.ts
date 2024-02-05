@@ -16,6 +16,7 @@ const defaultUrls: ReportURL[] = [
 
 export const getAllReports = async (urls: ReportURL[] = defaultUrls) => {
     const accessToken = localStorage.getItem("accessToken");
+    const today = new Date().toISOString().split('T')[0];
 
     for (const { endpoint, filename } of urls) {
         const url = addSuffixToBackendURL(endpoint);
@@ -38,7 +39,7 @@ export const getAllReports = async (urls: ReportURL[] = defaultUrls) => {
             // Create a temporary link element and download the file
             const link = document.createElement('a');
             link.href = fileURL;
-            link.setAttribute('download', filename);
+            link.setAttribute('download', `${today}_${filename}`);
             document.body.appendChild(link);
             link.click();
 
@@ -69,3 +70,4 @@ export const convertToCSV = (data: Array<Object>) => {
 
     return csvRows.join('\n');
 };
+

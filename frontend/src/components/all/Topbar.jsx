@@ -15,6 +15,9 @@ import SearchIcon from "@mui/icons-material/Search";
 import useMediaQuery from "@mui/material/useMediaQuery/useMediaQuery";
 import {searchBarItems} from "../../entitities/utils";
 import HelpModal from "../utility/HelpModal";
+import { navigateToHome } from "../../utils/navigateUtils.js";
+
+import logo from "../../assets/logo_large.png"
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -65,14 +68,10 @@ const Topbar = ({fixed, nutzerrolle, search=true}) => {
              } :  {backgroundColor: colors.color1[400]}}
         >
             <Box display="flex" alignItems="center" gap={isNonMobile? "10%" : "2%"}>
-                <Box>
-                    <Typography variant="h3"
-                                sx={{
-                                    color: theme.palette.neutral.background,
-                                    fontWeight: "bold",
-                                }}>
-                        GreenEcoHub
-                    </Typography>
+                <Box onClick={() => navigateToHome(nutzerrolle, navigate)}
+                sx={{cursor:"pointer"}}>
+                    <img src={logo} alt="GreenEcoHub Logo" style={{width: "250px", height: "50px"}}/>
+                   
                 </Box>
                 <Box
                     display="flex"

@@ -19,20 +19,12 @@ import Calendar from "../../components/all/dashboards/Calendar";
 import AdminUserEditSelect from "../../components/admin/dashboards/AdminUserEditSelect";
 import AdminUserEditCustom from "../../components/admin/dashboards/AdminUserEditCustom";
 import Chat from "../../components/all/Chat";
+import { standardFAQ } from "../../utils/faqs";
 
 
 const  AdminDashboard = () => {
     const [effect, setEffect] = useState("")
     const [theme, colorMode] = useMode();
-    const faqItems = [
-        {
-            title: "What is GreenEcoHub?",
-            text: "GreenEcoHub is a platform that allows users to track their carbon footprint and compare it to other users. It also allows users to track their progress in reducing their carbon footprint and provides tips on how to reduce it further.",
-        }, {
-            title: "How do I use GreenEcoHub?",
-            text: "To use GreenEcoHub, you must first create an account. Once you have created an account, you can log in and begin tracking your carbon footprint. You can also view your progress and compare it to other users.",
-        }
-    ]
 
     
 
@@ -46,7 +38,7 @@ const  AdminDashboard = () => {
                 <Topbar fixed={true} nutzerrolle={"Admin"}/>
                 <Routes>
                 <Route path="/" element={<AdminHomeDashboard/>}/>
-                <Route path="/faq" element={<FAQ items={faqItems}/>}/>
+                <Route path="/faq" element={<FAQ items={standardFAQ}/>}/>
                 <Route path="/chat" element={<Chat/>}/>
                 <Route path="/userCreation" element={<UserCreation/>}/>
                 <Route path="/userTable" element={<AdminUserTable/>}/>

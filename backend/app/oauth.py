@@ -2,12 +2,12 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from fastapi import Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app import schemas, models, database
 from app.config import settings
-
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -75,11 +75,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         models.Nutzer: Das Benutzermodell des aktuellen Benutzers.
     """
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                          detail=f"Could not validate credentials",
+                                          detail="Could not validate credentials",
                                           headers={"WWW-Authenticate": "Bearer"})
 
-    token = verify_access_token(token, credentials_exception)
-    stmt = select(models.Nutzer).where(models.Nutzer.user_id == token.id)
+    token_data = verify_access_token(token, credentials_exception)
+    stmt = (select(models.Nutzer).where(models.Nutzer.user_id == token_data.id)
+            .where(or_(models.Nutzer.is_active == True, models.Nutzer.is_active.is_(None))))
     result = await db.execute(stmt)
     user = result.scalars().first()
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Nutzer nicht gefunden oder bereits deaktiviert",
+                            headers={"WWW-Authenticate": "Bearer"})
+
     return user

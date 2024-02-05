@@ -17,7 +17,6 @@ import csv
 import io
 from fastapi.responses import StreamingResponse
 
-
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 dictConfig(LogConfig().dict())
@@ -810,7 +809,7 @@ async def delete_kalendereintrag(eintrag_id: int, db: AsyncSession = Depends(dat
 
 @router.get("/download_reports_dashboard", status_code=status.HTTP_200_OK)
 async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_async),
-                                            current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                                     current_user: models.Nutzer = Depends(oauth.get_current_user)):
     """
     Ladet einen Dashboard-Bericht herunter, der verschiedene Metriken zusammenfasst, darunter die Gesamtzahl der Nutzer,
     Backend-Aufrufe, neue Energie- und PV-Anfragen sowie die Nutzerzahlen nach Rolle.
@@ -830,7 +829,7 @@ async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_
     try:
         # Gesamtanzahl Nutzer
         total_users = await db.execute(select(func.count(models.Nutzer.user_id)))
-        
+
         # Anzahl Backend Aufrufe 
         backend_calls = 0
         with open("logs/server.log", "r") as file:
@@ -839,15 +838,21 @@ async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_
                 if log_entry.get("level") == "INFO":
                     backend_calls += 1
         # Neue Kontaktanfragen für Energieausweise und PVAnlagen
-        new_energy_requests = await db.execute(select(func.count(models.Energieausweise.energieausweis_id)).where(models.Energieausweise.ausweis_status == "AnfrageGestellt"))
-        new_pv_requests = await db.execute(select(func.count(models.PVAnlage.anlage_id)).where(models.PVAnlage.prozess_status == "AnfrageGestellt"))
+        new_energy_requests = await db.execute(select(func.count(models.Energieausweise.energieausweis_id)).where(
+            models.Energieausweise.ausweis_status == "AnfrageGestellt"))
+        new_pv_requests = await db.execute(
+            select(func.count(models.PVAnlage.anlage_id)).where(models.PVAnlage.prozess_status == "AnfrageGestellt"))
 
         # Anzahl der Nutzer nach Rollen
         admin_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Admin"))
-        solarteure_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Solarteure"))
-        energieberatende_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Energieberatende"))
-        netzbetreiber_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Netzbetreiber"))
-        haushalte_count = await db.execute(select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Haushalte"))
+        solarteure_count = await db.execute(
+            select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Solarteure"))
+        energieberatende_count = await db.execute(
+            select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Energieberatende"))
+        netzbetreiber_count = await db.execute(
+            select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Netzbetreiber"))
+        haushalte_count = await db.execute(
+            select(func.count(models.Nutzer.user_id)).where(models.Nutzer.rolle == "Haushalte"))
 
         # Erstellen der CSV-Datei
         output = io.StringIO()
@@ -859,7 +864,7 @@ async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_
 
         # Schreiben der Daten
         writer.writerow(["Gesamtanzahl Nutzer", total_users.scalar()])
-        writer.writerow(["Backend Aufrufe", backend_calls])  
+        writer.writerow(["Backend Aufrufe", backend_calls])
         writer.writerow(["Neue Energieanfragen", new_energy_requests.scalar()])
         writer.writerow(["Neue PV Anfragen", new_pv_requests.scalar()])
         writer.writerow(["Anzahl Admins", admin_count.scalar()])
@@ -869,17 +874,18 @@ async def download_reports_dashboard(db: AsyncSession = Depends(database.get_db_
         writer.writerow(["Anzahl Haushalte", haushalte_count.scalar()])
 
         output.seek(0)  # Zurück zum Anfang der Datei
-        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=report.csv"})
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv",
+                                 headers={"Content-Disposition": "attachment; filename=report.csv"})
 
     except Exception as e:
         logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=logging_error)
-    
+
 
 @router.get("/download_reports_vertrag", status_code=status.HTTP_200_OK)
 async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_async),
-                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                                   current_user: models.Nutzer = Depends(oauth.get_current_user)):
     """
     Ladet einen Bericht über alle Verträge im CSV-Format herunter.
 
@@ -904,7 +910,8 @@ async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_as
         writer = csv.writer(output)
 
         # Schreiben der Kopfzeilen entsprechend der Tabelle Vertrag
-        header = ["vertrag_id", "user_id", "tarif_id", "beginn_datum", "end_datum", "netzbetreiber_id", "jahresabschlag", "vertragstatus"]
+        header = ["vertrag_id", "user_id", "tarif_id", "beginn_datum", "end_datum", "netzbetreiber_id",
+                  "jahresabschlag", "vertragstatus"]
         writer.writerow(header)
 
         # Schreiben der Daten aus der Vertrag-Tabelle
@@ -917,11 +924,12 @@ async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_as
                 vertrag.end_datum.isoformat() if vertrag.end_datum else None,
                 vertrag.netzbetreiber_id,
                 vertrag.jahresabschlag,
-                vertrag.vertragstatus.value  
+                vertrag.vertragstatus.value
             ])
 
         output.seek(0)  # Zurück zum Anfang der Datei
-        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=vertrag_report.csv"})
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv",
+                                 headers={"Content-Disposition": "attachment; filename=vertrag_report.csv"})
 
     except Exception as e:
         logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
@@ -931,7 +939,7 @@ async def download_reports_vertrag(db: AsyncSession = Depends(database.get_db_as
 
 @router.get("/download_reports_rechnungen", status_code=status.HTTP_200_OK)
 async def download_reports_rechnung(db: AsyncSession = Depends(database.get_db_async),
-                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     """
     Ladet einen Bericht mit allen Rechnungen im CSV-Format herunter.
 
@@ -978,17 +986,18 @@ async def download_reports_rechnung(db: AsyncSession = Depends(database.get_db_a
             ])
 
         output.seek(0)  # Zurück zum Anfang der Datei
-        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=rechnungen_report.csv"})
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv",
+                                 headers={"Content-Disposition": "attachment; filename=rechnungen_report.csv"})
 
     except Exception as e:
         logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=logging_error)
-    
+
 
 @router.get("/download_reports_energieausweise", status_code=status.HTTP_200_OK)
 async def download_reports_eausweis(db: AsyncSession = Depends(database.get_db_async),
-                           current_user: models.Nutzer = Depends(oauth.get_current_user)):
+                                    current_user: models.Nutzer = Depends(oauth.get_current_user)):
     """
     Ladet einen Bericht über alle Energieausweise im CSV-Format herunter.
 
@@ -1004,7 +1013,7 @@ async def download_reports_eausweis(db: AsyncSession = Depends(database.get_db_a
         HTTPException: Wenn während der Berichtserstellung ein interner Serverfehler auftritt.
     """
     await check_admin_role(current_user, "GET", "/download_reports_energieausweise")
-    
+
     try:
         # Wählen Sie alle Energieausweise aus, wenn der Nutzer Admin ist
         energieausweise = await db.execute(select(models.Energieausweise))
@@ -1036,9 +1045,58 @@ async def download_reports_eausweis(db: AsyncSession = Depends(database.get_db_a
             ])
 
         output.seek(0)  # Zurück zum Anfang der Datei
-        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=energieausweise_report.csv"})
+        return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv",
+                                 headers={"Content-Disposition": "attachment; filename=energieausweise_report.csv"})
 
     except Exception as e:
         logging_error = {"message": f"Serverfehler: {str(e)}", "trace": traceback.format_exc()}
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=logging_error)
+
+
+@router.put("/activate-user/{user_id}", status_code=status.HTTP_200_OK)
+async def activate_user(user_id: int, db: AsyncSession = Depends(database.get_db_async),
+                        current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Aktiviert ein Benutzerkonto.
+
+    Args:
+        user_id (int): Die ID des zu aktivierenden Benutzerkontos.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aus dem aktuellen Anfragekontext erhaltene Benutzerobjekt.
+
+    Returns:
+        dict: Eine Nachricht, die den Erfolg der Operation bestätigt.
+    """
+    await check_admin_role(current_user, "PUT", "/activate-user")
+    user_to_activate = await db.get(models.Nutzer, user_id)
+    if user_to_activate:
+        user_to_activate.is_active = True
+        await db.commit()
+        return {"message": f"User with ID {user_id} has been activated."}
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden.")
+
+
+@router.put("/deactivate-user/{user_id}", status_code=status.HTTP_200_OK)
+async def deactivate_user(user_id: int, db: AsyncSession = Depends(database.get_db_async),
+                          current_user: models.Nutzer = Depends(oauth.get_current_user)):
+    """
+    Deaktiviert ein Benutzerkonto.
+
+    Args:
+        user_id (int): Die ID des zu deaktivierenden Benutzerkontos.
+        db (AsyncSession): Die Datenbanksitzung.
+        current_user (models.Nutzer): Das aus dem aktuellen Anfragekontext erhaltene Benutzerobjekt.
+
+    Returns:
+        dict: Eine Nachricht, die den Erfolg der Operation bestätigt.
+    """
+    await check_admin_role(current_user, "PUT", "/deactivate-user")
+    user_to_deactivate = await db.get(models.Nutzer, user_id)
+    if user_to_deactivate:
+        user_to_deactivate.is_active = False
+        await db.commit()
+        return {"message": f"User with ID {user_id} has been deactivated."}
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nutzer nicht gefunden.")

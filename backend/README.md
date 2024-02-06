@@ -14,19 +14,42 @@ backend/
 │ ├── env.py 
 │ ├── ...
 │
-├── app/ # Source code folder
-│ ├── main.py # Main application file
-│ ├── routes/ # Routes of application file
-│ └── ...
+├── app/                        # Application source files
+│   ├── __init__.py
+│   ├── config.py               # Application configuration settings
+│   ├── database.py             # Database connection and session management
+│   ├── email_sender.py         # Email sending functionality
+│   ├── geo_utils.py            # Geolocation utilities
+│   ├── hashing.py              # Password hashing utilities
+│   ├── logger.py               # Logging configuration
+│   ├── main.py                 # FastAPI application entry point
+│   ├── models.py               # SQLAlchemy models
+│   ├── oauth.py                # OAuth2 authentication and authorization
+│   ├── routers/                # Application routes
+│   │   ├── admin.py
+│   │   ├── auth.py
+│   │   ├── energieberatende.py
+│   │   ├── haushalte.py
+│   │   ├── netzbetreiber.py
+│   │   ├── solarteure.py
+│   │   └── userrs.py
+│   ├── schemas.py              # Pydantic models for request and response schemas
+│   └── types.py                # Enumerations and custom type definitions
 │ 
 ├── vars/ # Environment variables folder
-│ ├── .env # Environment variables file
+│   ├── .env                    # Development environment variables
+│   └── .env.prod               # Production environment variables
 │
-└── reqs.txt # Requirements file
-└── alembic.ini # Alembic configuration file (Here the database connection is configured)
-└── setup.sh # Setup file
-└── Makefile # Makefile
-```
+├── .gitignore                  # Specifies intentionally untracked files to ignore
+├── alembic.ini                 # Alembic configuration file
+├── alembic_entrypoint.sh       # Entry point script for running Alembic migrations
+├── build_backend.sh            # Script to build and run the Docker container
+├── Dockerfile                  # Dockerfile for building the application container
+├── Makefile                    # Makefile containing shortcuts for common tasks
+├── postgres.sh                 # Script to run a PostgreSQL container
+├── README.md                   # Project documentation and setup instructions
+├── reqs.txt                    # Python dependencies to be installed
+└── setup.sh                    # Script for setting up the development environment
 
 ### Wichtiges zum Environment
 - /vars/.env datei erstellen im ordner backend
